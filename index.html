@@ -634,7 +634,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
 /* =========================================================
    LÕI DÙNG CHUNG CHO MỌI CHUYÊN ĐỀ
    - Kho đăng ký chuyên đề
-   - Lưu trữ tiến độ (máy chủ / trình duyệt)
+   - Lưu trữ tiến độ (GitHub / trình duyệt)
    - Sao, huy hiệu, chuỗi ngày, mục tiêu ngày
    ========================================================= */
 (function (global) {
@@ -743,67 +743,239 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     return rong();
   }
 
-  CTS.tai = function (cb) {
-    function napVideo() {
-      /* kho link video nằm ở API riêng để không bao giờ bị phiên học ghi đè */
-      fetch('api/video', { cache: 'no-store' })
-        .then(function (r) { if (!r.ok) throw 0; return r.json(); })
-        .then(function (v) {
-          videoMode = 'server';
-          if (v && Object.keys(v).length) state.video = v;
-          else if (state.video && Object.keys(state.video).length) CTS.luuVideo();  /* đẩy dữ liệu cũ lên */
-          if (!state.video) state.video = {};
-          cb();
-        })
-        .catch(function () {
-          videoMode = 'local';
-          try {
-            var raw = JSON.parse(localStorage.getItem(KEY_V));
-            if (raw && Object.keys(raw).length) state.video = raw;
-          } catch (e) { }
-          if (!state.video) state.video = {};
-          cb();
-        });
-    }
-    fetch('api/state', { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
-      .then(function (d) { saveMode = 'server'; state = diTru(d && (d.v || d.dang) ? d : null); napVideo(); })
-      .catch(function () {
-        saveMode = 'local';
-        var raw = null;
-        try { raw = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(KEY_CU)); } catch (e) { }
-        state = diTru(raw);
-        napVideo();
+  /* =========================================================
+     KHO DỮ LIỆU GITHUB
+     Ghi thẳng tiến độ / link video lên một repo RIÊNG, để Private.
+     Không cần server.js, không cần máy bật 24/24.
+       · tien-do.json  – tiến độ học, sổ lỗi, PIN
+       · video.json    – kho link video (file riêng, phiên học không ghi đè được)
+       · sao-luu/…     – mỗi ngày một bản chụp (ngoài lịch sử commit của git)
+     ========================================================= */
+  var GH = {
+    owner: 'hoanbvhn-gif',
+    repo: 'toanlop4-data',      /* repo PRIVATE chứa dữ liệu */
+    branch: 'main',
+    fState: 'tien-do.json',
+    fVideo: 'video.json'
+  };
+  CTS.GH = GH;
+
+  var TKEY = 'cts_gh_token';
+  var shaState = null, shaVideo = null;
+
+  function token() { try { return localStorage.getItem(TKEY) || ''; } catch (e) { return ''; } }
+  CTS.token = token;
+  CTS.datToken = function (t) { try { localStorage.setItem(TKEY, (t || '').trim()); } catch (e) { } };
+  CTS.xoaToken = function () { try { localStorage.removeItem(TKEY); } catch (e) { } };
+
+  /* ---------- base64 chuẩn UTF-8 (giữ được dấu tiếng Việt) ---------- */
+  function b64enc(s) {
+    var b = new TextEncoder().encode(s), bin = '', i, C = 0x8000;
+    for (i = 0; i < b.length; i += C) bin += String.fromCharCode.apply(null, b.subarray(i, i + C));
+    return btoa(bin);
+  }
+  function b64dec(s) {
+    var bin = atob((s || '').replace(/\s/g, '')), a = new Uint8Array(bin.length), i;
+    for (i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(a);
+  }
+
+  /* ---------- gọi API GitHub ---------- */
+  function api(duong, opt) {
+    opt = opt || {};
+    var h = {
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+    var t = token();
+    if (t) h.Authorization = 'Bearer ' + t;
+    if (opt.body) h['Content-Type'] = 'application/json';
+    return fetch('https://api.github.com' + duong, {
+      method: opt.method || 'GET',
+      headers: h,
+      body: opt.body ? JSON.stringify(opt.body) : undefined,
+      cache: 'no-store',
+      keepalive: !!opt.keepalive
+    });
+  }
+  function duongDan(f) {
+    return '/repos/' + GH.owner + '/' + GH.repo + '/contents/' + encodeURIComponent(f).replace(/%2F/g, '/');
+  }
+
+  /* đọc một file JSON — trả về {data, sha}; chưa có file thì data = null */
+  function doc(f) {
+    return api(duongDan(f) + '?ref=' + GH.branch + '&t=' + Date.now()).then(function (r) {
+      if (r.status === 404) return { data: null, sha: null };
+      if (!r.ok) throw new Error('GitHub ' + r.status);
+      return r.json().then(function (j) {
+        var d = null;
+        try { d = JSON.parse(b64dec(j.content)); } catch (e) { }
+        return { data: d, sha: j.sha };
       });
+    });
+  }
+
+  /* ghi một file JSON; trả về sha mới, hoặc null nếu đụng độ (sha cũ) */
+  function ghi(f, obj, sha, loi, keepalive) {
+    var body = { message: loi, content: b64enc(JSON.stringify(obj)), branch: GH.branch };
+    if (sha) body.sha = sha;
+    return api(duongDan(f), { method: 'PUT', body: body, keepalive: keepalive }).then(function (r) {
+      if (r.status === 409 || r.status === 422) return null;   /* sha lỗi thời */
+      if (!r.ok) throw new Error('GitHub ' + r.status);
+      return r.json().then(function (j) { return j.content.sha; });
+    });
+  }
+
+  /* ghi có xử lý đụng độ: lấy lại sha mới nhất rồi ghi lần hai */
+  function ghiChacChan(f, obj, lay, dat, loi, keepalive) {
+    return ghi(f, obj, lay(), loi, keepalive).then(function (s) {
+      if (s) { dat(s); return true; }
+      return doc(f).then(function (d) {
+        dat(d.sha);
+        return ghi(f, obj, d.sha, loi, keepalive).then(function (s2) {
+          if (s2) { dat(s2); return true; }
+          return false;
+        });
+      });
+    });
+  }
+
+  /* kiểm tra token có dùng được với repo dữ liệu không */
+  CTS.thuToken = function (t) {
+    var cu = token();
+    CTS.datToken(t);
+    return api('/repos/' + GH.owner + '/' + GH.repo).then(function (r) {
+      if (r.ok) return { ok: true };
+      CTS.datToken(cu);
+      if (r.status === 401) return { ok: false, loi: 'Token sai hoặc đã hết hạn.' };
+      if (r.status === 403) return { ok: false, loi: 'Token không đủ quyền (cần Contents: Read and write).' };
+      if (r.status === 404) return { ok: false, loi: 'Không thấy repo ' + GH.owner + '/' + GH.repo + ' — kiểm tra lại tên repo, hoặc token chưa được cấp quyền cho đúng repo này.' };
+      return { ok: false, loi: 'GitHub trả về lỗi ' + r.status + '.' };
+    }).catch(function () {
+      CTS.datToken(cu);
+      return { ok: false, loi: 'Không nối được mạng tới GitHub.' };
+    });
   };
 
-  /* lưu riêng kho link video */
+  /* ---------- nạp dữ liệu lúc mở web ---------- */
+  CTS.tai = function (cb) {
+    function ngoaiTuyen() {
+      saveMode = 'local'; videoMode = 'local';
+      var raw = null, rv = null;
+      try { raw = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(KEY_CU)); } catch (e) { }
+      try { rv = JSON.parse(localStorage.getItem(KEY_V)); } catch (e) { }
+      state = diTru(raw);
+      if (rv && Object.keys(rv).length) state.video = rv;
+      if (!state.video) state.video = {};
+      cb();
+    }
+
+    if (!token()) return ngoaiTuyen();
+
+    Promise.all([doc(GH.fState), doc(GH.fVideo)]).then(function (kq) {
+      var s = kq[0], v = kq[1];
+      shaState = s.sha; shaVideo = v.sha;
+      saveMode = 'github'; videoMode = 'github';
+
+      /* lần đầu chưa có file trên GitHub → đẩy dữ liệu đang có trong máy này lên */
+      var raw = null;
+      if (!s.data) { try { raw = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(KEY_CU)); } catch (e) { } }
+      state = diTru(s.data && (s.data.v || s.data.dang) ? s.data : raw);
+
+      if (v.data && Object.keys(v.data).length) state.video = v.data;
+      else {
+        var rv = null;
+        try { rv = JSON.parse(localStorage.getItem(KEY_V)); } catch (e) { }
+        if (rv && Object.keys(rv).length) state.video = rv;
+      }
+      if (!state.video) state.video = {};
+
+      if (!s.data) CTS.luu();
+      if (!v.data && Object.keys(state.video).length) CTS.luuVideo();
+      cb();
+    }).catch(function () {
+      ngoaiTuyen();
+      bao('err');
+    });
+  };
+
+  /* ---------- kho link video (file riêng) ---------- */
   CTS.luuVideo = function () {
     var v = state.video || {};
     try { localStorage.setItem(KEY_V, JSON.stringify(v)); } catch (e) { }
-    if (videoMode !== 'server') return Promise.resolve(false);
-    return fetch('api/video', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v)
-    }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    if (videoMode !== 'github') return Promise.resolve(false);
+    return ghiChacChan(GH.fVideo, v,
+      function () { return shaVideo; },
+      function (s) { shaVideo = s; },
+      'Cập nhật kho video (' + Object.keys(v).length + ' bài)'
+    ).catch(function () { return false; });
   };
 
-  var timer = null;
+  /* ---------- tiến độ học ---------- */
+  var timer = null, dangGhi = false, choGhi = false;
+
+  function homNay() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function goiLen(keepalive) {
+    if (dangGhi) { choGhi = true; return; }
+    dangGhi = true;
+
+    var goi = JSON.parse(JSON.stringify(state));
+    delete goi.video;                    /* link video có kho riêng, phiên học không được ghi đè */
+    var ng = homNay();
+
+    ghiChacChan(GH.fState, goi,
+      function () { return shaState; },
+      function (s) { shaState = s; },
+      'Tiến độ ' + ng, keepalive
+    ).then(function (ok) {
+      dangGhi = false;
+      bao(ok ? 'github' : 'err');
+
+      /* mỗi ngày chụp thêm một bản sao lưu (ngoài lịch sử commit) */
+      if (ok && state.ghSaoLuu !== ng) {
+        state.ghSaoLuu = ng;
+        doc('sao-luu/tien-do-' + ng + '.json').then(function (d) {
+          if (d.sha) return;             /* hôm nay đã có bản rồi */
+          return ghi('sao-luu/tien-do-' + ng + '.json', goi, null, 'Sao lưu ' + ng);
+        }).catch(function () { });
+      }
+      if (choGhi) { choGhi = false; goiLen(); }
+    }).catch(function () {
+      dangGhi = false;
+      bao('err');
+      if (choGhi) { choGhi = false; goiLen(); }
+    });
+  }
+
   CTS.luu = function () {
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { }
-    if (saveMode !== 'server') { bao('local'); return; }
+    if (saveMode !== 'github') { bao('local'); return; }
+    bao('dang');
     clearTimeout(timer);
-    timer = setTimeout(function () {
-      fetch('api/state', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(state)
-      }).then(function (r) { bao(r.ok ? 'server' : 'err'); }).catch(function () { bao('err'); });
-    }, 300);
+    timer = setTimeout(function () { goiLen(false); }, 6000);   /* gộp nhiều lần lưu thành một commit */
   };
+
+  /* đẩy nốt trước khi đóng tab / khoá màn hình tablet */
+  CTS.luuNgay = function () {
+    if (saveMode !== 'github') return;
+    clearTimeout(timer);
+    goiLen(true);
+  };
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') CTS.luuNgay();
+  });
+  window.addEventListener('pagehide', function () { CTS.luuNgay(); });
+
   function bao(k) {
     var n = document.getElementById('saveinfo'); if (!n) return;
-    if (k === 'server') { n.className = 'saveinfo on'; n.textContent = '💾 Đã lưu vào máy tính'; }
-    else if (k === 'local') { n.className = 'saveinfo off'; n.textContent = '💾 Đã lưu trên trình duyệt này'; }
-    else { n.className = 'saveinfo off'; n.textContent = '⚠️ Chưa lưu được — thử tải lại trang'; }
+    if (k === 'github') { n.className = 'saveinfo on'; n.textContent = '☁️ Đã lưu lên GitHub'; }
+    else if (k === 'dang') { n.className = 'saveinfo on'; n.textContent = '☁️ Đang lưu…'; }
+    else if (k === 'local') { n.className = 'saveinfo off'; n.textContent = '💾 Chỉ lưu trên trình duyệt này'; }
+    else { n.className = 'saveinfo off'; n.textContent = '⚠️ Chưa lưu lên GitHub được — kiểm tra mạng hoặc token'; }
   }
   CTS.bao = bao;
 
@@ -17444,6 +17616,53 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
   /* =========================================================
      ĐĂNG NHẬP
      ========================================================= */
+  /* =========================================================
+     MÀN HÌNH KẾT NỐI GITHUB (hiện khi thiết bị chưa có token)
+     ========================================================= */
+  function veKetNoi() {
+    var g = C.GH;
+    var h = '<div class="loginpage"><div class="loginbox">';
+    h += '<div class="brand">☁️</div><h1>Góc học Toán</h1>';
+    h += '<p class="sl">Kết nối kho dữ liệu trên GitHub</p>';
+    h += '<div class="card" style="text-align:left;max-width:600px;margin:0 auto">';
+    h += '<h2 class="sec" style="margin-top:0">🔑 Mã kết nối của thiết bị này</h2>';
+    h += '<p class="muted">Tiến độ học được lưu vào repo riêng <code>' + esc(g.owner) + '/' + esc(g.repo) +
+      '</code>. Mỗi máy/máy tính bảng chỉ cần dán mã <b>một lần duy nhất</b>, sau đó dùng mãi.</p>';
+    h += '<div style="margin-top:14px"><b>Dán mã Personal Access Token</b><br>' +
+      '<input class="numbox" id="gh-tok" type="password" autocomplete="off" spellcheck="false" ' +
+      'style="width:100%;text-align:left;font-size:15px;margin-top:6px;letter-spacing:0" ' +
+      'placeholder="github_pat_…"></div>';
+    h += '<div id="gh-loi" class="muted" style="margin-top:10px"></div>';
+    h += '<div class="row" style="margin-top:16px"><button class="btn big" id="gh-ok">Kết nối</button>' +
+      '<button class="btn ghost" id="gh-bo">Dùng tạm, không đồng bộ</button></div>';
+    h += '<p class="muted" style="margin-top:14px">Chưa có mã? Vào <b>github.com → Settings → Developer settings → ' +
+      'Personal access tokens → Fine-grained tokens → Generate new token</b>, chọn đúng repo <code>' + esc(g.repo) +
+      '</code>, mục <b>Repository permissions → Contents</b> đặt <b>Read and write</b>. Xem thêm trong file HUONG-DAN.md.</p>';
+    h += '</div></div></div>';
+    el('pg-login').innerHTML = h;
+    moTrang('login');
+
+    function bao(t, xanh) {
+      el('gh-loi').innerHTML = '<span style="color:var(--' + (xanh ? 'ok' : 'no') + ')">' + t + '</span>';
+    }
+    el('gh-ok').addEventListener('click', function () {
+      var t = el('gh-tok').value.trim();
+      if (!t) { bao('⚠️ Chưa dán mã.'); return; }
+      el('gh-ok').disabled = true;
+      bao('⏳ Đang kiểm tra…', true);
+      C.thuToken(t).then(function (kq) {
+        el('gh-ok').disabled = false;
+        if (kq.ok) { bao('✔ Kết nối được rồi, đang tải dữ liệu…', true); setTimeout(function () { location.reload(); }, 500); }
+        else bao('⚠️ ' + kq.loi);
+      });
+    });
+    el('gh-tok').addEventListener('keydown', function (e) { if (e.key === 'Enter') el('gh-ok').click(); });
+    el('gh-bo').addEventListener('click', function () {
+      if (!confirm('Không kết nối GitHub thì tiến độ chỉ nằm trong trình duyệt của thiết bị này và KHÔNG dùng chung với máy khác. Vẫn tiếp tục?')) return;
+      vaoUngDung();
+    });
+  }
+
   function veLogin() {
     var s = st();
     var chuaLap = !s.pin.bo || !s.pin.con;
@@ -19117,7 +19336,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
      QUẢN LÝ VIDEO BÀI GIẢNG (khu của bố)
      ========================================================= */
   function veVideo() {
-    var svr = C.videoMode() === 'server';
+    var svr = C.videoMode() === 'github';
     var h = '<h2 class="sec">🎬 Video bài giảng</h2>';
     h += '<div class="card"><p class="muted" style="margin:0">Dán link YouTube vào từng bài. ' +
       'Video sẽ hiện ngay đầu phần lý thuyết của bài đó, và hiện thêm một nút xem nhanh mỗi khi con làm sai câu thuộc bài đó.<br>' +
@@ -19125,14 +19344,12 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
       'link danh sách phát <code>?list=…</code>. Link có mốc thời gian (<code>&t=90</code>) sẽ tự phát từ đúng phút đó.</p>';
     h += '<p class="muted" style="margin:10px 0 0">Hiện đang có <b>' + C.tongVideo() + ' video</b>.</p>';
     h += (svr
-      ? '<div class="tip" style="margin-bottom:0"><b>Nơi lưu: file <code>data/video.json</code> trên máy chủ.</b><br>' +
-        'File này <b>tách hẳn</b> khỏi file tiến độ học, và mỗi lần ghi đè máy chủ đều giữ một bản cũ ở ' +
-        '<code>data/sao-luu/video-truoc-do.json</code>.<br>' +
-        '👉 Khi cập nhật web, <b>chỉ thay file <code>index.html</code></b> (và <code>server.js</code> nếu có bản mới) — ' +
-        '<b>tuyệt đối không xoá hay ghi đè thư mục <code>data</code></b>, link video sẽ còn nguyên.</div>'
+      ? '<div class="tip" style="margin-bottom:0"><b>Nơi lưu: file <code>video.json</code> trong repo <code>' + esc(C.GH.repo) + '</code> trên GitHub.</b><br>' +
+        'File này <b>tách hẳn</b> khỏi file tiến độ học, nên phiên học của con không bao giờ ghi đè lên được.<br>' +
+        '👉 Mỗi lần sửa là một commit — vào tab <b>History</b> của file trên GitHub là xem lại được mọi bản cũ và khôi phục bất cứ lúc nào.</div>'
       : '<div class="warn" style="margin-bottom:0"><b>Đang lưu tạm trong trình duyệt của thiết bị này</b> — ' +
-        'không kết nối được máy chủ.<br>Nghĩa là link chỉ có trên máy này, và sẽ mất nếu xoá dữ liệu duyệt web. ' +
-        'Hãy chạy <code>node server.js</code> rồi mở web qua địa chỉ máy chủ để link được lưu vào file.<br>' +
+        'chưa kết nối GitHub.<br>Nghĩa là link chỉ có trên máy này, và sẽ mất nếu xoá dữ liệu duyệt web. ' +
+        'Vào <b>⚙️ Cài đặt → ☁️ Kho dữ liệu GitHub</b> để nhập mã kết nối.<br>' +
         'Trong lúc chờ, bấm <b>Xuất ra file</b> bên dưới để giữ lại một bản.</div>');
     h += '<div class="row" style="margin-top:14px">' +
       '<button class="btn ghost" id="v-xuat">⬇ Xuất danh sách video ra file</button>' +
@@ -19317,14 +19534,40 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
       '<button class="btn sm ' + (s.amThanh !== false ? '' : 'ghost') + '" data-am="1">🔊 Bật</button>' +
       '<button class="btn sm ' + (s.amThanh === false ? '' : 'ghost') + '" data-am="0">🔇 Tắt</button></div></div>';
 
+    var ghOn = C.saveMode() === 'github';
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">☁️ Kho dữ liệu GitHub</h2>';
+    h += '<p class="muted">Repo: <code>' + esc(C.GH.owner) + '/' + esc(C.GH.repo) + '</code> · Trạng thái thiết bị này: <b style="color:var(--' +
+      (ghOn ? 'ok' : 'no') + ')">' + (ghOn ? '✔ Đã kết nối — dùng chung mọi thiết bị' : '⚠️ Chưa kết nối — chỉ lưu trong trình duyệt này') + '</b></p>';
+    h += '<div class="row" style="margin-top:12px">' +
+      '<button class="btn sm ghost" id="cd-ghdoi">' + (ghOn ? 'Đổi mã kết nối' : 'Nhập mã kết nối') + '</button>' +
+      (ghOn ? '<button class="btn sm ghost" id="cd-ghday">Đẩy lên ngay</button>' +
+              '<button class="btn sm ghost" id="cd-ghxoa" style="color:var(--no);border-color:#fbd5d5">Gỡ mã khỏi máy này</button>' : '') +
+      '</div>';
+    h += '<p class="muted" style="margin-top:10px">Mỗi lần lưu là một commit trên GitHub, nên <b>toàn bộ lịch sử đều lấy lại được</b>. ' +
+      'Ngoài ra máy tự chụp thêm một bản mỗi ngày vào thư mục <code>sao-luu/</code> của repo.</p></div>';
+
     h += '<div class="card"><h2 class="sec" style="margin-top:0">💾 Dữ liệu</h2><div class="row">' +
       '<button class="btn ghost" id="cd-xuat">Tải file sao lưu</button>' +
       '<button class="btn ghost" id="cd-xoa" style="color:var(--no);border-color:#fbd5d5">Xoá toàn bộ tiến độ</button></div>';
-    h += '<p class="muted" style="margin-top:10px">Nơi lưu hiện tại: <b>' +
-      (C.saveMode() === 'server' ? 'trên máy tính chạy web (dùng chung mọi thiết bị)' : 'trong trình duyệt của thiết bị này') +
-      '</b>. Máy chủ tự sao lưu mỗi ngày một bản trong thư mục <code>data/sao-luu</code>.</p></div>';
+    h += '<p class="muted" style="margin-top:10px">Nút trên tải một bản JSON về máy — dùng khi muốn giữ bản rời ngoài GitHub.</p></div>';
 
     el('pg-caidat').innerHTML = h;
+
+    if (el('cd-ghdoi')) el('cd-ghdoi').addEventListener('click', function () {
+      var t = prompt('Dán mã Personal Access Token của GitHub:');
+      if (t === null) return;
+      C.thuToken(t.trim()).then(function (kq) {
+        if (kq.ok) { alert('✔ Kết nối được. Trang sẽ tải lại.'); location.reload(); }
+        else alert('⚠️ ' + kq.loi);
+      });
+    });
+    if (el('cd-ghday')) el('cd-ghday').addEventListener('click', function () {
+      C.luuNgay(); C.luuVideo(); alert('Đã đẩy tiến độ và kho video lên GitHub.');
+    });
+    if (el('cd-ghxoa')) el('cd-ghxoa').addEventListener('click', function () {
+      if (!confirm('Gỡ mã kết nối khỏi thiết bị này? Từ sau máy này sẽ không đồng bộ nữa cho tới khi nhập lại mã.')) return;
+      C.xoaToken(); location.reload();
+    });
 
     el('cd-luu').addEventListener('click', function () {
       var ten = el('cd-ten').value.trim();
@@ -19538,13 +19781,19 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
   /* =========================================================
      KHỞI ĐỘNG
      ========================================================= */
-  C.tai(function () {
+  function vaoUngDung() {
     C.bao(C.saveMode());
     var s = st();
     var cu = null;
     try { cu = sessionStorage.getItem('cts_vai'); } catch (e) { }
     if (s.pin.bo && s.pin.con && (cu === 'con' || cu === 'bo')) vaoVai(cu);
     else veLogin();
+  }
+
+  C.tai(function () {
+    C.bao(C.saveMode());
+    if (!C.token()) { veKetNoi(); return; }   /* thiết bị chưa có mã → hỏi trước khi vào */
+    vaoUngDung();
   });
 })();
 </script>
