@@ -177,6 +177,27 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 .sb-t{font-weight:800;color:var(--pri-d);font-size:15px;margin-bottom:3px}
 .sb-c{padding-left:12px;border-left:2px solid var(--pri-l)}
 .hl{background:#fff3b0;padding:1px 8px;border-radius:6px;font-size:1.08em}
+.nk-tbl{border-collapse:collapse;width:100%;margin:6px 0;font-size:13.5px;background:#fff}
+.nk-tbl th,.nk-tbl td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.nk-tbl th{font-size:11.5px;color:var(--ink2);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.nk-tbl td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nk-tbl tr.sai td{background:#fff6f6}
+.nk-de{color:var(--ink2);font-size:12.5px;display:block;margin-top:2px;line-height:1.35}
+.nk-k{display:inline-block;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+.nk-k.lt{background:var(--pri-l);color:var(--pri-d)}
+.nk-k.tron{background:#efe6ff;color:#6b3fd6}
+.nk-k.thi{background:#fff3cd;color:#8a6100}
+.nk-k.sua{background:#ffe6f0;color:#b3336a}
+.nk-k.kd{background:#e2f5ea;color:#1c7a4a}
+.nk-cham{color:#b3336a;font-weight:800}
+.nk-nghi{color:var(--ink2);font-style:italic}
+.nk-tbl tr.nk-cu td{background:#fbfaff;color:var(--ink2)}
+.nk-cu-tag{display:inline-block;font-size:10.5px;font-weight:800;color:#7a6f9b;background:#efecf9;
+  border-radius:99px;padding:1px 7px;margin-top:2px;white-space:nowrap}
+.nk-tbl.nk-ngay tr.nk-r{cursor:pointer}
+.nk-tbl.nk-ngay tr.nk-r:hover td{background:var(--pri-l)}
+.nk-tbl.nk-ngay tr.nk-r.chon td{background:var(--pri-l);box-shadow:inset 0 0 0 2px var(--pri)}
+.nk-tbl.nk-ngay td .nk-de{margin-top:1px}
 .tbl{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px;background:#fff}
 .tbl th,.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:left}
 .tbl th{background:var(--pri-l);font-weight:700;font-size:14px}
@@ -622,6 +643,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
   <div id="pg-bao" class="hide"></div>
   <div id="pg-video" class="hide"></div>
   <div id="pg-phieu" class="hide"></div>
+  <div id="pg-nhatky" class="hide"></div>
   <div id="pg-caidat" class="hide"></div>
 </div>
 
@@ -857,6 +879,170 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     });
   };
 
+  /* =========================================================
+     NHẬT KÝ TỪNG CÂU
+     Mỗi câu bé làm là một dòng: lúc nào, dạng gì, đúng/sai, hết bao nhiêu giây.
+     Cất theo THÁNG ở nhat-ky/YYYY-MM.json — tách khỏi tien-do.json để file
+     tiến độ không phình lên, và để hai thiết bị ghi xen nhau vẫn gộp được.
+     ========================================================= */
+  var NK = {};        /* 'YYYY-MM' -> mảng bản ghi đã nạp/đã thêm */
+  var NKsha = {};     /* 'YYYY-MM' -> sha file trên GitHub */
+  var NKban = {};     /* 'YYYY-MM' -> true nếu có thay đổi chưa đẩy lên */
+  var NKtimer = null, NKdangGhi = false;
+  var NK_LOCAL = 'cts_nhatky';
+
+  function fileNK(th) { return 'nhat-ky/' + th + '.json'; }
+  function thangCua(t) {
+    var d = new Date(t);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+  CTS.thangNay = function () { return thangCua(Date.now()); };
+
+  /* giữ một bản trong trình duyệt để mất mạng không mất bản ghi */
+  function nkLuuTam() {
+    try { localStorage.setItem(NK_LOCAL, JSON.stringify(NK)); } catch (e) { }
+  }
+  function nkDocTam() {
+    try { return JSON.parse(localStorage.getItem(NK_LOCAL)) || {}; } catch (e) { return {}; }
+  }
+
+  /* gộp hai mảng bản ghi, bỏ trùng theo id, sắp theo thời gian */
+  function gop(a, b) {
+    var thay = {}, ra = [];
+    (a || []).concat(b || []).forEach(function (e) {
+      if (!e || !e.id || thay[e.id]) return;
+      thay[e.id] = 1; ra.push(e);
+    });
+    ra.sort(function (x, y) { return x.t - y.t; });
+    if (ra.length > 20000) ra = ra.slice(-20000);
+    return ra;
+  }
+
+  /* ghi nhận một câu — gọi từ lúc bé bấm Kiểm tra */
+  CTS.ghiNhatKy = function (e) {
+    e.id = 'Q' + e.t.toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+    var th = thangCua(e.t);
+    if (!NK[th]) NK[th] = [];
+    NK[th].push(e);
+    NKban[th] = true;
+    nkLuuTam();
+    if (saveMode !== 'github') return;
+    clearTimeout(NKtimer);
+    NKtimer = setTimeout(function () { nkDay(false); }, 6000);
+  };
+
+  CTS.nhatKy = function (th) { return NK[th] || []; };
+  CTS.thangCoNhatKy = function () {
+    return Object.keys(NK).filter(function (k) { return NK[k] && NK[k].length; }).sort().reverse();
+  };
+
+  /* nạp một tháng từ GitHub (dùng khi bố xem lại tháng cũ) */
+  CTS.napThang = function (th) {
+    if (NK[th] && !NKban[th]) return Promise.resolve(NK[th]);
+    if (saveMode !== 'github') return Promise.resolve(NK[th] || []);
+    return doc(fileNK(th)).then(function (d) {
+      NKsha[th] = d.sha;
+      NK[th] = gop(d.data || [], NK[th] || []);
+      return NK[th];
+    }).catch(function () { return NK[th] || []; });
+  };
+
+  /* nạp lại BẮT BUỘC từ GitHub — dùng cho khung theo dõi trực tiếp */
+  CTS.taiLaiThang = function (th) {
+    if (saveMode !== 'github') return Promise.resolve(NK[th] || []);
+    return doc(fileNK(th)).then(function (d) {
+      NKsha[th] = d.sha;
+      NK[th] = gop(d.data || [], NK[th] || []);
+      nkLuuTam();
+      return NK[th];
+    }).catch(function () { return NK[th] || []; });
+  };
+
+  /* đẩy các tháng đang bẩn lên GitHub, gộp thay vì ghi đè */
+  function nkDay(keepalive) {
+    if (NKdangGhi || saveMode !== 'github') return Promise.resolve(false);
+    var ds = Object.keys(NKban).filter(function (k) { return NKban[k]; });
+    if (!ds.length) return Promise.resolve(true);
+    NKdangGhi = true;
+
+    var chuoi = ds.reduce(function (p, th) {
+      return p.then(function () {
+        NKban[th] = false;
+        var muon = NK[th];
+        return ghi(fileNK(th), muon, NKsha[th], 'Nhật ký ' + th + ' (' + muon.length + ' câu)', keepalive)
+          .then(function (sha) {
+            if (sha) { NKsha[th] = sha; return; }
+            /* đụng độ: máy khác vừa ghi → lấy về, GỘP rồi ghi lại (không được đè mất) */
+            return doc(fileNK(th)).then(function (d) {
+              NK[th] = gop(d.data || [], NK[th]);
+              NKsha[th] = d.sha;
+              return ghi(fileNK(th), NK[th], d.sha, 'Nhật ký ' + th + ' (gộp ' + NK[th].length + ' câu)', keepalive)
+                .then(function (s2) { if (s2) NKsha[th] = s2; else NKban[th] = true; });
+            });
+          })
+          .catch(function () { NKban[th] = true; });
+      });
+    }, Promise.resolve());
+
+    return chuoi.then(function () {
+      NKdangGhi = false; nkLuuTam();
+      return true;
+    }).catch(function () { NKdangGhi = false; return false; });
+  }
+  CTS.dayNhatKy = function () { clearTimeout(NKtimer); return nkDay(false); };
+
+  /* ---------- kéo dữ liệu CŨ (trước khi có nhật ký) vào cho đỡ trống ----------
+     · 22 câu trong sổ lỗi: có đủ ngày giờ, đề bài, con viết gì, đáp án — chỉ thiếu số giây
+     · 26 buổi học cũ: chỉ có tổng thời gian cả buổi, không tách được từng câu
+     Mọi bản ghi kéo về đều mang cờ cu/bu và bị LOẠI khỏi mọi con số thống kê,
+     để không làm lệch trung vị thời gian. id đặt cố định nên chạy lại không nhân đôi. */
+  CTS.keoDuLieuCu = function () {
+    if (!state) return 0;
+    var them = 0;
+
+    (state.soLoi || []).forEach(function (e) {
+      if (!e || !e.t) return;
+      var th = thangCua(e.t);
+      if (!NK[th]) NK[th] = [];
+      var id = 'X' + e.id;
+      if (NK[th].some(function (x) { return x.id === id; })) return;
+      NK[th].push({
+        id: id, t: e.t, gy: 0, cu: 1,
+        cd: e.cd, d: e.dang, dt: e.tenDang || '', bai: e.bai || 0,
+        ok: 0, k: e.thi ? 'thi' : 'lt',
+        de: String(e.de || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220),
+        da: String(e.dapAn || '').slice(0, 60),
+        tl: String(e.nhap || '').slice(0, 40)
+      });
+      NKban[th] = true; them++;
+    });
+
+    (state.phien || []).forEach(function (p) {
+      if (!p || !p.t) return;
+      var th = thangCua(p.t);
+      if (!NK[th]) NK[th] = [];
+      var id = 'P' + p.t;
+      if (NK[th].some(function (x) { return x.id === id; })) return;
+      NK[th].push({
+        id: id, t: p.t, gy: 0, bu: 1,
+        cd: p.cd, d: '', dt: p.ten || '', bai: 0,
+        ok: p.dung >= p.tong ? 1 : 0,
+        k: p.kieu === 'thi' ? 'thi' : (p.kieu === 'sualoi' ? 'sua' : (p.kieu === 'tron' ? 'tron' : 'lt')),
+        sc: p.tong || 0, sd: p.dung || 0, sg: p.giay || 0,
+        de: '', da: ''
+      });
+      NKban[th] = true; them++;
+    });
+
+    if (them) {
+      Object.keys(NK).forEach(function (th) { NK[th] = gop(NK[th], []); });
+      nkLuuTam();
+      if (saveMode === 'github') nkDay(false);
+    }
+    return them;
+  };
+
+
   /* ---------- nạp dữ liệu lúc mở web ---------- */
   CTS.tai = function (cb) {
     function ngoaiTuyen() {
@@ -867,15 +1053,27 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
       state = diTru(raw);
       if (rv && Object.keys(rv).length) state.video = rv;
       if (!state.video) state.video = {};
+      NK = nkDocTam();
+      if (!state.nkKeoCu) { CTS.keoDuLieuCu(); state.nkKeoCu = 1; }
       cb();
     }
 
     if (!token()) return ngoaiTuyen();
 
-    Promise.all([doc(GH.fState), doc(GH.fVideo)]).then(function (kq) {
-      var s = kq[0], v = kq[1];
+    var thNay = thangCua(Date.now());
+    Promise.all([doc(GH.fState), doc(GH.fVideo), doc(fileNK(thNay))]).then(function (kq) {
+      var s = kq[0], v = kq[1], nk = kq[2];
       shaState = s.sha; shaVideo = v.sha;
       saveMode = 'github'; videoMode = 'github';
+
+      /* nhật ký: gộp bản trên GitHub với bản còn kẹt trong máy này (lúc mất mạng) */
+      var tam = nkDocTam();
+      NK = {}; NKsha = {}; NKban = {};
+      Object.keys(tam).forEach(function (k) { NK[k] = tam[k] || []; });
+      NKsha[thNay] = nk.sha;
+      NK[thNay] = gop(nk.data || [], NK[thNay] || []);
+      Object.keys(tam).forEach(function (k) { if ((tam[k] || []).length) NKban[k] = true; });
+      nkLuuTam();
 
       /* lần đầu chưa có file trên GitHub → đẩy dữ liệu đang có trong máy này lên */
       var raw = null;
@@ -892,6 +1090,8 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
 
       if (!s.data) CTS.luu();
       if (!v.data && Object.keys(state.video).length) CTS.luuVideo();
+      if (!state.nkKeoCu) { CTS.keoDuLieuCu(); state.nkKeoCu = 1; CTS.luu(); }
+      if (Object.keys(NKban).length) nkDay(false);
       cb();
     }).catch(function () {
       ngoaiTuyen();
@@ -964,6 +1164,8 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     if (saveMode !== 'github') return;
     clearTimeout(timer);
     goiLen(true);
+    clearTimeout(NKtimer);
+    nkDay(true);
   };
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'hidden') CTS.luuNgay();
@@ -1238,30 +1440,51 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     }
     return state.khoiDong;
   };
-  /* trả về {ds, con, tong} nếu hôm nay còn phải khởi động, ngược lại null */
+  /* bốc một ĐỢT: các câu sai CŨ NHẤT còn chưa sửa. Trả về số câu bốc được. */
+  function bocDot(k) {
+    var chua = CTS.dsLoi(true).slice().sort(function (a, b) { return a.t - b.t; });
+    var n = state.soDangKD || 5;
+    if (n > 900 || n <= 0) n = chua.length;
+    k.ds = chua.slice(0, n).map(function (x) {
+      return { id: x.id, cd: x.cd, dang: x.dang, tenDang: x.tenDang };
+    });
+    return k.ds.length;
+  }
+
+  /* Trả về {ds, con, tong, dot, tonKho} nếu bé còn phải sửa lỗi, ngược lại null.
+     Quy tắc: SỔ LỖI CÒN CÂU NÀO THÌ CHƯA ĐƯỢC HỌC BÀI MỚI.
+     Sửa hết một đợt mà sổ vẫn còn thì máy tự bốc đợt kế tiếp — ưu tiên câu sai cũ nhất.
+     Câu sai phát sinh trong ngày cũng đóng cổng lại ngay, không để dồn sang hôm sau. */
   CTS.canKhoiDong = function () {
     var k = CTS.khoiDongHomNay();
-    if (k.xong || k.boQua) return null;
-    if (!k.ds) {
-      /* lấy các CÂU sai cũ nhất trước — mỗi câu sửa riêng */
-      var chua = CTS.dsLoi(true).slice().sort(function (a, b) { return a.t - b.t; });
-      var n = state.soDangKD || 5;
-      if (n > 900) n = chua.length;
-      k.ds = chua.slice(0, n).map(function (x) {
-        return { id: x.id, cd: x.cd, dang: x.dang, tenDang: x.tenDang };
-      });
-      k.dsOn = CTS.dsCanOn();
-      if (!k.ds.length && !k.dsOn.length) { k.xong = 1; return null; }
-    }
+    if (k.boQua) return null;                 /* bố đã mở khoá cho hôm nay */
+
     if (!k.dsOn) k.dsOn = CTS.dsCanOn();
-    var con = k.ds.filter(function (x) {
-      var e = CTS.loiTheoId(x.id);
-      return e && !e.sua;
-    });
     var conOn = k.dsOn.filter(function (x) { return !CTS.daOnHomNay(x.cd, x.dang); });
+
+    function conPhai() {
+      return (k.ds || []).filter(function (x) {
+        var e = CTS.loiTheoId(x.id);
+        return e && !e.sua;
+      });
+    }
+    var con = conPhai();
+
+    /* chưa có đợt nào, hoặc đợt vừa rồi đã xong mà sổ lỗi vẫn còn → bốc đợt mới */
+    if (!k.ds || (!con.length && CTS.demLoi() > 0)) {
+      if (k.ds && !con.length) k.dot = (k.dot || 1) + 1;
+      bocDot(k);
+      con = conPhai();
+    }
+
     if (!con.length && !conOn.length) { k.xong = 1; return null; }
-    return { ds: k.ds, con: con, dsOn: k.dsOn, conOn: conOn,
-      tong: k.ds.length + k.dsOn.length };
+    k.xong = 0;
+    return {
+      ds: k.ds, con: con, dsOn: k.dsOn, conOn: conOn,
+      tong: k.ds.length + k.dsOn.length,
+      dot: k.dot || 1,
+      tonKho: CTS.demLoi()                     /* tổng câu sai còn trong sổ, kể cả đợt sau */
+    };
   };
   /* ---------- ÔN CÁCH QUÃNG: dạng đã nắm nhưng lâu không đụng ---------- */
   CTS.SO_DANG_ON = 5;                 /* mỗi buổi ôn tối đa bấy nhiêu dạng */
@@ -17560,13 +17783,14 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
      ĐIỀU HƯỚNG
      ========================================================= */
   var TRANG = ['login', 'home', 'cd', 'chon', 'theory', 'practice', 'tiendo', 'soloi',
-    'khoidong', 'bao', 'video', 'phieu', 'caidat'];
+    'khoidong', 'bao', 'video', 'phieu', 'nhatky', 'caidat'];
   function moTrang(t) {
     /* CỔNG KHỞI ĐỘNG: mỗi ngày bé phải sửa lỗi xong mới được học tiếp */
     if (vaiTro === 'con' && t !== 'login' && t !== 'khoidong' &&
       !(t === 'practice' && phien && phien.khoiDong) && C.canKhoiDong()) {
       t = 'khoidong'; veKhoiDong();
     }
+    if (t !== 'nhatky') nkTatNhip();          /* rời trang thì thôi tải lại nền */
     TRANG.forEach(function (x) { el('pg-' + x).classList.toggle('hide', x !== t); });
     el('topbar').classList.toggle('hide', t === 'login');
     document.querySelectorAll('#hd-nav button').forEach(function (b) {
@@ -17587,9 +17811,10 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
         ((s.chuoi && s.chuoi.ngay === C.ngayHomNay()) ? s.chuoi.so : 0) + ' ngày</span>' +
         '<button class="chip" data-thoat="1">↩ Thoát</button>';
       var nLoi = C.demLoi();
-      if (C.canKhoiDong()) {
-        el('hd-nav').innerHTML = '<button class="on" data-go="khoidong">🌅 Khởi động ngày mới' +
-          ' <span class="nbadge">' + C.canKhoiDong().con.length + '</span></button>';
+      var kdX = C.canKhoiDong();
+      if (kdX) {
+        el('hd-nav').innerHTML = '<button class="on" data-go="khoidong">🩹 Sửa lỗi trước đã' +
+          ' <span class="nbadge">' + (kdX.tonKho || kdX.con.length) + '</span></button>';
       } else {
         el('hd-nav').innerHTML =
           '<button data-go="home">🏠 Trang chủ</button>' +
@@ -17607,6 +17832,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
         '<button data-go="bao">📊 Báo cáo tổng hợp</button>' +
         '<button data-go="soloi">📕 Sổ lỗi' +
         (nLoi2 ? ' <span class="nbadge">' + nLoi2 + '</span>' : '') + '</button>' +
+        '<button data-go="nhatky">⏱️ Nhật ký từng câu</button>' +
         '<button data-go="video">🎬 Video bài giảng</button>' +
         '<button data-go="phieu">🖨️ Phiếu in</button>' +
         '<button data-go="caidat">⚙️ Cài đặt</button>';
@@ -18314,6 +18540,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
 
   function veCau() {
     var p = phien, q = p.cau[p.i], cd = C.CD[q.cd || p.cd];
+    p.tHien = Date.now();          /* mốc bắt đầu bấm giờ cho đúng câu này */
     var h = '<div class="crumb"><button data-go2="cd">← ' + cd.icon + ' ' + cd.tenNgan + '</button>' +
       '<button data-thoatphien="1">Dừng buổi học</button></div>';
     h += '<div class="card">';
@@ -18405,6 +18632,27 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
 
     p.ketQua[p.i] = ok ? 1 : 0;
     C.ghiNhan(q.cd, q.dang, ok);
+
+    /* ---- nhật ký từng câu: bao lâu, dạng gì, làm trong buổi nào ---- */
+    var gy = p.tHien ? Math.round((Date.now() - p.tHien) / 100) / 10 : 0;
+    var loai = p.thi ? 'thi'
+      : (p.sualoi ? (p.khoiDong ? 'kd' : 'sua')
+        : (p.tron ? 'tron' : 'lt'));
+    var nhan = q.laOn ? 'on'
+      : (q.laGoc ? 'goc'
+        : (q.loiId ? 'bs'
+          : (q.laiSau ? 'lai' : '')));
+    var bn = {
+      t: Date.now(), gy: gy,
+      cd: q.cd, d: q.dang, dt: q.tenDang || '', bai: q.bai || 0,
+      ok: ok ? 1 : 0, k: loai,
+      de: String(q.de || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220),
+      da: (q.hienDapAn || dung.join(' ; ')).slice(0, 60)
+    };
+    if (nhan) bn.n = nhan;
+    if (boQua) bn.bq = 1;
+    if (!ok) bn.tl = String(inp.value || '').trim().slice(0, 40);
+    C.ghiNhatKy(bn);
     /* ghi vào SỔ LỖI — trừ khi đang sửa chính câu đó (đã có sẵn trong sổ rồi) */
     if (!ok && !(p.sualoi && q.loiId)) C.ghiLoi(q, inp.value, p.thi);
     if (p.sualoi) {
@@ -18600,13 +18848,21 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     var h = '<div class="card done ' + (xongHet ? 'pass' : '') + '">';
     h += '<div class="big">' + (xongHet ? '🩹' : '💪') + '</div>';
     h += '<div class="score">' + p.daSua.length + ' / ' + (p.hangDoi || []).length + '</div>';
-    if (p.khoiDong && xongHet && !C.canKhoiDong()) {
-      h += '<div class="unlock">🔓 <b>XONG BUỔI KHỞI ĐỘNG!</b><br>' +
+    var conKD0 = p.khoiDong ? C.canKhoiDong() : null;
+    if (p.khoiDong && xongHet && !conKD0) {
+      h += '<div class="unlock">🔓 <b>SẠCH SỔ LỖI!</b><br>' +
         '<span class="u2">Giờ con học bài mới được rồi 🎉</span></div>';
+    } else if (p.khoiDong && xongHet && conKD0) {
+      h += '<div class="unlock" style="background:linear-gradient(135deg,#ffd76e,#ffb84d)">' +
+        '💪 <b>XONG ĐỢT ' + ((conKD0.dot || 2) - 1) + '!</b><br>' +
+        '<span class="u2">Sổ lỗi còn <b>' + conKD0.tonKho + ' câu</b> — làm nốt là được học bài mới</span></div>';
     }
     h += '<p>' + (xongHet
-      ? '<b>Xong hết rồi!</b> Mọi câu sai trong buổi này đều đã được làm lại và làm đúng ' +
-        C.CAN_DUNG_SUA + ' bài bổ sung. Các câu đó đã chuyển sang mục <b>“Đã hoàn thành”</b>. 🎉'
+      ? (conKD0
+        ? '<b>Xong đợt này rồi!</b> Các câu vừa sửa đã chuyển sang mục <b>“Đã hoàn thành”</b>. ' +
+          'Nghỉ một chút rồi bấm <b>Làm tiếp</b> để sang đợt sau nhé — còn <b>' + conKD0.tonKho + ' câu</b>.'
+        : '<b>Xong hết rồi!</b> Mọi câu sai trong buổi này đều đã được làm lại và làm đúng ' +
+          C.CAN_DUNG_SUA + ' bài bổ sung. Các câu đó đã chuyển sang mục <b>“Đã hoàn thành”</b>. 🎉')
       : 'Con đã hoàn thành <b>' + p.daSua.length + '</b> câu sai, còn <b>' + con.length +
         ' câu</b> nữa. ' + (tong >= 60
           ? 'Buổi này đã làm 60 câu — nghỉ một lát rồi vào sổ lỗi làm tiếp nhé.'
@@ -18644,9 +18900,9 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
         ' dạng cần ôn lại</b> (mỗi dạng 1 câu).</div>';
     }
     if (p.khoiDong) {
-      var conKD = C.canKhoiDong();
+      var conKD = conKD0;
       h += '<div class="row" style="justify-content:center;margin-top:16px">' +
-        (conKD ? '<button class="btn" data-kdbatdau="1">▶ Làm tiếp</button>' +
+        (conKD ? '<button class="btn" data-kdbatdau="1">▶ Làm tiếp (còn ' + conKD.tonKho + ' câu)</button>' +
           '<button class="btn ghost" data-go="khoidong">Xem danh sách</button>'
           : '<button class="btn" data-go="home">🏠 Vào học bài mới</button>') + '</div></div>';
     } else {
@@ -18907,8 +19163,8 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     var s = st(), k = C.canKhoiDong();
     if (!k) {                                   /* đã xong rồi */
       var h0 = '<div class="card done pass"><div class="big">🌞</div>' +
-        '<div class="score">Xong rồi!</div>' +
-        '<p>Con đã sửa hết các lỗi của buổi khởi động hôm nay. Giờ học bài mới được rồi!</p>' +
+        '<div class="score">Sạch sổ lỗi!</div>' +
+        '<p>Con đã sửa hết mọi câu làm sai. Giờ học bài mới được rồi!</p>' +
         '<div class="row" style="justify-content:center;margin-top:14px">' +
         '<button class="btn" data-go="home">🏠 Vào học bài</button></div></div>';
       el('pg-khoidong').innerHTML = h0;
@@ -18920,14 +19176,17 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     var xong = k.tong - k.con.length - (k.conOn || []).length;
 
     var h = '<div class="hero2 kd"><div class="in"><div style="flex:1;min-width:220px">';
+    var conCaThay = k.tonKho || 0;
+    var uocBai = conCaThay * (C.CAN_DUNG_SUA + 1);
     h += '<h2>🌅 ' + chao + ', ' + esc(s.ten || 'con') + '!</h2>';
-    h += '<p>Trước khi học bài mới, con <b>sửa lại những dạng đã làm sai</b>' +
-      ((k.conOn || []).length ? ' và <b>ôn lại vài dạng lâu chưa đụng</b>' : '') + ' nhé.</p>';
+    h += '<p>Con <b>sửa hết các câu đã làm sai</b>' +
+      ((k.conOn || []).length ? ' và <b>ôn lại vài dạng lâu chưa đụng</b>' : '') +
+      ' rồi mới học bài mới nhé.</p>';
     h += '<div class="kpis">' +
-      '<div class="kpi"><b>' + k.con.length + '</b><span>câu sai phải sửa</span></div>' +
+      '<div class="kpi"><b>' + k.con.length + '</b><span>câu của đợt này</span></div>' +
+      '<div class="kpi"><b>' + conCaThay + '</b><span>câu sai còn trong sổ</span></div>' +
       '<div class="kpi"><b>' + (k.conOn || []).length + '</b><span>dạng cần ôn lại</span></div>' +
-      '<div class="kpi"><b>' + xong + '/' + k.tong + '</b><span>đã xong</span></div>' +
-      '<div class="kpi"><b>' + C.demLoi() + '</b><span>câu sai trong sổ</span></div></div>';
+      '<div class="kpi"><b>đợt ' + (k.dot || 1) + '</b><span>đang làm</span></div></div>';
     h += '<div class="row" style="margin-top:16px">' +
       '<button class="btn" style="background:#fff;color:#c2255c" data-kdbatdau="1">' +
       (xong ? '▶ Sửa tiếp' : '▶ Bắt đầu sửa lỗi') + '</button></div>';
@@ -18936,7 +19195,14 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
         '<span style="font-size:24px">' + xong + '/' + k.tong + '</span>') +
       '<div class="lab">buổi khởi động</div></div></div></div>';
 
-    h += '<div class="card lotrinh"><b>🌅 Buổi khởi động hôm nay gồm ' + k.tong + ' dạng</b><ul>' +
+    h += '<div class="card lotrinh"><b>🩹 Đợt ' + (k.dot || 1) + ' — ' + k.tong + ' việc</b>' +
+      (conCaThay > k.con.length
+        ? '<p style="margin:6px 0 0">Sổ lỗi đang còn <b>' + conCaThay + ' câu</b>. Máy chia thành từng đợt ' +
+          '<b>' + (state.soDangKD > 900 ? 'toàn bộ' : (s.soDangKD || 5) + ' câu') + '</b> cho đỡ mệt — ' +
+          'xong đợt này máy tự đưa đợt kế tiếp, <b>ưu tiên câu sai lâu nhất</b>. ' +
+          'Còn khoảng <b>' + uocBai + ' bài</b> nữa là sạch sổ.</p>'
+        : '<p style="margin:6px 0 0">Đây là <b>đợt cuối</b> — sửa xong là sạch sổ lỗi, con vào học bài mới được ngay. 🎉</p>') +
+      '<ul>' +
       '<li>Máy ra <b>đề mới cùng dạng</b> — số liệu khác, không phải chép lại đề cũ.</li>' +
       '<li><b>Từng câu sai một:</b> con <b>làm lại đúng bài đã sai</b>, rồi làm <b>' +
       C.CAN_DUNG_SUA + ' bài bổ sung</b> cùng dạng. Sai một bài bổ sung là <b>làm lại từ đầu</b> ' +
@@ -18944,11 +19210,12 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
       ((k.dsOn || []).length
         ? '<li><b>Dạng ôn lại:</b> chỉ <b>1 câu</b> mỗi dạng — đây là những dạng con đã nắm được ' +
           'nhưng lâu rồi chưa đụng. Làm sai thì dạng đó vào sổ lỗi, mai sửa.</li>' : '') +
-      '<li>Xong hết mới mở được trang chủ, chuyên đề và bài thi.</li>' +
+      '<li><b>Sổ lỗi sạch hết</b> mới mở được trang chủ, chuyên đề và bài thi. ' +
+      'Trong lúc học bài mới nếu con làm sai câu nào thì <b>sửa luôn câu đó</b> rồi mới đi tiếp.</li>' +
       '</ul></div>';
 
     if (k.ds.length) {
-    h += '<div class="card"><h2 class="sec" style="margin-top:0">📋 Các câu đã làm sai</h2><div class="rank">';
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">📋 Các câu phải sửa trong đợt này</h2><div class="rank">';
     k.ds.forEach(function (x, idx) {
       var cdX = C.CD[x.cd], e = C.loiTheoId(x.id);
       var xongC = !e || e.sua, ch = C.chuoiCua(x.id);
@@ -19123,6 +19390,481 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
   /* =========================================================
      BÁO CÁO TỔNG HỢP (khu của bố)
      ========================================================= */
+  /* =========================================================
+     ⏱️ NHẬT KÝ TỪNG CÂU  (khu của bố)
+     · 🔴 Đang học   — tự tải lại 30 giây/lần, xem bé đang làm câu gì
+     · 📅 Theo ngày  — mỗi ngày một dòng, bấm vào mới bung chi tiết
+     ========================================================= */
+  var nkThang = null, nkLoc = { cd: '', k: '', chi: '' }, nkDangTai = false;
+  var nkNgayChon = null;          /* toDateString() của ngày đang mở chi tiết */
+  var nkTheoDoi = true;           /* có đang bật theo dõi trực tiếp không */
+  var nkHen = null;               /* setInterval của khung trực tiếp */
+  var nkLanTai = 0;               /* mốc lần tải gần nhất */
+  var nkYen = 0;                  /* số lần tải liên tiếp mà không có câu mới */
+
+  var NK_TEN = { lt: 'Luyện tập', tron: 'Ôn tổng hợp', thi: 'Bài thi', sua: 'Sửa lỗi', kd: 'Khởi động' };
+  var NK_NHAN = {
+    goc: 'làm lại câu đã sai', bs: 'bài bổ sung', on: 'ôn lại dạng cũ',
+    lai: 'luyện lại sau khi sai'
+  };
+  var NK_NGHI = 600;      /* trên 10 phút coi như bé rời máy, không tính vào trung bình */
+  var NK_NHIP = 30000;    /* nhịp tải lại khi theo dõi trực tiếp */
+  var NK_YEN_TOI_DA = 20; /* yên lặng 10 phút thì tự tạm dừng cho đỡ tốn */
+
+  function nkGiay(x) {
+    if (x >= NK_NGHI) return '—';
+    if (x >= 60) return Math.floor(x / 60) + 'ph' + String(Math.round(x % 60)).padStart(2, '0');
+    return (x < 10 ? x.toFixed(1) : Math.round(x)) + 's';
+  }
+  function nkGio(t) {
+    var d = new Date(t);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') +
+      ':' + String(d.getSeconds()).padStart(2, '0');
+  }
+  var NK_THU = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+  function nkNgay(t) {
+    var d = new Date(t);
+    return NK_THU[d.getDay()] + ', ' + String(d.getDate()).padStart(2, '0') + '/' +
+      String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+  }
+  function nkNgayNgan(t) {
+    var d = new Date(t);
+    return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+  function trungVi(ds) {
+    if (!ds.length) return 0;
+    var a = ds.slice().sort(function (x, y) { return x - y; });
+    var g = Math.floor(a.length / 2);
+    return a.length % 2 ? a[g] : (a[g - 1] + a[g]) / 2;
+  }
+  function nkPhut(giay) {
+    if (!giay) return '—';
+    if (giay < 60) return Math.round(giay) + ' giây';
+    var p = Math.floor(giay / 60);
+    if (p < 60) return p + ' phút';
+    return Math.floor(p / 60) + ' giờ ' + (p % 60) + ' phút';
+  }
+  function nkTruoc(ms) {
+    var g = Math.round(ms / 1000);
+    if (g < 60) return g + ' giây trước';
+    if (g < 3600) return Math.floor(g / 60) + ' phút trước';
+    if (g < 86400) return Math.floor(g / 3600) + ' giờ trước';
+    return Math.floor(g / 86400) + ' ngày trước';
+  }
+
+  /* ---------- bảng chi tiết từng câu, dùng chung cho khung trực tiếp và phần theo ngày ---------- */
+  function nkBangCau(ct, nguong, gonNhe) {
+    var h = '<div style="overflow-x:auto"><table class="nk-tbl"><tr><th>Giờ</th><th class="n">Mất</th>' +
+      '<th>K/Q</th><th>Buổi</th><th>Dạng · Đề bài</th></tr>';
+    ct.forEach(function (e) {
+      var cd = C.CD[e.cd];
+
+      if (e.bu) {                       /* dòng tổng kết cả một buổi học cũ */
+        var tb = e.sc ? e.sg / e.sc : 0;
+        h += '<tr class="nk-cu"><td class="n">' + nkGio(e.t) + '</td>';
+        h += '<td class="n nk-nghi">' + nkPhut(e.sg) + '</td>';
+        h += '<td>' + (e.sc ? e.sd + '/' + e.sc : '—') + '</td>';
+        h += '<td><span class="nk-k ' + e.k + '">' + NK_TEN[e.k] + '</span>' +
+          '<br><span class="nk-cu-tag">📦 cả buổi</span></td>';
+        h += '<td><b>' + esc(e.dt || (cd ? cd.tenNgan : '')) + '</b> <span class="muted">' +
+          (cd ? cd.icon + ' ' + esc(cd.tenNgan) : '') + '</span>' +
+          '<span class="nk-de">Buổi học cũ — bản web trước không bấm giờ từng câu' +
+          (e.sc ? ' (trung bình <b>' + nkGiay(tb) + '</b>/câu)' : '') + '</span></td></tr>';
+        return;
+      }
+
+      var cham = !e.cu && e.gy >= nguong && e.gy < NK_NGHI;
+      h += '<tr class="' + (e.cu ? 'nk-cu' : (e.ok ? '' : 'sai')) + '">';
+      h += '<td class="n">' + nkGio(e.t) + '</td>';
+      h += '<td class="n ' + (e.cu || e.gy >= NK_NGHI ? 'nk-nghi' : (cham ? 'nk-cham' : '')) + '">' +
+        (e.cu ? 'không đo' : (e.gy >= NK_NGHI ? '⏸ rời máy' : nkGiay(e.gy))) + '</td>';
+      h += '<td>' + (e.bq ? '<span class="muted">bỏ qua</span>' : (e.ok ? '✅' : '❌')) + '</td>';
+      h += '<td><span class="nk-k ' + e.k + '">' + NK_TEN[e.k] + '</span>' +
+        (e.cu ? '<br><span class="nk-cu-tag">📦 dữ liệu cũ</span>' : '') +
+        (e.n ? '<br><span class="muted" style="font-size:11px">' + NK_NHAN[e.n] + '</span>' : '') + '</td>';
+      h += '<td><b>' + esc(e.dt || e.d) + '</b> <span class="muted">' +
+        (cd ? cd.icon + ' ' + esc(cd.tenNgan) : '') + '</span>';
+      if (e.de && !gonNhe) h += '<span class="nk-de">' + esc(e.de) + '</span>';
+      if (!e.ok && !e.bq) h += '<span class="nk-de">Con viết: <b style="color:var(--no)">' +
+        esc(e.tl || '(bỏ trống)') + '</b> · Đáp án: <b style="color:var(--ok)">' + esc(e.da || '') + '</b></span>';
+      h += '</td></tr>';
+    });
+    return h + '</table></div>';
+  }
+
+  /* ---------- gom nhật ký thành từng ngày ---------- */
+  function nkGomNgay(ds) {
+    var m = {};
+    ds.forEach(function (e) {
+      var k = new Date(e.t).toDateString();
+      (m[k] = m[k] || []).push(e);
+    });
+    return Object.keys(m).sort(function (a, b) { return new Date(b) - new Date(a); })
+      .map(function (k) {
+        var ct = m[k].slice().sort(function (a, b) { return a.t - b.t; });
+        var thuc = ct.filter(function (e) { return !e.cu && !e.bu; });
+        var gio = thuc.filter(function (e) { return e.gy > 0 && e.gy < NK_NGHI; });
+        var cu = ct.filter(function (e) { return e.cu || e.bu; });
+        var buGiay = ct.filter(function (e) { return e.bu; }).reduce(function (a, e) { return a + (e.sg || 0); }, 0);
+
+        /* dạng yếu nhất trong ngày: sai nhiều nhất, hoà thì lấy dạng lâu hơn */
+        var theoD = {};
+        thuc.concat(ct.filter(function (e) { return e.cu; })).forEach(function (e) {
+          var kk = e.cd + '|' + e.d;
+          if (!theoD[kk]) theoD[kk] = { dt: e.dt || e.d, cd: e.cd, lam: 0, sai: 0, gy: [] };
+          theoD[kk].lam++; if (!e.ok) theoD[kk].sai++;
+          if (e.gy > 0 && e.gy < NK_NGHI) theoD[kk].gy.push(e.gy);
+        });
+        var yeu = Object.keys(theoD).map(function (kk) { return theoD[kk]; })
+          .filter(function (x) { return x.sai > 0; })
+          .sort(function (a, b) { return b.sai - a.sai || trungVi(b.gy) - trungVi(a.gy); })[0] || null;
+
+        var loai = {};
+        ct.forEach(function (e) { loai[e.k] = (loai[e.k] || 0) + 1; });
+
+        return {
+          key: k, t: ct[ct.length - 1].t, tDau: ct[0].t, ct: ct,
+          cau: thuc.length, dung: thuc.filter(function (e) { return e.ok; }).length,
+          giay: gio.reduce(function (a, e) { return a + e.gy; }, 0) + buGiay,
+          tv: trungVi(gio.map(function (e) { return e.gy; })),
+          cu: cu.length, yeu: yeu, loai: loai
+        };
+      });
+  }
+
+  /* ---------- khung 🔴 Đang học ---------- */
+  function nkKhungTrucTiep(ds, nguong) {
+    var s = st();
+    var moiNhat = ds.filter(function (e) { return !e.cu && !e.bu; })
+      .sort(function (a, b) { return b.t - a.t; });
+    var cuoi = moiNhat[0];
+    var cach = cuoi ? Date.now() - cuoi.t : Infinity;
+
+    var mau, chu, phu;
+    if (!cuoi) { mau = '#adb5bd'; chu = '⚪ Chưa có hoạt động nào'; phu = 'Nhật ký sẽ hiện ngay khi con làm câu đầu tiên.'; }
+    else if (cach < 180000) { mau = 'var(--no)'; chu = '🔴 Con đang học'; phu = 'Câu gần nhất ' + nkTruoc(cach) + '.'; }
+    else if (cach < 900000) { mau = '#f59f00'; chu = '🟡 Vừa tạm nghỉ'; phu = 'Câu gần nhất ' + nkTruoc(cach) + '.'; }
+    else { mau = '#adb5bd'; chu = '⚪ Không có hoạt động'; phu = 'Câu gần nhất ' + nkTruoc(cach) + '.'; }
+
+    /* hôm nay đã làm bao nhiêu */
+    var hn = new Date().toDateString();
+    var cauHN = moiNhat.filter(function (e) { return new Date(e.t).toDateString() === hn; });
+    var dungHN = cauHN.filter(function (e) { return e.ok; }).length;
+    var mt = s.mucTieu || 20;
+
+    var h = '<div class="card" style="border-left:6px solid ' + mau + '">';
+    h += '<div class="row" style="align-items:center;justify-content:space-between">';
+    h += '<h2 class="sec" style="margin:0">' + chu + '</h2>';
+    h += '<button class="btn sm ' + (nkTheoDoi ? '' : 'ghost') + '" id="nk-live">' +
+      (nkTheoDoi ? '⏸ Tạm dừng theo dõi' : '▶ Theo dõi trực tiếp') + '</button></div>';
+    h += '<p class="muted" style="margin:8px 0 0">' + phu +
+      (nkTheoDoi ? ' Trang tự tải lại mỗi 30 giây' +
+        (nkLanTai ? ' — lần gần nhất lúc ' + nkGio(nkLanTai) : '') + '.'
+        : ' Đang tạm dừng — bấm nút bên phải để theo dõi tiếp.') + '</p>';
+
+    h += '<div class="repgrid" style="margin-top:12px">';
+    h += '<div class="repcard"><b>' + cauHN.length + '</b><span>câu hôm nay</span></div>';
+    h += '<div class="repcard"><b>' + (cauHN.length ? Math.round(dungHN / cauHN.length * 100) + '%' : '—') +
+      '</b><span>đúng hôm nay</span></div>';
+    h += '<div class="repcard"><b>' + Math.min(100, Math.round(cauHN.length / mt * 100)) +
+      '%</b><span>mục tiêu ' + mt + ' câu</span></div>';
+    h += '<div class="repcard"><b>' + C.demLoi() + '</b><span>câu sai chưa sửa</span></div>';
+    h += '</div>';
+
+    if (moiNhat.length) {
+      h += '<p class="muted" style="margin:14px 0 4px"><b>8 câu gần nhất:</b></p>';
+      h += nkBangCau(moiNhat.slice(0, 8), nguong, true);
+    }
+    return h + '</div>';
+  }
+
+  function veNhatKy() {
+    var s = st();
+    var th = nkThang || C.thangNay();
+    var ds = C.nhatKy(th);
+    var dsThang = C.thangCoNhatKy();
+    if (dsThang.indexOf(th) < 0) dsThang.unshift(th);
+
+    var h = '<h2 class="sec">⏱️ Nhật ký từng câu</h2>';
+
+    /* ----- chọn tháng + lọc, gói gọn một thẻ ----- */
+    h += '<div class="card"><div class="row" style="align-items:center">';
+    h += '<b>Tháng:</b>';
+    dsThang.forEach(function (m) {
+      var p = m.split('-');
+      h += '<button class="btn sm ' + (m === th ? '' : 'ghost') + '" data-nkth="' + m + '">Tháng ' +
+        Number(p[1]) + '/' + p[0] + '</button>';
+    });
+    h += '<button class="btn sm ghost" id="nk-them">+ Tháng khác</button>';
+    h += '<button class="btn sm ghost" id="nk-csv" style="margin-left:auto">⬇ Xuất CSV</button>';
+    h += '</div>';
+    h += '<div class="row" style="align-items:center;gap:8px;margin-top:10px">';
+    h += '<b>Chuyên đề:</b>';
+    h += '<button class="btn sm ' + (nkLoc.cd ? 'ghost' : '') + '" data-nkcd="">Tất cả</button>';
+    var coCD = {};
+    ds.forEach(function (e) { coCD[e.cd] = 1; });
+    C.DS_CD.forEach(function (cd) {
+      if (!coCD[cd.id]) return;
+      h += '<button class="btn sm ' + (nkLoc.cd === cd.id ? '' : 'ghost') + '" data-nkcd="' + cd.id + '">' +
+        cd.icon + ' ' + esc(cd.tenNgan) + '</button>';
+    });
+    h += '</div><div class="row" style="align-items:center;gap:8px;margin-top:10px">';
+    h += '<b>Buổi:</b>';
+    h += '<button class="btn sm ' + (nkLoc.k ? 'ghost' : '') + '" data-nkk="">Tất cả</button>';
+    ['lt', 'tron', 'thi', 'sua', 'kd'].forEach(function (k) {
+      if (!ds.some(function (e) { return e.k === k; })) return;
+      h += '<button class="btn sm ' + (nkLoc.k === k ? '' : 'ghost') + '" data-nkk="' + k + '">' + NK_TEN[k] + '</button>';
+    });
+    h += '<span style="margin-left:12px"></span><b>Chỉ xem:</b>';
+    h += '<button class="btn sm ' + (nkLoc.chi ? 'ghost' : '') + '" data-nkchi="">Mọi câu</button>';
+    h += '<button class="btn sm ' + (nkLoc.chi === 'sai' ? '' : 'ghost') + '" data-nkchi="sai">Câu sai</button>';
+    h += '<button class="btn sm ' + (nkLoc.chi === 'cham' ? '' : 'ghost') + '" data-nkchi="cham">Câu làm lâu</button>';
+    h += '</div>';
+    if (nkDangTai) h += '<p class="muted" style="margin:10px 0 0">⏳ Đang tải từ GitHub…</p>';
+    h += '</div>';
+
+    /* ----- áp bộ lọc ----- */
+    var lam = ds.filter(function (e) {
+      if (nkLoc.cd && e.cd !== nkLoc.cd) return false;
+      if (nkLoc.k && e.k !== nkLoc.k) return false;
+      return true;
+    });
+    var thuc = lam.filter(function (e) { return !e.cu && !e.bu; });
+    var cuSo = lam.filter(function (e) { return e.cu; }).length;
+    var buSo = lam.filter(function (e) { return e.bu; }).length;
+    var hopLe = thuc.filter(function (e) { return e.gy > 0 && e.gy < NK_NGHI; });
+    var tv = trungVi(hopLe.map(function (e) { return e.gy; }));
+    var nguong = Math.max(tv * 2.5, 45);
+
+    /* ----- 🔴 khung theo dõi trực tiếp ----- */
+    h += nkKhungTrucTiep(ds, nguong);
+
+    if (!ds.length) {
+      h += '<div class="card"><p class="muted" style="margin:0">Tháng này chưa có bản ghi nào.</p></div>';
+      el('pg-nhatky').innerHTML = h;
+      nkGan();
+      return;
+    }
+
+    /* ----- 📅 bảng tiến trình theo ngày ----- */
+    var ngays = nkGomNgay(lam);
+    if (nkNgayChon === null && ngays.length) nkNgayChon = ngays[0].key;
+
+    var mt = s.mucTieu || 20;
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">📅 Tiến trình theo ngày</h2>';
+    h += '<p class="muted">Mỗi ngày một dòng. Bấm vào một ngày để bung danh sách từng câu của riêng ngày đó.</p>';
+    h += '<div style="overflow-x:auto"><table class="nk-tbl nk-ngay"><tr>' +
+      '<th>Ngày</th><th class="n">Câu</th><th class="n">Đúng</th><th class="n">Mục tiêu</th>' +
+      '<th class="n">Làm bài</th><th class="n">Mỗi câu</th><th>Buổi học</th><th>Dạng yếu nhất hôm đó</th><th></th></tr>';
+    ngays.forEach(function (n) {
+      var chon = n.key === nkNgayChon;
+      var tl = n.cau ? Math.round(n.dung / n.cau * 100) : 0;
+      var pct = Math.min(100, Math.round(n.cau / mt * 100));
+      h += '<tr class="nk-r ' + (chon ? 'chon' : '') + '" data-nkngay="' + n.key + '">';
+      h += '<td><b>' + nkNgayNgan(n.t) + '</b><span class="nk-de">' + NK_THU[new Date(n.t).getDay()] +
+        ' · ' + nkGio(n.tDau).slice(0, 5) + '–' + nkGio(n.t).slice(0, 5) + '</span></td>';
+      h += '<td class="n"><b>' + (n.cau || '—') + '</b>' +
+        (n.cu ? '<span class="nk-de">+' + n.cu + ' cũ</span>' : '') + '</td>';
+      h += '<td class="n">' + (n.cau ? n.dung + '<span class="nk-de"><span class="pill ' +
+        (tl >= 85 ? 'g' : tl < 60 ? 'r' : '') + '">' + tl + '%</span></span>' : '—') + '</td>';
+      h += '<td class="n">' + (n.cau
+        ? '<span class="pill ' + (pct >= 100 ? 'g' : '') + '">' + pct + '%</span>' : '—') + '</td>';
+      h += '<td class="n">' + nkPhut(n.giay) + '</td>';
+      h += '<td class="n">' + (n.tv ? nkGiay(n.tv) : '—') + '</td>';
+      h += '<td>';
+      ['kd', 'sua', 'lt', 'tron', 'thi'].forEach(function (k) {
+        if (n.loai[k]) h += '<span class="nk-k ' + k + '" style="margin:1px 2px 1px 0">' + NK_TEN[k] + '</span>';
+      });
+      h += '</td>';
+      h += '<td>' + (n.yeu
+        ? '<b>' + esc(n.yeu.dt) + '</b><span class="nk-de">sai ' + n.yeu.sai + '/' + n.yeu.lam + ' câu' +
+          (C.CD[n.yeu.cd] ? ' · ' + C.CD[n.yeu.cd].icon + ' ' + esc(C.CD[n.yeu.cd].tenNgan) : '') + '</span>'
+        : '<span class="muted">không sai câu nào 🎉</span>') + '</td>';
+      h += '<td class="n">' + (chon ? '<b>▾ đang mở</b>' : '<span class="muted">▸ xem</span>') + '</td>';
+      h += '</tr>';
+    });
+    h += '</table></div></div>';
+
+    /* ----- 📋 chi tiết đúng một ngày ----- */
+    var ngayHT = ngays.filter(function (n) { return n.key === nkNgayChon; })[0];
+    if (ngayHT) {
+      var ct = ngayHT.ct.slice().sort(function (a, b) { return b.t - a.t; }).filter(function (e) {
+        if (nkLoc.chi === 'sai') return !e.ok && !e.bu;
+        if (nkLoc.chi === 'cham') return !e.cu && !e.bu && e.gy >= nguong && e.gy < NK_NGHI;
+        return true;
+      });
+      h += '<div class="card"><h2 class="sec" style="margin-top:0">📋 ' + nkNgay(ngayHT.t) + '</h2>';
+      h += '<p class="muted">' + ngayHT.cau + ' câu · đúng ' + ngayHT.dung + ' · làm bài ' + nkPhut(ngayHT.giay) +
+        (ct.length !== ngayHT.ct.length ? ' · đang lọc còn ' + ct.length + ' dòng' : '') +
+        '. Mới nhất ở trên.</p>';
+      h += ct.length ? nkBangCau(ct, nguong) : '<p class="muted">Không có dòng nào khớp bộ lọc.</p>';
+      h += '</div>';
+    }
+
+    /* ----- số liệu cả tháng ----- */
+    var dung = thuc.filter(function (e) { return e.ok; }).length;
+    var tongG = hopLe.reduce(function (a, e) { return a + e.gy; }, 0) +
+      lam.filter(function (e) { return e.bu; }).reduce(function (a, e) { return a + (e.sg || 0); }, 0);
+    var nghi = thuc.filter(function (e) { return e.gy >= NK_NGHI; }).length;
+    var lauNhat = hopLe.length ? hopLe.reduce(function (a, e) { return e.gy > a.gy ? e : a; }) : null;
+
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">📊 Cả tháng</h2><div class="repgrid">';
+    function o(v, t) { h += '<div class="repcard"><b>' + v + '</b><span>' + t + '</span></div>'; }
+    o(thuc.length, 'câu có bấm giờ');
+    o(thuc.length ? Math.round(dung / thuc.length * 100) + '%' : '—', 'tỉ lệ đúng');
+    o(nkGiay(tv), 'thời gian thường gặp<br>(trung vị mỗi câu)');
+    o(nkPhut(tongG), 'tổng thời gian<br>thật sự làm bài');
+    o(ngays.length, 'ngày có học');
+    o(lauNhat ? nkGiay(lauNhat.gy) : '—', 'câu lâu nhất');
+    h += '</div>';
+    h += '<p class="muted" style="margin:12px 0 0">Dùng <b>trung vị</b> chứ không dùng trung bình cộng: ' +
+      'chỉ cần một lần bé rời máy giữa chừng là trung bình cộng bị kéo lệch hẳn, còn trung vị thì không.' +
+      (nghi ? ' Có <b>' + nghi + ' câu</b> quá 10 phút — nhiều khả năng bé rời máy, đã loại khỏi mọi con số.' : '') +
+      ' Mốc "làm lâu" của tháng này là <b>' + nkGiay(nguong) + '</b> trở lên.' +
+      ((cuSo || buSo) ? '<br><b>📦 Dữ liệu cũ:</b> ' +
+        (cuSo ? '<b>' + cuSo + ' câu sai</b> lấy từ sổ lỗi' : '') + (cuSo && buSo ? ' và ' : '') +
+        (buSo ? '<b>' + buSo + ' buổi học</b> ghi gộp cả buổi' : '') +
+        ' từ trước khi có nhật ký — không tính vào các con số trên vì bản web cũ không bấm giờ từng câu.' : '') +
+      '</p></div>';
+
+    /* ----- 🐢 dạng làm lâu nhất ----- */
+    var theoDang = {};
+    hopLe.forEach(function (e) {
+      var k = e.cd + '|' + e.d;
+      if (!theoDang[k]) theoDang[k] = { cd: e.cd, d: e.d, dt: e.dt, gy: [], lam: 0, dung: 0 };
+      var x = theoDang[k];
+      x.gy.push(e.gy); x.lam++; if (e.ok) x.dung++;
+      if (e.dt) x.dt = e.dt;
+    });
+    var dsDang = Object.keys(theoDang).map(function (k) {
+      var x = theoDang[k]; x.tv = trungVi(x.gy); return x;
+    }).filter(function (x) { return x.lam >= 2; })
+      .sort(function (a, b) { return b.tv - a.tv; });
+
+    if (dsDang.length) {
+      h += '<div class="card"><h2 class="sec" style="margin-top:0">🐢 Dạng con mất nhiều thời gian nhất</h2>';
+      h += '<p class="muted">Dạng vừa lâu vừa hay sai là dạng cần luyện trước. Dạng lâu nhưng vẫn đúng thì ' +
+        'bé hiểu bài rồi, chỉ chưa thành phản xạ.</p>';
+      h += '<div style="overflow-x:auto"><table class="nk-tbl"><tr><th>Dạng bài</th><th>Chuyên đề</th>' +
+        '<th class="n">Số câu</th><th class="n">Đúng</th><th class="n">Trung vị</th><th class="n">Nhanh</th><th class="n">Lâu</th></tr>';
+      dsDang.slice(0, 25).forEach(function (x) {
+        var cd = C.CD[x.cd];
+        var tl = Math.round(x.dung / x.lam * 100);
+        h += '<tr><td><b>' + esc(x.dt || x.d) + '</b></td>' +
+          '<td>' + (cd ? cd.icon + ' ' + esc(cd.tenNgan) : esc(x.cd)) + '</td>' +
+          '<td class="n">' + x.lam + '</td>' +
+          '<td class="n"><span class="pill ' + (tl >= 85 ? 'g' : tl < 60 ? 'r' : '') + '">' + tl + '%</span></td>' +
+          '<td class="n"><b>' + nkGiay(x.tv) + '</b></td>' +
+          '<td class="n">' + nkGiay(Math.min.apply(null, x.gy)) + '</td>' +
+          '<td class="n">' + nkGiay(Math.max.apply(null, x.gy)) + '</td></tr>';
+      });
+      h += '</table></div></div>';
+    }
+
+    el('pg-nhatky').innerHTML = h;
+    nkGan();
+  }
+
+  function nkGan() {
+    var n = el('pg-nhatky');
+    n.querySelectorAll('[data-nkth]').forEach(function (b) {
+      b.addEventListener('click', function () { nkThang = b.dataset.nkth; nkNgayChon = null; nkTai(nkThang); });
+    });
+    n.querySelectorAll('[data-nkcd]').forEach(function (b) {
+      b.addEventListener('click', function () { nkLoc.cd = b.dataset.nkcd; veNhatKy(); });
+    });
+    n.querySelectorAll('[data-nkk]').forEach(function (b) {
+      b.addEventListener('click', function () { nkLoc.k = b.dataset.nkk; veNhatKy(); });
+    });
+    n.querySelectorAll('[data-nkchi]').forEach(function (b) {
+      b.addEventListener('click', function () { nkLoc.chi = b.dataset.nkchi; veNhatKy(); });
+    });
+    n.querySelectorAll('[data-nkngay]').forEach(function (r) {
+      r.addEventListener('click', function () {
+        nkNgayChon = nkNgayChon === r.dataset.nkngay ? null : r.dataset.nkngay;
+        veNhatKy();
+      });
+    });
+    if (el('nk-live')) el('nk-live').addEventListener('click', function () {
+      nkTheoDoi = !nkTheoDoi; nkYen = 0;
+      if (nkTheoDoi) { nkNhipTim(); nkLamMoi(); } else nkTatNhip();
+      veNhatKy();
+    });
+    if (el('nk-them')) el('nk-them').addEventListener('click', function () {
+      var t = prompt('Xem tháng nào? Gõ theo dạng NĂM-THÁNG, ví dụ 2026-07:', C.thangNay());
+      if (!t || !/^\d{4}-\d{2}$/.test(t.trim())) return;
+      nkThang = t.trim(); nkNgayChon = null; nkTai(nkThang);
+    });
+    if (el('nk-csv')) el('nk-csv').addEventListener('click', nkXuatCSV);
+  }
+
+  function nkTai(th) {
+    nkDangTai = true; veNhatKy();
+    C.napThang(th).then(function () { nkDangTai = false; veNhatKy(); });
+  }
+
+  /* ---------- nhịp tim của khung theo dõi trực tiếp ---------- */
+  function nkLamMoi() {
+    var th = nkThang || C.thangNay();
+    var truoc = C.nhatKy(th).length;
+    return C.taiLaiThang(th).then(function (ds) {
+      nkLanTai = Date.now();
+      if (ds.length > truoc) nkYen = 0; else nkYen++;
+      if (nkYen >= NK_YEN_TOI_DA) { nkTheoDoi = false; nkTatNhip(); }
+      if (!el('pg-nhatky').classList.contains('hide')) veNhatKy();
+    });
+  }
+  function nkNhipTim() {
+    nkTatNhip();
+    nkHen = setInterval(function () {
+      if (el('pg-nhatky').classList.contains('hide')) { nkTatNhip(); return; }
+      nkLamMoi();
+    }, NK_NHIP);
+  }
+  function nkTatNhip() { if (nkHen) { clearInterval(nkHen); nkHen = null; } }
+  function nkMoTrang() {
+    nkNgayChon = null; nkYen = 0;
+    veNhatKy();
+    nkLamMoi();                 /* mở trang là lấy ngay bản mới nhất, không dùng bản cũ trong máy */
+    if (nkTheoDoi) nkNhipTim();
+  }
+
+  function nkXuatCSV() {
+    var ds = C.nhatKy(nkThang || C.thangNay()).filter(function (e) {
+      if (nkLoc.cd && e.cd !== nkLoc.cd) return false;
+      if (nkLoc.k && e.k !== nkLoc.k) return false;
+      return true;
+    }).sort(function (a, b) { return a.t - b.t; });
+
+    var cot = ['Ngày', 'Giờ', 'Số giây', 'Đúng/Sai', 'Loại buổi', 'Ghi chú buổi',
+      'Chuyên đề', 'Dạng bài', 'Đề bài', 'Con viết', 'Đáp án đúng', 'Nguồn'];
+    function o(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
+    var dong = [cot.map(o).join(',')];
+    ds.forEach(function (e) {
+      var d = new Date(e.t), cd = C.CD[e.cd];
+      dong.push([
+        String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(),
+        nkGio(e.t),
+        String(e.bu ? (e.sg || 0) : e.gy).replace('.', ','),
+        e.bu ? (e.sd + '/' + e.sc) : (e.bq ? 'Bỏ qua' : (e.ok ? 'Đúng' : 'Sai')),
+        NK_TEN[e.k] || e.k,
+        e.n ? (NK_NHAN[e.n] || e.n) : '',
+        cd ? cd.tenNgan : e.cd,
+        e.dt || e.d,
+        e.de || '',
+        e.ok ? '' : (e.tl || ''),
+        e.da || '',
+        e.bu ? 'Buổi học cũ (gộp cả buổi)' : (e.cu ? 'Dữ liệu cũ từ sổ lỗi' : 'Bấm giờ từng câu')
+      ].map(o).join(','));
+    });
+    var blob = new Blob(['﻿' + dong.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'nhat-ky-' + (nkThang || C.thangNay()) + '.csv';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+
   function veBaoCao() {
     var s = st();
     var ngay30 = C.soLieuNgay(30);
@@ -19458,18 +20200,29 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     h += '</div><p class="muted" style="margin-top:8px">Vòng tròn vàng trên màn hình của con sẽ đầy dần theo mục tiêu này.</p></div>';
 
     /* --- buổi khởi động ngày mới --- */
-    h += '<div class="card"><h2 class="sec" style="margin-top:0">🌅 Khởi động ngày mới</h2>';
-    h += '<p class="muted">Mỗi ngày, lần đầu con vào học sẽ phải <b>sửa lại các dạng đã làm sai</b> ' +
-      'thì mới mở được trang chủ và chuyên đề. Máy chọn các dạng <b>sai nhiều nhất</b> trước.</p>';
-    h += '<div class="row"><span class="muted">Mỗi buổi bắt sửa tối đa:</span>';
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">🩹 Sửa hết lỗi mới được học bài mới</h2>';
+    h += '<div class="tip" style="margin-top:0"><b>Đang bật chế độ chặt.</b> ' +
+      '<b>Sổ lỗi còn câu nào thì con chưa vào được trang chủ, chuyên đề và bài thi.</b> ' +
+      'Câu sai phát sinh <b>trong ngày cũng phải sửa ngay trong ngày</b>, không để dồn sang hôm sau. ' +
+      'Máy luôn <b>ưu tiên câu sai lâu nhất</b>.</div>';
+    h += '<p class="muted" style="margin-top:12px">Để bé không bị dồn quá nhiều câu một lúc, máy chia sổ lỗi ' +
+      'thành từng <b>đợt</b>. Xong một đợt có màn hình chúc mừng và cho nghỉ, rồi máy tự đưa đợt kế tiếp — ' +
+      'vẫn phải sửa hết, chỉ là không làm liền một mạch.</p>';
+    h += '<p class="muted">Mỗi câu sai tốn <b>' + (C.CAN_DUNG_SUA + 1) + ' bài</b> (1 làm lại + ' +
+      C.CAN_DUNG_SUA + ' bổ sung), sai giữa chừng thì cộng thêm ' + C.CAN_DUNG_SUA + '. ' +
+      'Sổ lỗi hiện có <b>' + C.demLoi() + ' câu</b> → còn khoảng <b>' +
+      (C.demLoi() * (C.CAN_DUNG_SUA + 1)) + ' bài</b> nữa là sạch.</p>';
+    h += '<div class="row"><span class="muted">Mỗi đợt bao nhiêu câu:</span>';
     [3, 5, 10, 999].forEach(function (n) {
       h += '<button class="btn sm ' + ((s.soDangKD || 5) === n ? '' : 'ghost') + '" data-sodangkd="' + n + '">' +
-        (n > 900 ? 'Tất cả' : n + ' dạng') + '</button>';
+        (n > 900 ? 'Không chia đợt' : n + ' câu') + '</button>';
     });
     h += '</div>';
+    h += '<p class="muted" style="margin-top:8px">Chọn <b>Không chia đợt</b> là bắt làm một mạch tới khi sạch sổ. ' +
+      'Nếu bé mệt hoặc bận, dùng ô <b>🔑 Bố mở khoá</b> ở cuối màn hình khởi động của bé để cho qua hôm nay.</p>';
     h += '<p class="muted" style="margin:14px 0 6px"><b>🔁 Ôn lại dạng lâu không đụng.</b> ' +
-      'Dạng con đã nắm được nhưng quá lâu chưa làm sẽ được đưa vào buổi khởi động ' +
-      '<b>1 câu mỗi dạng</b> (tối đa ' + C.SO_DANG_ON + ' dạng). Làm sai thì dạng đó vào sổ lỗi, mai sửa.</p>';
+      'Dạng con đã nắm được nhưng quá lâu chưa làm sẽ được đưa vào <b>đợt đầu tiên trong ngày</b>, ' +
+      '<b>1 câu mỗi dạng</b> (tối đa ' + C.SO_DANG_ON + ' dạng). Làm sai thì dạng đó vào sổ lỗi và phải sửa ngay hôm nay.</p>';
     h += '<div class="row"><span class="muted">Nhắc ôn khi quá:</span>';
     [0, 7, 14, 30].forEach(function (n) {
       var cur = s.soNgayOn === undefined ? 14 : s.soNgayOn;
@@ -19627,6 +20380,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
       else if (d.go === 'soloi') { veSoLoi(); moTrang('soloi'); }
       else if (d.go === 'khoidong') { veKhoiDong(); moTrang('khoidong'); }
       else if (d.go === 'bao') { veBaoCao(); moTrang('bao'); }
+      else if (d.go === 'nhatky') { nkThang = null; moTrang('nhatky'); nkMoTrang(); }
       else if (d.go === 'video') { veVideo(); moTrang('video'); }
       else if (d.go === 'phieu') { vePhieu(); moTrang('phieu'); }
       else if (d.go === 'caidat') { veCaiDat(); moTrang('caidat'); }
