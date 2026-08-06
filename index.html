@@ -885,10 +885,11 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
      Cất theo THÁNG ở nhat-ky/YYYY-MM.json — tách khỏi tien-do.json để file
      tiến độ không phình lên, và để hai thiết bị ghi xen nhau vẫn gộp được.
      ========================================================= */
+  var NK_NHIP_DAY = 1500;   /* gộp các câu trong 1,5 giây thành một lần đẩy — bố thấy gần như tức thì */
   var NK = {};        /* 'YYYY-MM' -> mảng bản ghi đã nạp/đã thêm */
   var NKsha = {};     /* 'YYYY-MM' -> sha file trên GitHub */
   var NKban = {};     /* 'YYYY-MM' -> true nếu có thay đổi chưa đẩy lên */
-  var NKtimer = null, NKdangGhi = false;
+  var NKtimer = null, NKdangGhi = false, NKcho = false;
   var NK_LOCAL = 'cts_nhatky';
 
   function fileNK(th) { return 'nhat-ky/' + th + '.json'; }
@@ -928,7 +929,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     nkLuuTam();
     if (saveMode !== 'github') return;
     clearTimeout(NKtimer);
-    NKtimer = setTimeout(function () { nkDay(false); }, 6000);
+    NKtimer = setTimeout(function () { nkDay(false); }, NK_NHIP_DAY);
   };
 
   CTS.nhatKy = function (th) { return NK[th] || []; };
@@ -947,6 +948,14 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     }).catch(function () { return NK[th] || []; });
   };
 
+  /* Đọc tiến độ mới nhất trên GitHub để HIỂN THỊ, tuyệt đối không ghi đè state
+     đang mở của bố (tránh mất thay đổi nếu bố đang sửa cài đặt). */
+  CTS.docTienDo = function () {
+    if (saveMode !== 'github') return Promise.resolve(null);
+    return doc(GH.fState).then(function (d) { return d.data || null; })
+      .catch(function () { return null; });
+  };
+
   /* nạp lại BẮT BUỘC từ GitHub — dùng cho khung theo dõi trực tiếp */
   CTS.taiLaiThang = function (th) {
     if (saveMode !== 'github') return Promise.resolve(NK[th] || []);
@@ -960,7 +969,10 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
 
   /* đẩy các tháng đang bẩn lên GitHub, gộp thay vì ghi đè */
   function nkDay(keepalive) {
-    if (NKdangGhi || saveMode !== 'github') return Promise.resolve(false);
+    if (saveMode !== 'github') return Promise.resolve(false);
+    /* đang có lượt ghi dở → xếp hàng, chạy tiếp ngay khi xong.
+       (trước đây chỗ này bỏ qua luôn, cả cụm bản ghi phải nằm chờ tới câu sau) */
+    if (NKdangGhi) { NKcho = true; return Promise.resolve(false); }
     var ds = Object.keys(NKban).filter(function (k) { return NKban[k]; });
     if (!ds.length) return Promise.resolve(true);
     NKdangGhi = true;
@@ -984,10 +996,13 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
       });
     }, Promise.resolve());
 
-    return chuoi.then(function () {
+    function xong(kq) {
       NKdangGhi = false; nkLuuTam();
-      return true;
-    }).catch(function () { NKdangGhi = false; return false; });
+      if (NKcho) { NKcho = false; nkDay(false); }
+      return kq;
+    }
+    return chuoi.then(function () { return xong(true); })
+      .catch(function () { return xong(false); });
   }
   CTS.dayNhatKy = function () { clearTimeout(NKtimer); return nkDay(false); };
 
@@ -19198,7 +19213,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     h += '<div class="card lotrinh"><b>🩹 Đợt ' + (k.dot || 1) + ' — ' + k.tong + ' việc</b>' +
       (conCaThay > k.con.length
         ? '<p style="margin:6px 0 0">Sổ lỗi đang còn <b>' + conCaThay + ' câu</b>. Máy chia thành từng đợt ' +
-          '<b>' + (state.soDangKD > 900 ? 'toàn bộ' : (s.soDangKD || 5) + ' câu') + '</b> cho đỡ mệt — ' +
+          '<b>' + ((s.soDangKD || 5) > 900 ? 'toàn bộ' : (s.soDangKD || 5) + ' câu') + '</b> cho đỡ mệt — ' +
           'xong đợt này máy tự đưa đợt kế tiếp, <b>ưu tiên câu sai lâu nhất</b>. ' +
           'Còn khoảng <b>' + uocBai + ' bài</b> nữa là sạch sổ.</p>'
         : '<p style="margin:6px 0 0">Đây là <b>đợt cuối</b> — sửa xong là sạch sổ lỗi, con vào học bài mới được ngay. 🎉</p>') +
@@ -19408,8 +19423,14 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     lai: 'luyện lại sau khi sai'
   };
   var NK_NGHI = 600;      /* trên 10 phút coi như bé rời máy, không tính vào trung bình */
-  var NK_NHIP = 30000;    /* nhịp tải lại khi theo dõi trực tiếp */
-  var NK_YEN_TOI_DA = 20; /* yên lặng 10 phút thì tự tạm dừng cho đỡ tốn */
+  /* nhịp tải lại thay đổi theo việc bé có đang làm bài hay không */
+  var NK_NHIP_HOC = 10000;    /* bé đang làm bài  → 10 giây */
+  var NK_NHIP_NGHI = 30000;   /* bé vừa tạm nghỉ  → 30 giây */
+  var NK_NHIP_YEN = 60000;    /* lâu không thấy gì → 60 giây */
+  var NK_YEN_TOI_DA = 30 * 60000;  /* yên lặng 30 phút thì tự tạm dừng cho đỡ tốn */
+  var nkTienDo = null;        /* bản tiến độ mới nhất đọc từ GitHub, chỉ để hiển thị */
+  var nkNhipHT = 0;           /* nhịp đang dùng */
+  var nkKe = 0;               /* mốc lần tải kế tiếp */
 
   function nkGiay(x) {
     if (x >= NK_NGHI) return '—';
@@ -19533,6 +19554,21 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
   }
 
   /* ---------- khung 🔴 Đang học ---------- */
+  /* bé có đang làm bài không → quyết định nhịp tải lại */
+  function nkCachCuoi(ds) {
+    var cuoi = null;
+    ds.forEach(function (e) {
+      if (e.cu || e.bu) return;
+      if (!cuoi || e.t > cuoi.t) cuoi = e;
+    });
+    return cuoi ? Date.now() - cuoi.t : Infinity;
+  }
+  function nkNhipNen(cach) {
+    if (cach < 300000) return NK_NHIP_HOC;      /* có câu trong 5 phút → bám sát */
+    if (cach < 1800000) return NK_NHIP_NGHI;
+    return NK_NHIP_YEN;
+  }
+
   function nkKhungTrucTiep(ds, nguong) {
     var s = st();
     var moiNhat = ds.filter(function (e) { return !e.cu && !e.bu; })
@@ -19552,15 +19588,29 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
     var dungHN = cauHN.filter(function (e) { return e.ok; }).length;
     var mt = s.mucTieu || 20;
 
+    /* số câu sai chưa sửa lấy từ bản tiến độ MỚI NHẤT trên GitHub, không lấy bản trong máy bố */
+    var soLoi = null, sao = null;
+    if (nkTienDo && nkTienDo.soLoi) {
+      soLoi = nkTienDo.soLoi.filter(function (x) { return !x.sua; }).length;
+      sao = nkTienDo.sao;
+    }
+
     var h = '<div class="card" style="border-left:6px solid ' + mau + '">';
     h += '<div class="row" style="align-items:center;justify-content:space-between">';
     h += '<h2 class="sec" style="margin:0">' + chu + '</h2>';
-    h += '<button class="btn sm ' + (nkTheoDoi ? '' : 'ghost') + '" id="nk-live">' +
-      (nkTheoDoi ? '⏸ Tạm dừng theo dõi' : '▶ Theo dõi trực tiếp') + '</button></div>';
-    h += '<p class="muted" style="margin:8px 0 0">' + phu +
-      (nkTheoDoi ? ' Trang tự tải lại mỗi 30 giây' +
-        (nkLanTai ? ' — lần gần nhất lúc ' + nkGio(nkLanTai) : '') + '.'
-        : ' Đang tạm dừng — bấm nút bên phải để theo dõi tiếp.') + '</p>';
+    h += '<div class="row" style="gap:6px">' +
+      '<button class="btn sm ghost" id="nk-now">🔄 Tải lại ngay</button>' +
+      '<button class="btn sm ' + (nkTheoDoi ? '' : 'ghost') + '" id="nk-live">' +
+      (nkTheoDoi ? '⏸ Tạm dừng' : '▶ Theo dõi trực tiếp') + '</button></div></div>';
+
+    h += '<p class="muted" style="margin:8px 0 0">' + phu + ' ';
+    if (nkTheoDoi) {
+      var giayNhip = Math.round((nkNhipHT || NK_NHIP_NGHI) / 1000);
+      h += 'Đang tự tải lại <b>mỗi ' + giayNhip + ' giây</b>' +
+        (nkNhipHT === NK_NHIP_HOC ? ' (bám sát vì con đang làm bài)' : '') + '. ' +
+        (nkLanTai ? 'Lần gần nhất lúc <b>' + nkGio(nkLanTai) + '</b>.' : '');
+    } else h += 'Đang tạm dừng — bấm <b>▶ Theo dõi trực tiếp</b> để chạy lại.';
+    h += '</p>';
 
     h += '<div class="repgrid" style="margin-top:12px">';
     h += '<div class="repcard"><b>' + cauHN.length + '</b><span>câu hôm nay</span></div>';
@@ -19568,11 +19618,14 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
       '</b><span>đúng hôm nay</span></div>';
     h += '<div class="repcard"><b>' + Math.min(100, Math.round(cauHN.length / mt * 100)) +
       '%</b><span>mục tiêu ' + mt + ' câu</span></div>';
-    h += '<div class="repcard"><b>' + C.demLoi() + '</b><span>câu sai chưa sửa</span></div>';
+    h += '<div class="repcard"><b>' + (soLoi === null ? C.demLoi() : soLoi) +
+      '</b><span>câu sai chưa sửa</span></div>';
+    if (sao !== null) h += '<div class="repcard"><b>' + sao + '</b><span>⭐ tổng sao</span></div>';
     h += '</div>';
 
     if (moiNhat.length) {
-      h += '<p class="muted" style="margin:14px 0 4px"><b>8 câu gần nhất:</b></p>';
+      h += '<p class="muted" style="margin:14px 0 4px"><b>8 câu gần nhất</b> — hiện lên ngay sau khi con bấm ' +
+        '<i>Kiểm tra</i>, không phải đợi hết buổi:</p>';
       h += nkBangCau(moiNhat.slice(0, 8), nguong, true);
     }
     return h + '</div>';
@@ -19786,9 +19839,14 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
       });
     });
     if (el('nk-live')) el('nk-live').addEventListener('click', function () {
-      nkTheoDoi = !nkTheoDoi; nkYen = 0;
-      if (nkTheoDoi) { nkNhipTim(); nkLamMoi(); } else nkTatNhip();
+      nkTheoDoi = !nkTheoDoi; nkYen = Date.now();
+      if (nkTheoDoi) nkLamMoi(); else nkTatNhip();
       veNhatKy();
+    });
+    if (el('nk-now')) el('nk-now').addEventListener('click', function () {
+      el('nk-now').textContent = '⏳ Đang tải…';
+      nkYen = Date.now();
+      nkLamMoi();
     });
     if (el('nk-them')) el('nk-them').addEventListener('click', function () {
       var t = prompt('Xem tháng nào? Gõ theo dạng NĂM-THÁNG, ví dụ 2026-07:', C.thangNay());
@@ -19807,26 +19865,35 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
   function nkLamMoi() {
     var th = nkThang || C.thangNay();
     var truoc = C.nhatKy(th).length;
-    return C.taiLaiThang(th).then(function (ds) {
+    return Promise.all([C.taiLaiThang(th), C.docTienDo()]).then(function (kq) {
+      var ds = kq[0];
+      if (kq[1]) nkTienDo = kq[1];
       nkLanTai = Date.now();
-      if (ds.length > truoc) nkYen = 0; else nkYen++;
-      if (nkYen >= NK_YEN_TOI_DA) { nkTheoDoi = false; nkTatNhip(); }
+      if (ds.length > truoc) nkYen = Date.now();
+      if (!nkYen) nkYen = Date.now();
+      /* không thấy câu mới suốt 30 phút thì thôi, khỏi gọi GitHub vô ích */
+      if (Date.now() - nkYen >= NK_YEN_TOI_DA) { nkTheoDoi = false; nkTatNhip(); }
+      else if (nkTheoDoi) nkNhipTim(ds);
       if (!el('pg-nhatky').classList.contains('hide')) veNhatKy();
     });
   }
-  function nkNhipTim() {
+  /* đặt lại hẹn giờ theo đúng nhịp cần dùng lúc này */
+  function nkNhipTim(ds) {
+    var nhip = nkNhipNen(nkCachCuoi(ds || C.nhatKy(nkThang || C.thangNay())));
+    if (nhip === nkNhipHT && nkHen) return;      /* nhịp không đổi thì giữ nguyên hẹn giờ */
     nkTatNhip();
+    nkNhipHT = nhip;
+    nkKe = Date.now() + nhip;
     nkHen = setInterval(function () {
       if (el('pg-nhatky').classList.contains('hide')) { nkTatNhip(); return; }
       nkLamMoi();
-    }, NK_NHIP);
+    }, nhip);
   }
-  function nkTatNhip() { if (nkHen) { clearInterval(nkHen); nkHen = null; } }
+  function nkTatNhip() { if (nkHen) { clearInterval(nkHen); nkHen = null; } nkNhipHT = 0; }
   function nkMoTrang() {
-    nkNgayChon = null; nkYen = 0;
+    nkNgayChon = null; nkYen = Date.now();
     veNhatKy();
     nkLamMoi();                 /* mở trang là lấy ngay bản mới nhất, không dùng bản cũ trong máy */
-    if (nkTheoDoi) nkNhipTim();
   }
 
   function nkXuatCSV() {
