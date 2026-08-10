@@ -659,7 +659,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-06.4';
+var BAN_WEB = '2026-08-10.sup1';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -706,7 +706,7 @@ var BAN_WEB = '2026-08-06.4';
 /* =========================================================
    LÕI DÙNG CHUNG CHO MỌI CHUYÊN ĐỀ
    - Kho đăng ký chuyên đề
-   - Lưu trữ tiến độ (GitHub / trình duyệt)
+   - Lưu trữ tiến độ (Supabase / trình duyệt)
    - Sao, huy hiệu, chuỗi ngày, mục tiêu ngày
    ========================================================= */
 (function (global) {
@@ -816,89 +816,139 @@ var BAN_WEB = '2026-08-06.4';
   }
 
   /* =========================================================
-     KHO DỮ LIỆU GITHUB
-     Ghi thẳng tiến độ / link video lên một repo RIÊNG, để Private.
-     Không cần server.js, không cần máy bật 24/24.
-       · tien-do.json  – tiến độ học, sổ lỗi, PIN
-       · video.json    – kho link video (file riêng, phiên học không ghi đè được)
-       · sao-luu/…     – mỗi ngày một bản chụp (ngoài lịch sử commit của git)
-     ========================================================= */
-  var GH = {
-    owner: 'hoanbvhn-gif',
-    repo: 'toanlop4-data',      /* repo PRIVATE chứa dữ liệu */
-    branch: 'main',
-    fState: 'tien-do.json',
-    fVideo: 'video.json'
-  };
-  CTS.GH = GH;
+     KHO DỮ LIỆU SUPABASE
+     Ghi thẳng tiến độ / link video / nhật ký lên một bảng Postgres riêng
+     (dự án Supabase của bố). Không cần server.js, không cần máy bật 24/24,
+     lưu gần như tức thì thay vì phải chờ commit.
 
-  var TKEY = 'cts_gh_token';
+     Bảng:  tien_do(id text primary key, du_lieu jsonb, ver text, cap_nhat timestamptz)
+
+     Mỗi "file" ngày xưa nằm trên GitHub giờ là MỘT DÒNG trong bảng, tên dòng
+     ghép từ MÃ LỚP HỌC (mã bí mật của riêng bé) với tên file:
+       · tien-do.json               ->  <ma>__tien-do
+       · video.json                 ->  <ma>__video
+       · nhat-ky/2026-08.json       ->  <ma>__nhat-ky__2026-08
+       · sao-luu/tien-do-…​.json     ->  <ma>__sao-luu__tien-do-…
+
+     Cột "ver" là con dấu phiên bản: mỗi lần ghi sinh một mã ngẫu nhiên mới.
+     Khi ghi, máy chỉ cho phép sửa nếu ver trên máy chủ vẫn đúng bằng ver mình
+     cầm — máy khác vừa ghi xen vào thì lệnh sửa trả về rỗng, chương trình tự
+     đọc lại, GỘP rồi ghi lần hai. Nhờ vậy hai thiết bị học cùng lúc không đè
+     mất bản ghi của nhau (đúng như cơ chế sha của GitHub trước đây).
+     ========================================================= */
+  var SUP_KEY = 'cts_supabase';          /* nơi cất cấu hình trên từng máy */
+  var BANG = 'tien_do';
+  var F_STATE = 'tien-do.json', F_VIDEO = 'video.json';
+  CTS.F_STATE = F_STATE; CTS.F_VIDEO = F_VIDEO;
+
+  var SUP = null;                         /* {url, key, ma} */
   var shaState = null, shaVideo = null;
 
-  function token() { try { return localStorage.getItem(TKEY) || ''; } catch (e) { return ''; } }
+  /* Cờ TẠM NGƯNG LƯU. Bật lên khi đang nạp lại dữ liệu cũ vào kho: lúc đó bản
+     trong bộ nhớ máy này là bản rỗng/cũ, tuyệt đối không được để nó tự đẩy lên
+     đè mất bản vừa nạp (kể cả cú đẩy lúc đóng tab). */
+  var ngungLuu = false;
+  CTS.ngungLuu = function () { ngungLuu = true; };
+
+  function docCauHinh() {
+    try { return JSON.parse(localStorage.getItem(SUP_KEY) || 'null'); } catch (e) { return null; }
+  }
+  function chuanHoa(c) {
+    if (!c) return null;
+    var url = String(c.url || '').trim().replace(/\/+$/, '');
+    var key = String(c.key || '').trim();
+    var ma = String(c.ma || '').trim();
+    if (!url || !key || !ma) return null;
+    if (!/^https?:\/\//.test(url)) url = 'https://' + url;
+    return { url: url, key: key, ma: ma };
+  }
+  SUP = chuanHoa(docCauHinh());
+
+  CTS.cauHinh = function () { return SUP; };
+  /* token() giữ nguyên tên cũ để phần còn lại của web không phải sửa:
+     "có mã" nghĩa là máy này đã khai báo xong kho dữ liệu. */
+  function token() { return SUP ? SUP.ma : ''; }
   CTS.token = token;
-  CTS.datToken = function (t) { try { localStorage.setItem(TKEY, (t || '').trim()); } catch (e) { } };
-  CTS.xoaToken = function () { try { localStorage.removeItem(TKEY); } catch (e) { } };
+  CTS.datCauHinh = function (c) {
+    c = chuanHoa(c);
+    SUP = c;
+    try {
+      if (c) localStorage.setItem(SUP_KEY, JSON.stringify(c));
+      else localStorage.removeItem(SUP_KEY);
+    } catch (e) { }
+  };
+  CTS.xoaToken = function () { CTS.datCauHinh(null); };
 
-  /* ---------- base64 chuẩn UTF-8 (giữ được dấu tiếng Việt) ---------- */
-  function b64enc(s) {
-    var b = new TextEncoder().encode(s), bin = '', i, C = 0x8000;
-    for (i = 0; i < b.length; i += C) bin += String.fromCharCode.apply(null, b.subarray(i, i + C));
-    return btoa(bin);
+  /* ---------- tên dòng trong bảng ---------- */
+  function dongCua(f) {
+    return SUP.ma + '__' + String(f).replace(/\.json$/, '').replace(/\//g, '__');
   }
-  function b64dec(s) {
-    var bin = atob((s || '').replace(/\s/g, '')), a = new Uint8Array(bin.length), i;
-    for (i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
-    return new TextDecoder('utf-8').decode(a);
+  function q(v) { return encodeURIComponent(String(v)); }
+  function verMoi() {
+    return Date.now().toString(36) + '-' + Math.floor(Math.random() * 1e9).toString(36);
   }
 
-  /* ---------- gọi API GitHub ---------- */
-  function api(duong, opt) {
-    opt = opt || {};
-    var h = {
-      'Accept': 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28'
-    };
-    var t = token();
-    if (t) h.Authorization = 'Bearer ' + t;
-    if (opt.body) h['Content-Type'] = 'application/json';
-    return fetch('https://api.github.com' + duong, {
-      method: opt.method || 'GET',
-      headers: h,
-      body: opt.body ? JSON.stringify(opt.body) : undefined,
+  /* ---------- gọi REST của Supabase ----------
+     Chú ý: khoá kiểu MỚI (sb_publishable_…) KHÔNG được đặt vào Authorization —
+     Supabase sẽ báo lỗi. Chỉ khoá kiểu cũ (anon JWT, bắt đầu bằng "eyJ") mới
+     cần gửi kèm Authorization: Bearer. */
+  function sbHeader(prefer, coBody) {
+    var h = { apikey: SUP.key, 'Accept': 'application/json' };
+    if (/^eyJ/.test(SUP.key)) h.Authorization = 'Bearer ' + SUP.key;
+    if (coBody) h['Content-Type'] = 'application/json';
+    if (prefer) h.Prefer = prefer;
+    return h;
+  }
+  function sb(method, duong, body, prefer, keepalive) {
+    return fetch(SUP.url + '/rest/v1/' + BANG + duong, {
+      method: method,
+      headers: sbHeader(prefer, body !== undefined && body !== null),
+      body: (body === undefined || body === null) ? undefined : JSON.stringify(body),
       cache: 'no-store',
-      keepalive: !!opt.keepalive
+      keepalive: !!keepalive
     });
   }
-  function duongDan(f) {
-    return '/repos/' + GH.owner + '/' + GH.repo + '/contents/' + encodeURIComponent(f).replace(/%2F/g, '/');
-  }
 
-  /* đọc một file JSON — trả về {data, sha}; chưa có file thì data = null */
+  /* đọc một "file" JSON — trả về {data, sha}
+       sha = null  : chưa có dòng nào
+       sha = ''    : có dòng nhưng chưa có dấu phiên bản
+       sha = 'abc' : dấu phiên bản hiện tại  */
   function doc(f) {
-    return api(duongDan(f) + '?ref=' + GH.branch + '&t=' + Date.now()).then(function (r) {
-      if (r.status === 404) return { data: null, sha: null };
-      if (!r.ok) throw new Error('GitHub ' + r.status);
+    if (!SUP) return Promise.resolve({ data: null, sha: null });
+    return sb('GET', '?id=eq.' + q(dongCua(f)) + '&select=du_lieu,ver', null, null).then(function (r) {
+      if (!r.ok) throw new Error('Supabase ' + r.status);
       return r.json().then(function (j) {
-        var d = null;
-        try { d = JSON.parse(b64dec(j.content)); } catch (e) { }
-        return { data: d, sha: j.sha };
+        if (!j || !j.length) return { data: null, sha: null };
+        return { data: j[0].du_lieu === undefined ? null : j[0].du_lieu, sha: j[0].ver || '' };
       });
     });
   }
 
-  /* ghi một file JSON; trả về sha mới, hoặc null nếu đụng độ (sha cũ) */
+  /* ghi một "file" JSON; trả về dấu phiên bản mới, hoặc null nếu đụng độ */
   function ghi(f, obj, sha, loi, keepalive) {
-    var body = { message: loi, content: b64enc(JSON.stringify(obj)), branch: GH.branch };
-    if (sha) body.sha = sha;
-    return api(duongDan(f), { method: 'PUT', body: body, keepalive: keepalive }).then(function (r) {
-      if (r.status === 409 || r.status === 422) return null;   /* sha lỗi thời */
-      if (!r.ok) throw new Error('GitHub ' + r.status);
-      return r.json().then(function (j) { return j.content.sha; });
-    });
+    if (!SUP) return Promise.resolve(null);
+    var id = dongCua(f), v = verMoi(), luc = new Date().toISOString();
+
+    if (sha === null || sha === undefined) {
+      /* chưa có dòng -> CHÈN MỚI. Nếu máy khác vừa chèn trước thì Postgres báo
+         trùng khoá (409) -> trả null để bên ngoài đọc lại rồi gộp. */
+      return sb('POST', '', [{ id: id, du_lieu: obj, ver: v, cap_nhat: luc }],
+        'return=minimal', keepalive).then(function (r) {
+          if (r.status === 409) return null;
+          if (!r.ok) throw new Error('Supabase ' + r.status);
+          return v;
+        });
+    }
+    /* đã có dòng -> chỉ sửa nếu dấu phiên bản còn khớp */
+    var loc = '?id=eq.' + q(id) + (sha ? '&ver=eq.' + q(sha) : '&ver=is.null') + '&select=id';
+    return sb('PATCH', loc, { du_lieu: obj, ver: v, cap_nhat: luc },
+      'return=representation', keepalive).then(function (r) {
+        if (!r.ok) throw new Error('Supabase ' + r.status);
+        return r.json().then(function (j) { return (j && j.length) ? v : null; });
+      });
   }
 
-  /* ghi có xử lý đụng độ: lấy lại sha mới nhất rồi ghi lần hai */
+  /* ghi có xử lý đụng độ: lấy lại dấu phiên bản mới nhất rồi ghi lần hai */
   function ghiChacChan(f, obj, lay, dat, loi, keepalive) {
     return ghi(f, obj, lay(), loi, keepalive).then(function (s) {
       if (s) { dat(s); return true; }
@@ -911,24 +961,92 @@ var BAN_WEB = '2026-08-06.4';
       });
     });
   }
+  CTS.supDoc = doc;
+  CTS.supGhi = function (f, obj) { return doc(f).then(function (d) { return ghi(f, obj, d.sha, ''); }); };
 
-  /* kiểm tra token có dùng được với repo dữ liệu không */
-  CTS.thuToken = function (t) {
-    var cu = token();
-    CTS.datToken(t);
-    return api('/repos/' + GH.owner + '/' + GH.repo).then(function (r) {
-      if (r.ok) return { ok: true };
-      CTS.datToken(cu);
-      if (r.status === 401) return { ok: false, loi: 'Token sai hoặc đã hết hạn.' };
-      if (r.status === 403) return { ok: false, loi: 'Token không đủ quyền (cần Contents: Read and write).' };
-      if (r.status === 404) return { ok: false, loi: 'Không thấy repo ' + GH.owner + '/' + GH.repo + ' — kiểm tra lại tên repo, hoặc token chưa được cấp quyền cho đúng repo này.' };
-      return { ok: false, loi: 'GitHub trả về lỗi ' + r.status + '.' };
-    }).catch(function () {
-      CTS.datToken(cu);
-      return { ok: false, loi: 'Không nối được mạng tới GitHub.' };
-    });
+  /* ---------- mã lớp học: tự sinh cho gọn, bố không phải nghĩ ---------- */
+  CTS.taoMaLop = function () {
+    var c = 'abcdefghijkmnpqrstuvwxyz23456789', s = '';
+    for (var i = 0; i < 10; i++) s += c[Math.floor(Math.random() * c.length)];
+    return 'lop-' + s;
   };
 
+  /* ---------- kiểm tra một cấu hình có dùng được không ---------- */
+  CTS.thuKetNoi = function (c) {
+    var moi = chuanHoa(c);
+    if (!moi) return Promise.resolve({ ok: false, loi: 'Còn thiếu Project URL, Publishable key hoặc Mã lớp học.' });
+    var cu = SUP;
+    SUP = moi;
+    var thu = 'kiem-tra/' + verMoi();
+    /* thử ghi rồi xoá một dòng nháp: chắc chắn cả quyền đọc lẫn quyền ghi đều ổn */
+    return sb('GET', '?select=id&limit=1', null, null).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw { m: 'Khoá không đúng, hoặc bảng chưa bật quyền đọc (RLS). Chạy lại đoạn SQL mẫu bên dưới.' };
+      if (r.status === 404) throw { m: 'Không thấy bảng ' + BANG + ' trong dự án. Vào Supabase → SQL Editor chạy đoạn SQL mẫu bên dưới.' };
+      if (!r.ok) throw { m: 'Supabase trả về lỗi ' + r.status + '.' };
+      return ghi(thu, { thu: 1 }, null, '');
+    }).then(function (s) {
+      if (!s) throw { m: 'Không ghi được vào bảng — kiểm tra quyền ghi (RLS).' };
+      return sb('DELETE', '?id=eq.' + q(dongCua(thu)), null, 'return=minimal').catch(function () { });
+    }).then(function () {
+      SUP = cu; CTS.datCauHinh(moi);
+      return { ok: true };
+    }).catch(function (e) {
+      SUP = cu;
+      return { ok: false, loi: (e && e.m) ? e.m : 'Không nối được mạng tới Supabase (kiểm tra lại Project URL).' };
+    });
+  };
+  /* tên cũ, giữ để không vỡ chỗ nào gọi nhầm */
+  CTS.thuToken = CTS.thuKetNoi;
+
+  /* ---------- link cài đặt nhanh cho máy khác ----------
+     Bố bấm tạo link, gửi sang máy tính bảng của con, mở một lần là xong,
+     không phải gõ tay Project URL với khoá dài loằng ngoằng. */
+  function b64url(s) {
+    var b = new TextEncoder().encode(s), bin = '', i, C = 0x8000;
+    for (i = 0; i < b.length; i += C) bin += String.fromCharCode.apply(null, b.subarray(i, i + C));
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function b64urlDec(s) {
+    s = String(s).replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), a = new Uint8Array(bin.length), i;
+    for (i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(a);
+  }
+  CTS.taoLinkCaiDat = function () {
+    if (!SUP) return '';
+    return location.origin + location.pathname + '#sb=' + b64url(JSON.stringify(SUP));
+  };
+  /* đọc cấu hình từ link rồi XOÁ NGAY khỏi thanh địa chỉ (đỡ lộ khoá) */
+  (function nhanTuLink() {
+    var m = /[#&]sb=([A-Za-z0-9\-_]+)/.exec(location.hash || '');
+    if (!m) return;
+    try {
+      var c = chuanHoa(JSON.parse(b64urlDec(m[1])));
+      if (c) { SUP = c; CTS.datCauHinh(c); }
+    } catch (e) { }
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { }
+  })();
+
+  /* ---------- đoạn SQL để bố dán vào Supabase → SQL Editor ---------- */
+  CTS.SQL_MAU =
+    'create table if not exists tien_do (\n' +
+    '  id       text primary key,\n' +
+    '  du_lieu  jsonb not null,\n' +
+    '  ver      text,\n' +
+    '  cap_nhat timestamptz not null default now()\n' +
+    ');\n' +
+    'alter table tien_do add column if not exists ver text;\n' +
+    'alter table tien_do enable row level security;\n' +
+    'drop policy if exists cts_doc  on tien_do;\n' +
+    'drop policy if exists cts_them on tien_do;\n' +
+    'drop policy if exists cts_sua  on tien_do;\n' +
+    'drop policy if exists cts_xoa  on tien_do;\n' +
+    'create policy cts_doc  on tien_do for select using (true);\n' +
+    'create policy cts_them on tien_do for insert with check (true);\n' +
+    'create policy cts_sua  on tien_do for update using (true) with check (true);\n' +
+    'create policy cts_xoa  on tien_do for delete using (true);\n' +
+    "notify pgrst, 'reload schema';";
   /* =========================================================
      NHẬT KÝ TỪNG CÂU
      Mỗi câu bé làm là một dòng: lúc nào, dạng gì, đúng/sai, hết bao nhiêu giây.
@@ -937,7 +1055,7 @@ var BAN_WEB = '2026-08-06.4';
      ========================================================= */
   var NK_NHIP_DAY = 1500;   /* gộp các câu trong 1,5 giây thành một lần đẩy — bố thấy gần như tức thì */
   var NK = {};        /* 'YYYY-MM' -> mảng bản ghi đã nạp/đã thêm */
-  var NKsha = {};     /* 'YYYY-MM' -> sha file trên GitHub */
+  var NKsha = {};     /* 'YYYY-MM' -> dấu phiên bản của dòng trên Supabase */
   var NKban = {};     /* 'YYYY-MM' -> true nếu có thay đổi chưa đẩy lên */
   var NKtimer = null, NKdangGhi = false, NKcho = false;
   var NK_LOCAL = 'cts_nhatky';
@@ -977,7 +1095,7 @@ var BAN_WEB = '2026-08-06.4';
     NK[th].push(e);
     NKban[th] = true;
     nkLuuTam();
-    if (saveMode !== 'github') return;
+    if (saveMode !== 'sup') return;
     clearTimeout(NKtimer);
     NKtimer = setTimeout(function () { nkDay(false); }, NK_NHIP_DAY);
   };
@@ -987,10 +1105,10 @@ var BAN_WEB = '2026-08-06.4';
     return Object.keys(NK).filter(function (k) { return NK[k] && NK[k].length; }).sort().reverse();
   };
 
-  /* nạp một tháng từ GitHub (dùng khi bố xem lại tháng cũ) */
+  /* nạp một tháng từ đám mây (dùng khi bố xem lại tháng cũ) */
   CTS.napThang = function (th) {
     if (NK[th] && !NKban[th]) return Promise.resolve(NK[th]);
-    if (saveMode !== 'github') return Promise.resolve(NK[th] || []);
+    if (saveMode !== 'sup') return Promise.resolve(NK[th] || []);
     return doc(fileNK(th)).then(function (d) {
       NKsha[th] = d.sha;
       NK[th] = gop(d.data || [], NK[th] || []);
@@ -998,17 +1116,17 @@ var BAN_WEB = '2026-08-06.4';
     }).catch(function () { return NK[th] || []; });
   };
 
-  /* Đọc tiến độ mới nhất trên GitHub để HIỂN THỊ, tuyệt đối không ghi đè state
+  /* Đọc tiến độ mới nhất trên đám mây để HIỂN THỊ, tuyệt đối không ghi đè state
      đang mở của bố (tránh mất thay đổi nếu bố đang sửa cài đặt). */
   CTS.docTienDo = function () {
-    if (saveMode !== 'github') return Promise.resolve(null);
-    return doc(GH.fState).then(function (d) { return d.data || null; })
+    if (saveMode !== 'sup') return Promise.resolve(null);
+    return doc(F_STATE).then(function (d) { return d.data || null; })
       .catch(function () { return null; });
   };
 
-  /* nạp lại BẮT BUỘC từ GitHub — dùng cho khung theo dõi trực tiếp */
+  /* nạp lại BẮT BUỘC từ đám mây — dùng cho khung theo dõi trực tiếp */
   CTS.taiLaiThang = function (th) {
-    if (saveMode !== 'github') return Promise.resolve(NK[th] || []);
+    if (saveMode !== 'sup') return Promise.resolve(NK[th] || []);
     return doc(fileNK(th)).then(function (d) {
       NKsha[th] = d.sha;
       NK[th] = gop(d.data || [], NK[th] || []);
@@ -1017,9 +1135,10 @@ var BAN_WEB = '2026-08-06.4';
     }).catch(function () { return NK[th] || []; });
   };
 
-  /* đẩy các tháng đang bẩn lên GitHub, gộp thay vì ghi đè */
+  /* đẩy các tháng đang bẩn lên đám mây, gộp thay vì ghi đè */
   function nkDay(keepalive) {
-    if (saveMode !== 'github') return Promise.resolve(false);
+    if (ngungLuu) return Promise.resolve(false);
+    if (saveMode !== 'sup') return Promise.resolve(false);
     /* đang có lượt ghi dở → xếp hàng, chạy tiếp ngay khi xong.
        (trước đây chỗ này bỏ qua luôn, cả cụm bản ghi phải nằm chờ tới câu sau) */
     if (NKdangGhi) { NKcho = true; return Promise.resolve(false); }
@@ -1102,7 +1221,7 @@ var BAN_WEB = '2026-08-06.4';
     if (them) {
       Object.keys(NK).forEach(function (th) { NK[th] = gop(NK[th], []); });
       nkLuuTam();
-      if (saveMode === 'github') nkDay(false);
+      if (saveMode === 'sup') nkDay(false);
     }
     return them;
   };
@@ -1126,12 +1245,12 @@ var BAN_WEB = '2026-08-06.4';
     if (!token()) return ngoaiTuyen();
 
     var thNay = thangCua(Date.now());
-    Promise.all([doc(GH.fState), doc(GH.fVideo), doc(fileNK(thNay))]).then(function (kq) {
+    Promise.all([doc(F_STATE), doc(F_VIDEO), doc(fileNK(thNay))]).then(function (kq) {
       var s = kq[0], v = kq[1], nk = kq[2];
       shaState = s.sha; shaVideo = v.sha;
-      saveMode = 'github'; videoMode = 'github';
+      saveMode = 'sup'; videoMode = 'sup';
 
-      /* nhật ký: gộp bản trên GitHub với bản còn kẹt trong máy này (lúc mất mạng) */
+      /* nhật ký: gộp bản trên đám mây với bản còn kẹt trong máy này (lúc mất mạng) */
       var tam = nkDocTam();
       NK = {}; NKsha = {}; NKban = {};
       Object.keys(tam).forEach(function (k) { NK[k] = tam[k] || []; });
@@ -1140,7 +1259,7 @@ var BAN_WEB = '2026-08-06.4';
       Object.keys(tam).forEach(function (k) { if ((tam[k] || []).length) NKban[k] = true; });
       nkLuuTam();
 
-      /* lần đầu chưa có file trên GitHub → đẩy dữ liệu đang có trong máy này lên */
+      /* lần đầu chưa có dữ liệu trên đám mây → đẩy dữ liệu đang có trong máy này lên */
       var raw = null;
       if (!s.data) { try { raw = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(KEY_CU)); } catch (e) { } }
       state = diTru(s.data && (s.data.v || s.data.dang) ? s.data : raw);
@@ -1166,10 +1285,11 @@ var BAN_WEB = '2026-08-06.4';
 
   /* ---------- kho link video (file riêng) ---------- */
   CTS.luuVideo = function () {
+    if (ngungLuu) return Promise.resolve(false);
     var v = state.video || {};
     try { localStorage.setItem(KEY_V, JSON.stringify(v)); } catch (e) { }
-    if (videoMode !== 'github') return Promise.resolve(false);
-    return ghiChacChan(GH.fVideo, v,
+    if (videoMode !== 'sup') return Promise.resolve(false);
+    return ghiChacChan(F_VIDEO, v,
       function () { return shaVideo; },
       function (s) { shaVideo = s; },
       'Cập nhật kho video (' + Object.keys(v).length + ' bài)'
@@ -1185,6 +1305,7 @@ var BAN_WEB = '2026-08-06.4';
   }
 
   function goiLen(keepalive) {
+    if (ngungLuu) return;
     if (dangGhi) { choGhi = true; return; }
     dangGhi = true;
 
@@ -1192,13 +1313,13 @@ var BAN_WEB = '2026-08-06.4';
     delete goi.video;                    /* link video có kho riêng, phiên học không được ghi đè */
     var ng = homNay();
 
-    ghiChacChan(GH.fState, goi,
+    ghiChacChan(F_STATE, goi,
       function () { return shaState; },
       function (s) { shaState = s; },
       'Tiến độ ' + ng, keepalive
     ).then(function (ok) {
       dangGhi = false;
-      bao(ok ? 'github' : 'err');
+      bao(ok ? 'sup' : 'err');
 
       /* mỗi ngày chụp thêm một bản sao lưu (ngoài lịch sử commit) */
       if (ok && state.ghSaoLuu !== ng) {
@@ -1217,8 +1338,9 @@ var BAN_WEB = '2026-08-06.4';
   }
 
   CTS.luu = function () {
+    if (ngungLuu) return;
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { }
-    if (saveMode !== 'github') { bao('local'); return; }
+    if (saveMode !== 'sup') { bao('local'); return; }
     bao('dang');
     clearTimeout(timer);
     timer = setTimeout(function () { goiLen(false); }, 6000);   /* gộp nhiều lần lưu thành một commit */
@@ -1226,7 +1348,8 @@ var BAN_WEB = '2026-08-06.4';
 
   /* đẩy nốt trước khi đóng tab / khoá màn hình tablet */
   CTS.luuNgay = function () {
-    if (saveMode !== 'github') return;
+    if (ngungLuu) return;
+    if (saveMode !== 'sup') return;
     clearTimeout(timer);
     goiLen(true);
     clearTimeout(NKtimer);
@@ -1239,10 +1362,10 @@ var BAN_WEB = '2026-08-06.4';
 
   function bao(k) {
     var n = document.getElementById('saveinfo'); if (!n) return;
-    if (k === 'github') { n.className = 'saveinfo on'; n.textContent = '☁️ Đã lưu lên GitHub'; }
+    if (k === 'sup') { n.className = 'saveinfo on'; n.textContent = '☁️ Đã lưu lên đám mây'; }
     else if (k === 'dang') { n.className = 'saveinfo on'; n.textContent = '☁️ Đang lưu…'; }
     else if (k === 'local') { n.className = 'saveinfo off'; n.textContent = '💾 Chỉ lưu trên trình duyệt này'; }
-    else { n.className = 'saveinfo off'; n.textContent = '⚠️ Chưa lưu lên GitHub được — kiểm tra mạng hoặc token'; }
+    else { n.className = 'saveinfo off'; n.textContent = '⚠️ Chưa lưu lên đám mây được — kiểm tra mạng hoặc mã kết nối'; }
   }
   CTS.bao = bao;
 
@@ -17908,48 +18031,68 @@ var BAN_WEB = '2026-08-06.4';
      ĐĂNG NHẬP
      ========================================================= */
   /* =========================================================
-     MÀN HÌNH KẾT NỐI GITHUB (hiện khi thiết bị chưa có token)
+     MÀN HÌNH KẾT NỐI KHO DỮ LIỆU (hiện khi thiết bị chưa khai báo)
      ========================================================= */
   function veKetNoi() {
-    var g = C.GH;
     var h = '<div class="loginpage"><div class="loginbox">';
     h += '<div class="brand">☁️</div><h1>Góc học Toán</h1>';
-    h += '<p class="sl">Kết nối kho dữ liệu trên GitHub</p>';
-    h += '<div class="card" style="text-align:left;max-width:600px;margin:0 auto">';
-    h += '<h2 class="sec" style="margin-top:0">🔑 Mã kết nối của thiết bị này</h2>';
-    h += '<p class="muted">Tiến độ học được lưu vào repo riêng <code>' + esc(g.owner) + '/' + esc(g.repo) +
-      '</code>. Mỗi máy/máy tính bảng chỉ cần dán mã <b>một lần duy nhất</b>, sau đó dùng mãi.</p>';
-    h += '<div style="margin-top:14px"><b>Dán mã Personal Access Token</b><br>' +
-      '<input class="numbox" id="gh-tok" type="password" autocomplete="off" spellcheck="false" ' +
+    h += '<p class="sl">Kết nối kho dữ liệu Supabase</p>';
+    h += '<div class="card" style="text-align:left;max-width:640px;margin:0 auto">';
+    h += '<h2 class="sec" style="margin-top:0">🔑 Khai báo kho dữ liệu</h2>';
+    h += '<p class="muted">Cách nhanh nhất: ở máy bố vào <b>⚙️ Cài đặt → ☁️ Kho dữ liệu</b> bấm ' +
+      '<b>Tạo link cài đặt</b>, gửi link đó sang máy này rồi mở lên — máy sẽ tự điền hết. ' +
+      'Còn nếu muốn gõ tay thì điền ba ô dưới đây (mỗi máy chỉ điền <b>một lần duy nhất</b>).</p>';
+
+    h += '<div style="margin-top:14px"><b>1. Project URL</b><br>' +
+      '<input class="numbox" id="sb-url" autocomplete="off" spellcheck="false" ' +
       'style="width:100%;text-align:left;font-size:15px;margin-top:6px;letter-spacing:0" ' +
-      'placeholder="github_pat_…"></div>';
-    h += '<div id="gh-loi" class="muted" style="margin-top:10px"></div>';
-    h += '<div class="row" style="margin-top:16px"><button class="btn big" id="gh-ok">Kết nối</button>' +
-      '<button class="btn ghost" id="gh-bo">Dùng tạm, không đồng bộ</button></div>';
-    h += '<p class="muted" style="margin-top:14px">Chưa có mã? Vào <b>github.com → Settings → Developer settings → ' +
-      'Personal access tokens → Fine-grained tokens → Generate new token</b>, chọn đúng repo <code>' + esc(g.repo) +
-      '</code>, mục <b>Repository permissions → Contents</b> đặt <b>Read and write</b>. Xem thêm trong file HUONG-DAN.md.</p>';
+      'placeholder="https://xxxxxxxx.supabase.co"></div>';
+    h += '<div style="margin-top:12px"><b>2. Publishable key</b> <span class="muted">(loại công khai — tuyệt đối không dùng secret key)</span><br>' +
+      '<input class="numbox" id="sb-key" type="password" autocomplete="off" spellcheck="false" ' +
+      'style="width:100%;text-align:left;font-size:15px;margin-top:6px;letter-spacing:0" ' +
+      'placeholder="sb_publishable_…"></div>';
+    h += '<div style="margin-top:12px"><b>3. Mã lớp học</b> <span class="muted">(mã riêng của con — phải giống hệt trên mọi máy)</span><br>' +
+      '<input class="numbox" id="sb-ma" autocomplete="off" spellcheck="false" ' +
+      'style="width:100%;text-align:left;font-size:15px;margin-top:6px;letter-spacing:0" ' +
+      'placeholder="lop-abc123xyz"></div>';
+
+    h += '<div id="sb-loi" class="muted" style="margin-top:10px"></div>';
+    h += '<div class="row" style="margin-top:16px"><button class="btn big" id="sb-ok">Kết nối</button>' +
+      '<button class="btn ghost" id="sb-dan">📋 Dán link cài đặt</button>' +
+      '<button class="btn ghost" id="sb-bo">Dùng tạm, không đồng bộ</button></div>';
+    h += '<p class="muted" style="margin-top:14px">Lấy hai ô đầu ở <b>supabase.com → dự án của bố → Settings → API Keys</b>. ' +
+      'Nếu bảng dữ liệu chưa tạo, vào <b>SQL Editor</b> dán đoạn SQL in trong file HUONG-DAN.md rồi bấm Run.</p>';
     h += '</div></div></div>';
     el('pg-login').innerHTML = h;
     moTrang('login');
 
     function bao(t, xanh) {
-      el('gh-loi').innerHTML = '<span style="color:var(--' + (xanh ? 'ok' : 'no') + ')">' + t + '</span>';
+      el('sb-loi').innerHTML = '<span style="color:var(--' + (xanh ? 'ok' : 'no') + ')">' + t + '</span>';
     }
-    el('gh-ok').addEventListener('click', function () {
-      var t = el('gh-tok').value.trim();
-      if (!t) { bao('⚠️ Chưa dán mã.'); return; }
-      el('gh-ok').disabled = true;
+    el('sb-ok').addEventListener('click', function () {
+      var c = { url: el('sb-url').value, key: el('sb-key').value, ma: el('sb-ma').value };
+      if (!c.url.trim() || !c.key.trim() || !c.ma.trim()) { bao('⚠️ Còn ô chưa điền.'); return; }
+      el('sb-ok').disabled = true;
       bao('⏳ Đang kiểm tra…', true);
-      C.thuToken(t).then(function (kq) {
-        el('gh-ok').disabled = false;
+      C.thuKetNoi(c).then(function (kq) {
+        el('sb-ok').disabled = false;
         if (kq.ok) { bao('✔ Kết nối được rồi, đang tải dữ liệu…', true); setTimeout(function () { location.reload(); }, 500); }
         else bao('⚠️ ' + kq.loi);
       });
     });
-    el('gh-tok').addEventListener('keydown', function (e) { if (e.key === 'Enter') el('gh-ok').click(); });
-    el('gh-bo').addEventListener('click', function () {
-      if (!confirm('Không kết nối GitHub thì tiến độ chỉ nằm trong trình duyệt của thiết bị này và KHÔNG dùng chung với máy khác. Vẫn tiếp tục?')) return;
+    el('sb-dan').addEventListener('click', function () {
+      var lk = prompt('Dán link cài đặt (link có đoạn #sb=… ) vào đây:');
+      if (!lk) return;
+      var m = /[#&]sb=([A-Za-z0-9\-_]+)/.exec(lk);
+      if (!m) { bao('⚠️ Link không đúng — phải là link có đoạn #sb=…'); return; }
+      location.href = location.origin + location.pathname + '#sb=' + m[1];
+      location.reload();
+    });
+    ['sb-url', 'sb-key', 'sb-ma'].forEach(function (id) {
+      el(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') el('sb-ok').click(); });
+    });
+    el('sb-bo').addEventListener('click', function () {
+      if (!confirm('Không kết nối kho dữ liệu thì tiến độ chỉ nằm trong trình duyệt của thiết bị này và KHÔNG dùng chung với máy khác. Vẫn tiếp tục?')) return;
       vaoUngDung();
     });
   }
@@ -19489,7 +19632,7 @@ var BAN_WEB = '2026-08-06.4';
   var NK_NHIP_NGHI = 30000;   /* bé vừa tạm nghỉ  → 30 giây */
   var NK_NHIP_YEN = 60000;    /* lâu không thấy gì → 60 giây */
   var NK_YEN_TOI_DA = 30 * 60000;  /* yên lặng 30 phút thì tự tạm dừng cho đỡ tốn */
-  var nkTienDo = null;        /* bản tiến độ mới nhất đọc từ GitHub, chỉ để hiển thị */
+  var nkTienDo = null;        /* bản tiến độ mới nhất đọc từ đám mây, chỉ để hiển thị */
   var nkNhipHT = 0;           /* nhịp đang dùng */
   var nkKe = 0;               /* mốc lần tải kế tiếp */
 
@@ -19649,7 +19792,7 @@ var BAN_WEB = '2026-08-06.4';
     var dungHN = cauHN.filter(function (e) { return e.ok; }).length;
     var mt = s.mucTieu || 20;
 
-    /* số câu sai chưa sửa lấy từ bản tiến độ MỚI NHẤT trên GitHub, không lấy bản trong máy bố */
+    /* số câu sai chưa sửa lấy từ bản tiến độ MỚI NHẤT trên đám mây, không lấy bản trong máy bố */
     var soLoi = null, sao = null;
     if (nkTienDo && nkTienDo.soLoi) {
       soLoi = nkTienDo.soLoi.filter(function (x) { return !x.sua; }).length;
@@ -19734,7 +19877,7 @@ var BAN_WEB = '2026-08-06.4';
     h += '<button class="btn sm ' + (nkLoc.chi === 'sai' ? '' : 'ghost') + '" data-nkchi="sai">Câu sai</button>';
     h += '<button class="btn sm ' + (nkLoc.chi === 'cham' ? '' : 'ghost') + '" data-nkchi="cham">Câu làm lâu</button>';
     h += '</div>';
-    if (nkDangTai) h += '<p class="muted" style="margin:10px 0 0">⏳ Đang tải từ GitHub…</p>';
+    if (nkDangTai) h += '<p class="muted" style="margin:10px 0 0">⏳ Đang tải từ đám mây…</p>';
     h += '</div>';
 
     /* ----- áp bộ lọc ----- */
@@ -19932,7 +20075,7 @@ var BAN_WEB = '2026-08-06.4';
       nkLanTai = Date.now();
       if (ds.length > truoc) nkYen = Date.now();
       if (!nkYen) nkYen = Date.now();
-      /* không thấy câu mới suốt 30 phút thì thôi, khỏi gọi GitHub vô ích */
+      /* không thấy câu mới suốt 30 phút thì thôi, khỏi gọi máy chủ vô ích */
       if (Date.now() - nkYen >= NK_YEN_TOI_DA) { nkTheoDoi = false; nkTatNhip(); }
       else if (nkTheoDoi) nkNhipTim(ds);
       if (!el('pg-nhatky').classList.contains('hide')) veNhatKy();
@@ -20206,7 +20349,7 @@ var BAN_WEB = '2026-08-06.4';
      QUẢN LÝ VIDEO BÀI GIẢNG (khu của bố)
      ========================================================= */
   function veVideo() {
-    var svr = C.videoMode() === 'github';
+    var svr = C.videoMode() === 'sup';
     var h = '<h2 class="sec">🎬 Video bài giảng</h2>';
     h += '<div class="card"><p class="muted" style="margin:0">Dán link YouTube vào từng bài. ' +
       'Video sẽ hiện ngay đầu phần lý thuyết của bài đó, và hiện thêm một nút xem nhanh mỗi khi con làm sai câu thuộc bài đó.<br>' +
@@ -20214,12 +20357,12 @@ var BAN_WEB = '2026-08-06.4';
       'link danh sách phát <code>?list=…</code>. Link có mốc thời gian (<code>&t=90</code>) sẽ tự phát từ đúng phút đó.</p>';
     h += '<p class="muted" style="margin:10px 0 0">Hiện đang có <b>' + C.tongVideo() + ' video</b>.</p>';
     h += (svr
-      ? '<div class="tip" style="margin-bottom:0"><b>Nơi lưu: file <code>video.json</code> trong repo <code>' + esc(C.GH.repo) + '</code> trên GitHub.</b><br>' +
-        'File này <b>tách hẳn</b> khỏi file tiến độ học, nên phiên học của con không bao giờ ghi đè lên được.<br>' +
-        '👉 Mỗi lần sửa là một commit — vào tab <b>History</b> của file trên GitHub là xem lại được mọi bản cũ và khôi phục bất cứ lúc nào.</div>'
+      ? '<div class="tip" style="margin-bottom:0"><b>Nơi lưu: dòng <code>video</code> trong kho dữ liệu Supabase.</b><br>' +
+        'Dòng này <b>tách hẳn</b> khỏi dòng tiến độ học, nên phiên học của con không bao giờ ghi đè lên được.<br>' +
+        '👉 Sửa xong là lưu ngay, mọi thiết bị mở lên đều thấy cùng một danh sách.</div>'
       : '<div class="warn" style="margin-bottom:0"><b>Đang lưu tạm trong trình duyệt của thiết bị này</b> — ' +
-        'chưa kết nối GitHub.<br>Nghĩa là link chỉ có trên máy này, và sẽ mất nếu xoá dữ liệu duyệt web. ' +
-        'Vào <b>⚙️ Cài đặt → ☁️ Kho dữ liệu GitHub</b> để nhập mã kết nối.<br>' +
+        'chưa kết nối kho dữ liệu.<br>Nghĩa là link chỉ có trên máy này, và sẽ mất nếu xoá dữ liệu duyệt web. ' +
+        'Vào <b>⚙️ Cài đặt → ☁️ Kho dữ liệu</b> để khai báo kết nối.<br>' +
         'Trong lúc chờ, bấm <b>Xuất ra file</b> bên dưới để giữ lại một bản.</div>');
     h += '<div class="row" style="margin-top:14px">' +
       '<button class="btn ghost" id="v-xuat">⬇ Xuất danh sách video ra file</button>' +
@@ -20415,38 +20558,147 @@ var BAN_WEB = '2026-08-06.4';
       '<button class="btn sm ' + (s.amThanh !== false ? '' : 'ghost') + '" data-am="1">🔊 Bật</button>' +
       '<button class="btn sm ' + (s.amThanh === false ? '' : 'ghost') + '" data-am="0">🔇 Tắt</button></div></div>';
 
-    var ghOn = C.saveMode() === 'github';
-    h += '<div class="card"><h2 class="sec" style="margin-top:0">☁️ Kho dữ liệu GitHub</h2>';
-    h += '<p class="muted">Repo: <code>' + esc(C.GH.owner) + '/' + esc(C.GH.repo) + '</code> · Trạng thái thiết bị này: <b style="color:var(--' +
+    var ghOn = C.saveMode() === 'sup';
+    var cfg = C.cauHinh() || { url: '', key: '', ma: '' };
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">☁️ Kho dữ liệu (Supabase)</h2>';
+    h += '<p class="muted">Trạng thái thiết bị này: <b style="color:var(--' +
       (ghOn ? 'ok' : 'no') + ')">' + (ghOn ? '✔ Đã kết nối — dùng chung mọi thiết bị' : '⚠️ Chưa kết nối — chỉ lưu trong trình duyệt này') + '</b></p>';
+    if (ghOn) {
+      h += '<p class="muted">Dự án: <code>' + esc(cfg.url.replace(/^https?:\/\//, '')) + '</code><br>' +
+        'Mã lớp học: <code>' + esc(cfg.ma) + '</code> <span style="color:var(--no)">— mã này là chìa khoá vào dữ liệu của con, đừng đăng lên chỗ công khai.</span></p>';
+    }
     h += '<div class="row" style="margin-top:12px">' +
-      '<button class="btn sm ghost" id="cd-ghdoi">' + (ghOn ? 'Đổi mã kết nối' : 'Nhập mã kết nối') + '</button>' +
-      (ghOn ? '<button class="btn sm ghost" id="cd-ghday">Đẩy lên ngay</button>' +
-              '<button class="btn sm ghost" id="cd-ghxoa" style="color:var(--no);border-color:#fbd5d5">Gỡ mã khỏi máy này</button>' : '') +
+      '<button class="btn sm ghost" id="cd-ghdoi">' + (ghOn ? 'Đổi kết nối' : 'Khai báo kết nối') + '</button>' +
+      (ghOn ? '<button class="btn sm ghost" id="cd-ghlink">🔗 Tạo link cài đặt cho máy khác</button>' +
+              '<button class="btn sm ghost" id="cd-ghday">Đẩy lên ngay</button>' +
+              '<button class="btn sm ghost" id="cd-ghnap">⬆️ Nạp dữ liệu cũ từ GitHub</button>' +
+              '<input type="file" id="cd-ghfile" accept=".json,application/json" multiple style="display:none">' +
+              '<button class="btn sm ghost" id="cd-ghxoa" style="color:var(--no);border-color:#fbd5d5">Gỡ kết nối khỏi máy này</button>' : '') +
+      '<button class="btn sm ghost" id="cd-ghsql">📋 Xem đoạn SQL tạo bảng</button>' +
       '</div>';
-    h += '<p class="muted" style="margin-top:10px">Mỗi lần lưu là một commit trên GitHub, nên <b>toàn bộ lịch sử đều lấy lại được</b>. ' +
-      'Ngoài ra máy tự chụp thêm một bản mỗi ngày vào thư mục <code>sao-luu/</code> của repo.</p></div>';
+    h += '<p class="muted" id="cd-ghmsg" style="margin-top:10px"></p>';
+    h += '<p class="muted" style="margin-top:6px">Mỗi lần con làm xong một câu là dữ liệu bay thẳng lên Supabase trong khoảng một giây, ' +
+      'không phải chờ như hồi lưu bằng GitHub. Máy vẫn tự chụp thêm một bản sao lưu mỗi ngày ' +
+      '(dòng <code>sao-luu…</code> trong bảng), và bản trên GitHub cũ vẫn còn nguyên để làm bản dự phòng.</p></div>';
 
     h += '<div class="card"><h2 class="sec" style="margin-top:0">💾 Dữ liệu</h2><div class="row">' +
       '<button class="btn ghost" id="cd-xuat">Tải file sao lưu</button>' +
       '<button class="btn ghost" id="cd-xoa" style="color:var(--no);border-color:#fbd5d5">Xoá toàn bộ tiến độ</button></div>';
-    h += '<p class="muted" style="margin-top:10px">Nút trên tải một bản JSON về máy — dùng khi muốn giữ bản rời ngoài GitHub.</p></div>';
+    h += '<p class="muted" style="margin-top:10px">Nút trên tải một bản JSON về máy — dùng khi muốn giữ bản rời ngoài đám mây.</p></div>';
 
     el('pg-caidat').innerHTML = h;
 
+    function ghMsg(t, xanh) {
+      var n = el('cd-ghmsg'); if (n) n.innerHTML = '<span style="color:var(--' + (xanh ? 'ok' : 'no') + ')">' + t + '</span>';
+    }
+
     if (el('cd-ghdoi')) el('cd-ghdoi').addEventListener('click', function () {
-      var t = prompt('Dán mã Personal Access Token của GitHub:');
-      if (t === null) return;
-      C.thuToken(t.trim()).then(function (kq) {
-        if (kq.ok) { alert('✔ Kết nối được. Trang sẽ tải lại.'); location.reload(); }
-        else alert('⚠️ ' + kq.loi);
+      var c0 = C.cauHinh() || { url: '', key: '', ma: '' };
+      var url = prompt('1/3 · Project URL của dự án Supabase:', c0.url || 'https://');
+      if (url === null) return;
+      var key = prompt('2/3 · Publishable key (sb_publishable_…). Tuyệt đối KHÔNG dùng secret key:', c0.key || '');
+      if (key === null) return;
+      var ma = prompt('3/3 · Mã lớp học (giống hệt trên mọi máy). Để trống sẽ tự sinh mã mới:', c0.ma || '');
+      if (ma === null) return;
+      if (!ma.trim()) ma = C.taoMaLop();
+      ghMsg('⏳ Đang kiểm tra…', true);
+      C.thuKetNoi({ url: url, key: key, ma: ma }).then(function (kq) {
+        if (kq.ok) { alert('✔ Kết nối được.\nMã lớp học: ' + ma.trim() + '\n\nTrang sẽ tải lại.'); location.reload(); }
+        else ghMsg('⚠️ ' + kq.loi);
       });
     });
-    if (el('cd-ghday')) el('cd-ghday').addEventListener('click', function () {
-      C.luuNgay(); C.luuVideo(); alert('Đã đẩy tiến độ và kho video lên GitHub.');
+
+    if (el('cd-ghlink')) el('cd-ghlink').addEventListener('click', function () {
+      var lk = C.taoLinkCaiDat();
+      if (!lk) return;
+      function xong() {
+        ghMsg('✔ Đã chép link cài đặt. Gửi sang máy tính bảng của con, mở một lần là máy đó tự nối vào đúng kho dữ liệu này. ' +
+          '<b style="color:var(--no)">Link có chứa khoá và mã lớp — chỉ gửi riêng, đừng đăng công khai.</b>', true);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(lk).then(xong, function () { prompt('Chép link này rồi mở trên máy kia:', lk); });
+      } else prompt('Chép link này rồi mở trên máy kia:', lk);
     });
+
+    if (el('cd-ghday')) el('cd-ghday').addEventListener('click', function () {
+      C.luuNgay(); C.luuVideo();
+      ghMsg('✔ Đã đẩy tiến độ, kho video và nhật ký lên Supabase.', true);
+    });
+
+    if (el('cd-ghsql')) el('cd-ghsql').addEventListener('click', function () {
+      var sql = C.SQL_MAU;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(sql).then(function () {
+          ghMsg('✔ Đã chép đoạn SQL. Vào <b>supabase.com → dự án → SQL Editor</b>, dán vào rồi bấm <b>Run</b>.', true);
+        }, function () { prompt('Chép đoạn SQL này, dán vào Supabase → SQL Editor rồi bấm Run:', sql); });
+      } else prompt('Chép đoạn SQL này, dán vào Supabase → SQL Editor rồi bấm Run:', sql);
+    });
+
+    /* ---- nạp lại dữ liệu cũ tải về từ repo toanlop4-data ---- */
+    if (el('cd-ghnap')) el('cd-ghnap').addEventListener('click', function () { el('cd-ghfile').click(); });
+    if (el('cd-ghfile')) el('cd-ghfile').addEventListener('change', function (ev) {
+      var fs = Array.prototype.slice.call(ev.target.files || []);
+      ev.target.value = '';
+      if (!fs.length) return;
+      if (!confirm('Sẽ nạp ' + fs.length + ' file vào kho Supabase.\n\n' +
+        '· tien-do.json và video.json sẽ GHI ĐÈ dữ liệu đang có trên đám mây.\n' +
+        '· các file nhật ký (2026-07.json…) sẽ được GỘP, không mất bản ghi nào.\n\nTiếp tục?')) return;
+
+      C.ngungLuu();          /* từ giây phút này, máy này không đẩy gì lên nữa */
+      ghMsg('⏳ Đang đọc file…', true);
+      Promise.all(fs.map(function (f) {
+        return new Promise(function (ok) {
+          var r = new FileReader();
+          r.onload = function () {
+            var d = null;
+            try { d = JSON.parse(r.result); } catch (e) { }
+            ok({ ten: f.name, data: d });
+          };
+          r.onerror = function () { ok({ ten: f.name, data: null }); };
+          r.readAsText(f);
+        });
+      })).then(function (ds) {
+        var viec = [], bao = [];
+        ds.forEach(function (x) {
+          if (!x.data) { bao.push('✗ ' + x.ten + ' — không đọc được'); return; }
+          var t = x.ten;
+          if (/^tien-do\.json$/i.test(t)) viec.push({ f: 'tien-do.json', d: x.data, n: 'tiến độ học' });
+          else if (/^video\.json$/i.test(t)) viec.push({ f: 'video.json', d: x.data, n: 'kho video (' + Object.keys(x.data).length + ' bài)' });
+          else if (/^(\d{4}-\d{2})\.json$/i.test(t)) {
+            var th = t.replace(/\.json$/i, '');
+            viec.push({ f: 'nhat-ky/' + th + '.json', d: x.data, n: 'nhật ký ' + th + ' (' + (x.data.length || 0) + ' câu)', gop: 1 });
+          } else if (/^tien-do-(\d{4}-\d{2}-\d{2})\.json$/i.test(t)) {
+            viec.push({ f: 'sao-luu/' + t, d: x.data, n: 'bản sao lưu ' + t.replace(/^tien-do-|\.json$/gi, '') });
+          } else bao.push('✗ ' + t + ' — không nhận ra tên file, bỏ qua');
+        });
+        if (!viec.length) { ghMsg(bao.join('<br>') || '⚠️ Không có file nào hợp lệ.'); return; }
+
+        return viec.reduce(function (p, v) {
+          return p.then(function () {
+            ghMsg('⏳ Đang đẩy ' + v.n + '…', true);
+            if (!v.gop) return C.supGhi(v.f, v.d).then(function () { bao.push('✔ ' + v.n); });
+            /* nhật ký: gộp theo id để không đè mất câu đã học trên máy khác */
+            return C.supDoc(v.f).then(function (cu) {
+              var thay = {}, ra = [];
+              (cu.data || []).concat(v.d || []).forEach(function (e) {
+                if (!e || !e.id || thay[e.id]) return;
+                thay[e.id] = 1; ra.push(e);
+              });
+              ra.sort(function (a, b) { return a.t - b.t; });
+              return C.supGhi(v.f, ra).then(function () { bao.push('✔ ' + v.n + ' → còn ' + ra.length + ' câu sau khi gộp'); });
+            });
+          }).catch(function (e) { bao.push('✗ ' + v.n + ' — lỗi: ' + (e && e.message ? e.message : e)); });
+        }, Promise.resolve()).then(function () {
+          /* xoá bản cũ trong máy để lúc tải lại chắc chắn lấy bản trên đám mây */
+          try { localStorage.removeItem('cautaoso_v2'); localStorage.removeItem('cautaoso_v1'); localStorage.removeItem('cautaoso_video'); localStorage.removeItem('cts_nhatky'); } catch (e) { }
+          ghMsg(bao.join('<br>') + '<br><b>Xong. Bấm OK để tải lại trang.</b>', true);
+          setTimeout(function () { alert('Đã nạp xong dữ liệu cũ. Trang sẽ tải lại.'); location.reload(); }, 300);
+        });
+      });
+    });
+
     if (el('cd-ghxoa')) el('cd-ghxoa').addEventListener('click', function () {
-      if (!confirm('Gỡ mã kết nối khỏi thiết bị này? Từ sau máy này sẽ không đồng bộ nữa cho tới khi nhập lại mã.')) return;
+      if (!confirm('Gỡ kết nối khỏi thiết bị này? Từ sau máy này sẽ không đồng bộ nữa cho tới khi khai báo lại.')) return;
       C.xoaToken(); location.reload();
     });
 
