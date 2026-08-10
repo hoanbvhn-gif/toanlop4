@@ -183,6 +183,22 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 .nk-tbl td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .nk-tbl tr.sai td{background:#fff6f6}
 .nk-de{color:var(--ink2);font-size:12.5px;display:block;margin-top:2px;line-height:1.35}
+.nk-dedu{white-space:pre-wrap;color:var(--ink);background:#fbfaff;border-left:3px solid var(--pri-l);
+  border-radius:0 6px 6px 0;padding:5px 8px;margin-top:5px}
+.nk-da{margin-top:5px}
+.nk-chua{color:#a79fc4;font-style:italic}
+.nk-giai{margin-top:6px;border:1px solid var(--line);border-radius:8px;background:#fcfcff}
+.nk-giai>summary{cursor:pointer;padding:5px 9px;font-size:12.5px;font-weight:800;color:var(--pri-d);
+  list-style:none;user-select:none}
+.nk-giai>summary::-webkit-details-marker{display:none}
+.nk-giai>summary::before{content:'▸ ';font-weight:900}
+.nk-giai[open]>summary::before{content:'▾ '}
+.nk-giai>div{white-space:pre-wrap;font-size:12.5px;line-height:1.5;color:var(--ink);
+  padding:2px 10px 9px;border-top:1px solid var(--line)}
+.nk-mode{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.nk-ngaydau{margin:18px 0 0;font-size:14px;color:var(--pri-d);border-top:2px solid var(--pri-l);padding-top:8px}
+.nk-ngaydau:first-of-type{margin-top:6px;border-top:0;padding-top:0}
+.nk-ngaydau span{font-weight:600;color:var(--ink2);font-size:12.5px}
 .nk-k{display:inline-block;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:800;white-space:nowrap}
 .nk-k.lt{background:var(--pri-l);color:var(--pri-d)}
 .nk-k.tron{background:#efe6ff;color:#6b3fd6}
@@ -659,7 +675,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-10.sup1';
+var BAN_WEB = '2026-08-10.sup3';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -853,11 +869,24 @@ var BAN_WEB = '2026-08-10.sup1';
   function docCauHinh() {
     try { return JSON.parse(localStorage.getItem(SUP_KEY) || 'null'); } catch (e) { return null; }
   }
+  /* Mã lớp học -> dạng an toàn để làm tên dòng: bỏ dấu tiếng Việt, bỏ dấu cách,
+     về chữ thường. "Lớp 4" -> "lop-4". Chuẩn hoá để hai máy gõ hơi khác nhau
+     (có dấu / không dấu / hoa thường) vẫn vào đúng một kho. */
+  function chuanMa(x) {
+    x = String(x || '').trim().toLowerCase();
+    try { x = x.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) { }
+    x = x.replace(/đ/g, 'd');
+    return x.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  CTS.chuanMa = chuanMa;
+
   function chuanHoa(c) {
     if (!c) return null;
-    var url = String(c.url || '').trim().replace(/\/+$/, '');
+    var url = String(c.url || '').trim();
+    /* bố hay dán nguyên địa chỉ API kèm đuôi /rest/v1 — cắt bỏ cho đúng gốc dự án */
+    url = url.replace(/[?#].*$/, '').replace(/\/+$/, '').replace(/\/rest\/v1(\/.*)?$/i, '').replace(/\/+$/, '');
     var key = String(c.key || '').trim();
-    var ma = String(c.ma || '').trim();
+    var ma = chuanMa(c.ma);
     if (!url || !key || !ma) return null;
     if (!/^https?:\/\//.test(url)) url = 'https://' + url;
     return { url: url, key: key, ma: ma };
@@ -1087,7 +1116,8 @@ var BAN_WEB = '2026-08-10.sup1';
     return ra;
   }
 
-  /* ghi nhận một câu — gọi từ lúc bé bấm Kiểm tra */
+  /* ghi nhận một câu — gọi từ lúc bé bấm Kiểm tra. Trả về mã của bản ghi
+     để bên ngoài gắn thêm đề đầy đủ + lời giải vào KHO BÀI (xem phần dưới). */
   CTS.ghiNhatKy = function (e) {
     e.id = 'Q' + e.t.toString(36) + Math.floor(Math.random() * 1e6).toString(36);
     var th = thangCua(e.t);
@@ -1095,9 +1125,11 @@ var BAN_WEB = '2026-08-10.sup1';
     NK[th].push(e);
     NKban[th] = true;
     nkLuuTam();
-    if (saveMode !== 'sup') return;
-    clearTimeout(NKtimer);
-    NKtimer = setTimeout(function () { nkDay(false); }, NK_NHIP_DAY);
+    if (saveMode === 'sup') {
+      clearTimeout(NKtimer);
+      NKtimer = setTimeout(function () { nkDay(false); }, NK_NHIP_DAY);
+    }
+    return e.id;
   };
 
   CTS.nhatKy = function (th) { return NK[th] || []; };
@@ -1149,6 +1181,13 @@ var BAN_WEB = '2026-08-10.sup1';
     var chuoi = ds.reduce(function (p, th) {
       return p.then(function () {
         NKban[th] = false;
+        /* chưa biết dấu phiên bản (vừa mở lại web) → đọc một nhịp cho biết,
+           đỡ phải đâm vào lỗi trùng khoá rồi mới quay ra đọc */
+        var sanSang = NKsha[th] === undefined
+          ? doc(fileNK(th)).then(function (d) { NKsha[th] = d.sha; NK[th] = gop(d.data || [], NK[th] || []); })
+              .catch(function () { })
+          : Promise.resolve();
+        return sanSang.then(function () {
         var muon = NK[th];
         return ghi(fileNK(th), muon, NKsha[th], 'Nhật ký ' + th + ' (' + muon.length + ' câu)', keepalive)
           .then(function (sha) {
@@ -1162,6 +1201,7 @@ var BAN_WEB = '2026-08-10.sup1';
             });
           })
           .catch(function () { NKban[th] = true; });
+        });
       });
     }, Promise.resolve());
 
@@ -1174,6 +1214,166 @@ var BAN_WEB = '2026-08-10.sup1';
       .catch(function () { return xong(false); });
   }
   CTS.dayNhatKy = function () { clearTimeout(NKtimer); return nkDay(false); };
+
+  /* =========================================================
+     KHO BÀI — đề bài đầy đủ + lời giải từng bước của mỗi câu
+
+     Vì sao tách khỏi nhật ký: đo trên toàn bộ 212 dạng thì đề trung vị 139 ký tự
+     nhưng lời giải trung vị 808, cá biệt tới 2.717 (chuyên đề 13 suy luận logic).
+     Nhét chung vào nhật ký thì mỗi tháng phồng lên gần 2 MB, mà nhật ký lại đẩy
+     lên đám mây 1,5 giây một lần để bố xem trực tiếp — máy tính bảng sẽ ì.
+
+     Nên: nhật ký giữ phần NHẸ (giờ, dạng, đúng/sai, con viết gì, đáp án) đẩy tức
+     thì; còn đề + lời giải cất theo TỪNG NGÀY, đẩy thưa hơn (20 giây một lần và
+     lúc đóng tab), và chỉ tải về khi bố mở đúng ngày đó ra xem.
+       bai/2026-08-10.json  ->  dòng <ma>__bai__2026-08-10
+       nội dung: { "<mã câu>": { de: "đề đầy đủ", gi: "lời giải" } }
+     ========================================================= */
+  var BAI = {};        /* 'YYYY-MM-DD' -> { id: {de, gi} } */
+  var BAIsha = {}, BAIban = {}, BAItimer = null, BAIdangGhi = false, BAIcho = false;
+  var BAI_NHIP = 20000;
+  var BAI_LOCAL = 'cts_nk_bai';
+
+  function fileBai(ng) { return 'bai/' + ng + '.json'; }
+  function ngayCua(t) {
+    var d = new Date(t);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+  CTS.ngayCua = ngayCua;
+
+  function baiLuuTam() {
+    /* giữ tạm trong máy, nhưng chỉ 10 ngày gần nhất kẻo chật localStorage */
+    try {
+      var k = Object.keys(BAI).sort().slice(-10), g = {};
+      k.forEach(function (x) { g[x] = BAI[x]; });
+      localStorage.setItem(BAI_LOCAL, JSON.stringify(g));
+    } catch (e) { }
+  }
+  function baiDocTam() {
+    try { return JSON.parse(localStorage.getItem(BAI_LOCAL)) || {}; } catch (e) { return {}; }
+  }
+
+  /* ghi đề + lời giải của một câu */
+  CTS.ghiBai = function (id, t, de, gi) {
+    if (!id) return;
+    var ng = ngayCua(t);
+    if (!BAI[ng]) BAI[ng] = {};
+    BAI[ng][id] = { de: String(de || ''), gi: String(gi || '') };
+    BAIban[ng] = true;
+    baiLuuTam();
+    if (saveMode !== 'sup') return;
+    clearTimeout(BAItimer);
+    BAItimer = setTimeout(function () { baiDay(false); }, BAI_NHIP);
+  };
+
+  CTS.baiCua = function (ng) { return BAI[ng] || null; };
+  CTS.baiTheoId = function (t, id) {
+    var m = BAI[ngayCua(t)];
+    return (m && m[id]) || null;
+  };
+
+  /* tải kho bài của một ngày về (gộp, không đè mất phần đang có trong máy) */
+  CTS.napBai = function (ng) {
+    if (BAI[ng] && !BAIban[ng] && BAIsha[ng] !== undefined) return Promise.resolve(BAI[ng]);
+    if (saveMode !== 'sup') return Promise.resolve(BAI[ng] || {});
+    return doc(fileBai(ng)).then(function (d) {
+      BAIsha[ng] = d.sha;
+      var cu = d.data || {}, moi = BAI[ng] || {};
+      Object.keys(moi).forEach(function (k) { cu[k] = moi[k]; });
+      BAI[ng] = cu;
+      baiLuuTam();
+      return BAI[ng];
+    }).catch(function () { return BAI[ng] || {}; });
+  };
+
+  function baiDay(keepalive) {
+    if (ngungLuu) return Promise.resolve(false);
+    if (saveMode !== 'sup') return Promise.resolve(false);
+    if (BAIdangGhi) { BAIcho = true; return Promise.resolve(false); }
+    var ds = Object.keys(BAIban).filter(function (k) { return BAIban[k]; });
+    if (!ds.length) return Promise.resolve(true);
+    BAIdangGhi = true;
+
+    var chuoi = ds.reduce(function (p, ng) {
+      return p.then(function () {
+        BAIban[ng] = false;
+        var sanSang = BAIsha[ng] === undefined
+          ? doc(fileBai(ng)).then(function (d) {
+              BAIsha[ng] = d.sha;
+              var cu = d.data || {}, moi = BAI[ng] || {};
+              Object.keys(moi).forEach(function (k) { cu[k] = moi[k]; });
+              BAI[ng] = cu;
+            }).catch(function () { })
+          : Promise.resolve();
+        return sanSang.then(function () {
+        return ghi(fileBai(ng), BAI[ng], BAIsha[ng], '', keepalive).then(function (sha) {
+          if (sha) { BAIsha[ng] = sha; return; }
+          /* máy khác vừa ghi xen vào → lấy về, gộp rồi ghi lại */
+          return doc(fileBai(ng)).then(function (d) {
+            var cu = d.data || {}, moi = BAI[ng] || {};
+            Object.keys(moi).forEach(function (k) { cu[k] = moi[k]; });
+            BAI[ng] = cu; BAIsha[ng] = d.sha;
+            return ghi(fileBai(ng), BAI[ng], d.sha, '', keepalive).then(function (s2) {
+              if (s2) BAIsha[ng] = s2; else BAIban[ng] = true;
+            });
+          });
+        }).catch(function () { BAIban[ng] = true; });
+        });
+      });
+    }, Promise.resolve());
+
+    function xong(kq) {
+      BAIdangGhi = false; baiLuuTam();
+      if (BAIcho) { BAIcho = false; baiDay(false); }
+      return kq;
+    }
+    return chuoi.then(function () { return xong(true); }).catch(function () { return xong(false); });
+  }
+  CTS.dayBai = function () { clearTimeout(BAItimer); return baiDay(false); };
+
+  /* ---------- hỏi đám mây xem có những tháng nào / những ngày nào ----------
+     Dùng bộ lọc "like" của PostgREST: một lần gọi là ra hết tên dòng, khỏi phải
+     đoán mò từng tháng. Nhờ vậy mục "Tất cả các câu" mới dám hứa không bỏ sót. */
+  function dsDong(duoi) {
+    if (saveMode !== 'sup' || !SUP) return Promise.resolve([]);
+    return sb('GET', '?id=like.' + q(SUP.ma + '__' + duoi + '__*') + '&select=id', null, null)
+      .then(function (r) {
+        if (!r.ok) return [];
+        return r.json().then(function (j) {
+          return (j || []).map(function (x) {
+            return String(x.id).slice((SUP.ma + '__' + duoi + '__').length);
+          }).filter(Boolean);
+        });
+      }).catch(function () { return []; });
+  }
+  CTS.dsThangCloud = function () {
+    return dsDong('nhat-ky').then(function (a) {
+      return a.filter(function (x) { return /^\d{4}-\d{2}$/.test(x); }).sort().reverse();
+    });
+  };
+  CTS.dsNgayBai = function () {
+    return dsDong('bai').then(function (a) {
+      return a.filter(function (x) { return /^\d{4}-\d{2}-\d{2}$/.test(x); }).sort().reverse();
+    });
+  };
+
+  /* nạp nhật ký của MỌI tháng — dùng cho mục "Tất cả các câu" */
+  CTS.napMoiThang = function () {
+    return CTS.dsThangCloud().then(function (ds) {
+      Object.keys(NK).forEach(function (k) { if (ds.indexOf(k) < 0) ds.push(k); });
+      if (ds.indexOf(CTS.thangNay()) < 0) ds.push(CTS.thangNay());
+      return ds.reduce(function (p, th) {
+        return p.then(function () { return CTS.napThang(th); });
+      }, Promise.resolve()).then(function () { return ds.sort().reverse(); });
+    });
+  };
+  CTS.tatCaCau = function () {
+    var ra = [];
+    Object.keys(NK).forEach(function (th) { ra = ra.concat(NK[th] || []); });
+    ra.sort(function (a, b) { return b.t - a.t; });
+    return ra;
+  };
 
   /* ---------- kéo dữ liệu CŨ (trước khi có nhật ký) vào cho đỡ trống ----------
      · 22 câu trong sổ lỗi: có đủ ngày giờ, đề bài, con viết gì, đáp án — chỉ thiếu số giây
@@ -1237,7 +1437,7 @@ var BAN_WEB = '2026-08-10.sup1';
       state = diTru(raw);
       if (rv && Object.keys(rv).length) state.video = rv;
       if (!state.video) state.video = {};
-      NK = nkDocTam();
+      NK = nkDocTam(); BAI = baiDocTam();
       if (!state.nkKeoCu) { CTS.keoDuLieuCu(); state.nkKeoCu = 1; }
       cb();
     }
@@ -1252,6 +1452,8 @@ var BAN_WEB = '2026-08-10.sup1';
 
       /* nhật ký: gộp bản trên đám mây với bản còn kẹt trong máy này (lúc mất mạng) */
       var tam = nkDocTam();
+      BAI = baiDocTam(); BAIsha = {}; BAIban = {};
+      Object.keys(BAI).forEach(function (k) { if (Object.keys(BAI[k] || {}).length) BAIban[k] = true; });
       NK = {}; NKsha = {}; NKban = {};
       Object.keys(tam).forEach(function (k) { NK[k] = tam[k] || []; });
       NKsha[thNay] = nk.sha;
@@ -1276,6 +1478,7 @@ var BAN_WEB = '2026-08-10.sup1';
       if (!v.data && Object.keys(state.video).length) CTS.luuVideo();
       if (!state.nkKeoCu) { CTS.keoDuLieuCu(); state.nkKeoCu = 1; CTS.luu(); }
       if (Object.keys(NKban).length) nkDay(false);
+      if (Object.keys(BAIban).length) baiDay(false);
       cb();
     }).catch(function () {
       ngoaiTuyen();
@@ -1354,6 +1557,8 @@ var BAN_WEB = '2026-08-10.sup1';
     goiLen(true);
     clearTimeout(NKtimer);
     nkDay(true);
+    clearTimeout(BAItimer);
+    baiDay(true);
   };
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'hidden') CTS.luuNgay();
@@ -18836,6 +19041,20 @@ var BAN_WEB = '2026-08-10.sup1';
     el('btn-skip').addEventListener('click', function () { kiemTra(true); });
   }
 
+  /* bóc thẻ HTML, giữ xuống dòng cho lời giải đọc được như trên màn hình */
+  function thoHtml(x) {
+    return String(x || '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|li|tr|h[1-6])>/gi, '\n')
+      .replace(/<li[^>]*>/gi, '• ')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/ *\n */g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
   function docSo(s, giuThuTu) {
     var a = (s || '').split(/[^0-9]+/).filter(function (x) { return x !== ''; }).map(Number);
     return giuThuTu ? a : a.sort(function (x, y) { return x - y; });
@@ -18861,17 +19080,24 @@ var BAN_WEB = '2026-08-10.sup1';
       : (q.laGoc ? 'goc'
         : (q.loiId ? 'bs'
           : (q.laiSau ? 'lai' : '')));
+    var deDay = thoHtml(q.de);
+    var giDay = thoHtml(q.sol);
     var bn = {
       t: Date.now(), gy: gy,
       cd: q.cd, d: q.dang, dt: q.tenDang || '', bai: q.bai || 0,
       ok: ok ? 1 : 0, k: loai,
-      de: String(q.de || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220),
-      da: (q.hienDapAn || dung.join(' ; ')).slice(0, 60)
+      /* đề rút gọn để khung theo dõi trực tiếp nhẹ; bản đầy đủ nằm ở KHO BÀI */
+      de: deDay.slice(0, 200),
+      da: String(q.hienDapAn || dung.join(' ; ')).slice(0, 200)
     };
     if (nhan) bn.n = nhan;
     if (boQua) bn.bq = 1;
-    if (!ok) bn.tl = String(inp.value || '').trim().slice(0, 40);
-    C.ghiNhatKy(bn);
+    /* con viết gì thì ghi cho MỌI câu, kể cả câu đúng — để bố soi được bé
+       viết đủ số hay thiếu số, viết đúng thứ tự hay không */
+    bn.tl = String(inp.value || '').trim().slice(0, 200);
+    var maCau = C.ghiNhatKy(bn);
+    /* đề đầy đủ + lời giải từng bước, cất riêng theo ngày */
+    C.ghiBai(maCau, bn.t, deDay, giDay);
     /* ghi vào SỔ LỖI — trừ khi đang sửa chính câu đó (đã có sẵn trong sổ rồi) */
     if (!ok && !(p.sualoi && q.loiId)) C.ghiLoi(q, inp.value, p.thi);
     if (p.sualoi) {
@@ -19615,6 +19841,12 @@ var BAN_WEB = '2026-08-10.sup1';
      · 📅 Theo ngày  — mỗi ngày một dòng, bấm vào mới bung chi tiết
      ========================================================= */
   var nkThang = null, nkLoc = { cd: '', k: '', chi: '' }, nkDangTai = false;
+  var nkCheDo = 'ngay';           /* 'ngay' = theo ngày · 'tatca' = liệt kê hết mọi câu */
+  var nkSoHien = 200;             /* ở mục Tất cả, mỗi lần hiện bấy nhiêu dòng */
+  var nkDaTaiHet = false;         /* đã kéo hết mọi tháng về chưa */
+  var nkBaiDaTai = {};            /* 'YYYY-MM-DD' -> 1 nếu đã tải kho bài của ngày đó */
+  var nkBaiHangDoi = [];          /* những ngày đang xếp hàng chờ tải kho bài */
+  var nkDangTaiBai = false;
   var nkNgayChon = null;          /* toDateString() của ngày đang mở chi tiết */
   var nkTheoDoi = true;           /* có đang bật theo dõi trực tiếp không */
   var nkHen = null;               /* setInterval của khung trực tiếp */
@@ -19709,12 +19941,63 @@ var BAN_WEB = '2026-08-10.sup1';
         (e.n ? '<br><span class="muted" style="font-size:11px">' + NK_NHAN[e.n] + '</span>' : '') + '</td>';
       h += '<td><b>' + esc(e.dt || e.d) + '</b> <span class="muted">' +
         (cd ? cd.icon + ' ' + esc(cd.tenNgan) : '') + '</span>';
-      if (e.de && !gonNhe) h += '<span class="nk-de">' + esc(e.de) + '</span>';
-      if (!e.ok && !e.bq) h += '<span class="nk-de">Con viết: <b style="color:var(--no)">' +
-        esc(e.tl || '(bỏ trống)') + '</b> · Đáp án: <b style="color:var(--ok)">' + esc(e.da || '') + '</b></span>';
+
+      /* ĐỀ BÀI — lấy bản đầy đủ trong kho bài nếu đã tải về, không thì dùng bản rút gọn */
+      var kb = (!e.cu && !e.bu) ? C.baiTheoId(e.t, e.id) : null;
+      var deHien = (kb && kb.de) || e.de || '';
+      if (deHien && !gonNhe) h += '<span class="nk-de nk-dedu">' + esc(deHien) + '</span>';
+
+      /* CON VIẾT / ĐÁP ÁN — hiện cho MỌI câu, đúng cũng như sai */
+      if (!e.bu) {
+        var viet = (e.tl === undefined || e.tl === '') ? (e.ok ? e.da : '(bỏ trống)') : e.tl;
+        h += '<span class="nk-de nk-da">' +
+          (e.bq ? '<b class="muted">Con bỏ qua</b>'
+            : 'Con viết: <b style="color:var(--' + (e.ok ? 'ok' : 'no') + ')">' + esc(viet) + '</b>') +
+          ' · Đáp án: <b style="color:var(--ok)">' + esc(e.da || '—') + '</b></span>';
+      }
+
+      /* LỜI GIẢI — gấp lại, bấm mới bung, khỏi rối bảng */
+      if (kb && kb.gi) {
+        h += '<details class="nk-giai"><summary>📖 Lời giải từng bước</summary><div>' +
+          esc(kb.gi) + '</div></details>';
+      } else if (!e.cu && !e.bu && !gonNhe) {
+        h += '<span class="nk-de nk-chua">' + (nkDangTaiBai
+          ? '⏳ đang tải lời giải…'
+          : '📖 câu này chưa có lời giải lưu kèm (làm trước khi web có tính năng này)') + '</span>';
+      }
       h += '</td></tr>';
     });
     return h + '</table></div>';
+  }
+
+  /* ---------- tự kéo về đề bài + lời giải của những ngày đang hiện trên màn ----------
+     Chỉ gọi máy chủ một lần cho mỗi ngày, gọi xong mới vẽ lại. Nhờ cờ nkBaiDaTai
+     nên dù veNhatKy() chạy lại nhiều lần cũng không gọi trùng, không lặp vô tận. */
+  function nkNapBaiCho(ds) {
+    if (C.saveMode() !== 'sup') return;
+    (ds || []).forEach(function (e) {
+      if (e.cu || e.bu || !e.id) return;
+      var ng = C.ngayCua(e.t);
+      if (nkBaiDaTai[ng] || nkBaiHangDoi.indexOf(ng) >= 0) return;
+      nkBaiHangDoi.push(ng);
+    });
+    nkChayHangDoi();
+  }
+
+  /* chạy hàng đợi cho tới khi hết ngày cần tải, xong mới vẽ lại MỘT lần.
+     Vẽ lại giữa chừng sẽ nạp thêm ngày mới vào hàng đợi — vòng lặp tự nuốt tiếp. */
+  function nkChayHangDoi() {
+    if (nkDangTaiBai || !nkBaiHangDoi.length) return;
+    nkDangTaiBai = true;
+    var lo = nkBaiHangDoi.splice(0, nkBaiHangDoi.length);
+    lo.forEach(function (ng) { nkBaiDaTai[ng] = 1; });
+    lo.reduce(function (p, ng) {
+      return p.then(function () { return C.napBai(ng); }).catch(function () { });
+    }, Promise.resolve()).then(function () {
+      nkDangTaiBai = false;
+      if (nkBaiHangDoi.length) { nkChayHangDoi(); return; }
+      if (!el('pg-nhatky').classList.contains('hide')) veNhatKy();
+    });
   }
 
   /* ---------- gom nhật ký thành từng ngày ---------- */
@@ -19838,23 +20121,41 @@ var BAN_WEB = '2026-08-10.sup1';
   function veNhatKy() {
     var s = st();
     var th = nkThang || C.thangNay();
-    var ds = C.nhatKy(th);
+    var tatCa = nkCheDo === 'tatca';
+    var ds = tatCa ? C.tatCaCau() : C.nhatKy(th);
     var dsThang = C.thangCoNhatKy();
     if (dsThang.indexOf(th) < 0) dsThang.unshift(th);
 
     var h = '<h2 class="sec">⏱️ Nhật ký từng câu</h2>';
 
+    /* ----- chọn cách xem ----- */
+    h += '<div class="nk-mode">' +
+      '<button class="btn sm ' + (tatCa ? 'ghost' : '') + '" data-nkmode="ngay">📅 Theo ngày</button>' +
+      '<button class="btn sm ' + (tatCa ? '' : 'ghost') + '" data-nkmode="tatca">📜 Tất cả các câu</button>' +
+      '</div>';
+
     /* ----- chọn tháng + lọc, gói gọn một thẻ ----- */
-    h += '<div class="card"><div class="row" style="align-items:center">';
-    h += '<b>Tháng:</b>';
-    dsThang.forEach(function (m) {
-      var p = m.split('-');
-      h += '<button class="btn sm ' + (m === th ? '' : 'ghost') + '" data-nkth="' + m + '">Tháng ' +
-        Number(p[1]) + '/' + p[0] + '</button>';
-    });
-    h += '<button class="btn sm ghost" id="nk-them">+ Tháng khác</button>';
-    h += '<button class="btn sm ghost" id="nk-csv" style="margin-left:auto">⬇ Xuất CSV</button>';
-    h += '</div>';
+    h += '<div class="card">';
+    if (!tatCa) {
+      h += '<div class="row" style="align-items:center">';
+      h += '<b>Tháng:</b>';
+      dsThang.forEach(function (m) {
+        var p = m.split('-');
+        h += '<button class="btn sm ' + (m === th ? '' : 'ghost') + '" data-nkth="' + m + '">Tháng ' +
+          Number(p[1]) + '/' + p[0] + '</button>';
+      });
+      h += '<button class="btn sm ghost" id="nk-them">+ Tháng khác</button>';
+      h += '<button class="btn sm ghost" id="nk-csv" style="margin-left:auto">⬇ Xuất CSV</button>';
+      h += '</div>';
+    } else {
+      h += '<div class="row" style="align-items:center">';
+      h += '<b>Đang gộp ' + dsThang.length + ' tháng:</b> <span class="muted">' +
+        dsThang.map(function (m) { var p = m.split('-'); return 'tháng ' + Number(p[1]) + '/' + p[0]; }).join(' · ') + '</span>';
+      h += '<button class="btn sm ' + (nkDaTaiHet ? 'ghost' : '') + '" id="nk-taihet">' +
+        (nkDaTaiHet ? '✔ Đã kéo hết mọi tháng' : '☁️ Kéo hết mọi tháng về') + '</button>';
+      h += '<button class="btn sm ghost" id="nk-csv" style="margin-left:auto">⬇ Xuất CSV</button>';
+      h += '</div>';
+    }
     h += '<div class="row" style="align-items:center;gap:8px;margin-top:10px">';
     h += '<b>Chuyên đề:</b>';
     h += '<button class="btn sm ' + (nkLoc.cd ? 'ghost' : '') + '" data-nkcd="">Tất cả</button>';
@@ -19897,11 +20198,54 @@ var BAN_WEB = '2026-08-10.sup1';
     h += nkKhungTrucTiep(ds, nguong);
 
     if (!ds.length) {
-      h += '<div class="card"><p class="muted" style="margin:0">Tháng này chưa có bản ghi nào.</p></div>';
+      h += '<div class="card"><p class="muted" style="margin:0">' +
+        (tatCa ? 'Chưa có bản ghi nào.' : 'Tháng này chưa có bản ghi nào.') + '</p></div>';
       el('pg-nhatky').innerHTML = h;
       nkGan();
       return;
     }
+
+    /* ----- 📜 TẤT CẢ CÁC CÂU — liệt kê liền mạch, không bỏ sót ----- */
+    if (tatCa) {
+      var het = lam.slice().sort(function (a, b) { return b.t - a.t; }).filter(function (e) {
+        if (nkLoc.chi === 'sai') return !e.ok && !e.bu;
+        if (nkLoc.chi === 'cham') return !e.cu && !e.bu && e.gy >= nguong && e.gy < NK_NGHI;
+        return true;
+      });
+      var hien = het.slice(0, nkSoHien);
+      nkNapBaiCho(hien);
+
+      h += '<div class="card"><h2 class="sec" style="margin-top:0">📜 Tất cả các câu</h2>';
+      h += '<p class="muted">Tổng <b>' + het.length + '</b> câu' +
+        (het.length !== lam.length ? ' (đang lọc, bỏ ' + (lam.length - het.length) + ' dòng)' : '') +
+        ' · đang hiện <b>' + hien.length + '</b> dòng, mới nhất ở trên. ' +
+        (nkDangTaiBai ? '<b>⏳ đang tải đề &amp; lời giải…</b>' : 'Bấm <b>📖 Lời giải từng bước</b> ở mỗi câu để bung bài giải.') + '</p>';
+
+      /* dòng phân cách ngày cho dễ dò */
+      var ngayTruoc = '';
+      var khoi = [];
+      hien.forEach(function (e) {
+        var k = new Date(e.t).toDateString();
+        if (k !== ngayTruoc) { khoi.push({ ngay: k, t: e.t, ds: [] }); ngayTruoc = k; }
+        khoi[khoi.length - 1].ds.push(e);
+      });
+      khoi.forEach(function (kh) {
+        var dg = kh.ds.filter(function (e) { return !e.cu && !e.bu && e.ok; }).length;
+        var tc = kh.ds.filter(function (e) { return !e.cu && !e.bu; }).length;
+        h += '<h3 class="nk-ngaydau">' + nkNgay(kh.t) +
+          ' <span>' + kh.ds.length + ' dòng' + (tc ? ' · đúng ' + dg + '/' + tc : '') + '</span></h3>';
+        h += nkBangCau(kh.ds, nguong);
+      });
+
+      if (het.length > hien.length) {
+        h += '<div class="row" style="margin-top:12px"><button class="btn ghost" id="nk-them200">' +
+          '▾ Hiện thêm 200 câu (còn ' + (het.length - hien.length) + ')</button>' +
+          '<button class="btn ghost" id="nk-themhet">▾ Hiện hết ' + het.length + ' câu</button></div>';
+      } else {
+        h += '<p class="muted" style="margin:12px 0 0">✔ Đã hiện hết, không sót câu nào.</p>';
+      }
+      h += '</div>';
+    } else {
 
     /* ----- 📅 bảng tiến trình theo ngày ----- */
     var ngays = nkGomNgay(lam);
@@ -19950,12 +20294,14 @@ var BAN_WEB = '2026-08-10.sup1';
         if (nkLoc.chi === 'cham') return !e.cu && !e.bu && e.gy >= nguong && e.gy < NK_NGHI;
         return true;
       });
+      nkNapBaiCho(ct);
       h += '<div class="card"><h2 class="sec" style="margin-top:0">📋 ' + nkNgay(ngayHT.t) + '</h2>';
       h += '<p class="muted">' + ngayHT.cau + ' câu · đúng ' + ngayHT.dung + ' · làm bài ' + nkPhut(ngayHT.giay) +
         (ct.length !== ngayHT.ct.length ? ' · đang lọc còn ' + ct.length + ' dòng' : '') +
-        '. Mới nhất ở trên.</p>';
+        '. Mới nhất ở trên.' + (nkDangTaiBai ? ' <b>⏳ đang tải đề &amp; lời giải…</b>' : '') + '</p>';
       h += ct.length ? nkBangCau(ct, nguong) : '<p class="muted">Không có dòng nào khớp bộ lọc.</p>';
       h += '</div>';
+    }
     }
 
     /* ----- số liệu cả tháng ----- */
@@ -19965,13 +20311,15 @@ var BAN_WEB = '2026-08-10.sup1';
     var nghi = thuc.filter(function (e) { return e.gy >= NK_NGHI; }).length;
     var lauNhat = hopLe.length ? hopLe.reduce(function (a, e) { return e.gy > a.gy ? e : a; }) : null;
 
-    h += '<div class="card"><h2 class="sec" style="margin-top:0">📊 Cả tháng</h2><div class="repgrid">';
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">📊 ' +
+      (tatCa ? 'Toàn bộ' : 'Cả tháng') + '</h2><div class="repgrid">';
     function o(v, t) { h += '<div class="repcard"><b>' + v + '</b><span>' + t + '</span></div>'; }
     o(thuc.length, 'câu có bấm giờ');
     o(thuc.length ? Math.round(dung / thuc.length * 100) + '%' : '—', 'tỉ lệ đúng');
     o(nkGiay(tv), 'thời gian thường gặp<br>(trung vị mỗi câu)');
     o(nkPhut(tongG), 'tổng thời gian<br>thật sự làm bài');
-    o(ngays.length, 'ngày có học');
+    o(tatCa ? new Date(0) && Object.keys(lam.reduce(function (m, e) { m[new Date(e.t).toDateString()] = 1; return m; }, {})).length
+      : ngays.length, 'ngày có học');
     o(lauNhat ? nkGiay(lauNhat.gy) : '—', 'câu lâu nhất');
     h += '</div>';
     h += '<p class="muted" style="margin:12px 0 0">Dùng <b>trung vị</b> chứ không dùng trung bình cộng: ' +
@@ -20058,6 +20406,33 @@ var BAN_WEB = '2026-08-10.sup1';
       nkThang = t.trim(); nkNgayChon = null; nkTai(nkThang);
     });
     if (el('nk-csv')) el('nk-csv').addEventListener('click', nkXuatCSV);
+
+    n.querySelectorAll('[data-nkmode]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        nkCheDo = b.dataset.nkmode;
+        nkSoHien = 200;
+        if (nkCheDo === 'tatca' && !nkDaTaiHet) nkKeoHet(); else veNhatKy();
+      });
+    });
+    if (el('nk-taihet')) el('nk-taihet').addEventListener('click', function () {
+      if (nkDaTaiHet) return;
+      el('nk-taihet').textContent = '⏳ Đang kéo…';
+      nkKeoHet();
+    });
+    if (el('nk-them200')) el('nk-them200').addEventListener('click', function () {
+      nkSoHien += 200; veNhatKy();
+    });
+    if (el('nk-themhet')) el('nk-themhet').addEventListener('click', function () {
+      nkSoHien = 1e9; veNhatKy();
+    });
+  }
+
+  /* kéo nhật ký của MỌI tháng trên đám mây về — để mục "Tất cả" không sót tháng nào */
+  function nkKeoHet() {
+    nkDangTai = true; veNhatKy();
+    C.napMoiThang().then(function () {
+      nkDaTaiHet = true; nkDangTai = false; veNhatKy();
+    }).catch(function () { nkDangTai = false; veNhatKy(); });
   }
 
   function nkTai(th) {
@@ -20101,18 +20476,19 @@ var BAN_WEB = '2026-08-10.sup1';
   }
 
   function nkXuatCSV() {
-    var ds = C.nhatKy(nkThang || C.thangNay()).filter(function (e) {
+    var ds = (nkCheDo === 'tatca' ? C.tatCaCau() : C.nhatKy(nkThang || C.thangNay())).filter(function (e) {
       if (nkLoc.cd && e.cd !== nkLoc.cd) return false;
       if (nkLoc.k && e.k !== nkLoc.k) return false;
       return true;
     }).sort(function (a, b) { return a.t - b.t; });
 
     var cot = ['Ngày', 'Giờ', 'Số giây', 'Đúng/Sai', 'Loại buổi', 'Ghi chú buổi',
-      'Chuyên đề', 'Dạng bài', 'Đề bài', 'Con viết', 'Đáp án đúng', 'Nguồn'];
+      'Chuyên đề', 'Dạng bài', 'Đề bài', 'Con viết', 'Đáp án đúng', 'Lời giải', 'Nguồn'];
     function o(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
     var dong = [cot.map(o).join(',')];
     ds.forEach(function (e) {
       var d = new Date(e.t), cd = C.CD[e.cd];
+      var kb = (!e.cu && !e.bu) ? C.baiTheoId(e.t, e.id) : null;
       dong.push([
         String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(),
         nkGio(e.t),
@@ -20122,9 +20498,10 @@ var BAN_WEB = '2026-08-10.sup1';
         e.n ? (NK_NHAN[e.n] || e.n) : '',
         cd ? cd.tenNgan : e.cd,
         e.dt || e.d,
-        e.de || '',
-        e.ok ? '' : (e.tl || ''),
+        (kb && kb.de) || e.de || '',
+        e.bu ? '' : (e.tl === undefined || e.tl === '' ? (e.ok ? e.da : '') : e.tl),
         e.da || '',
+        (kb && kb.gi) || '',
         e.bu ? 'Buổi học cũ (gộp cả buổi)' : (e.cu ? 'Dữ liệu cũ từ sổ lỗi' : 'Bấm giờ từng câu')
       ].map(o).join(','));
     });
