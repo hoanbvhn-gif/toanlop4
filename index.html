@@ -159,6 +159,14 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 .btn.nhonho{font-size:14px;padding:10px 16px;background:#fff;color:var(--pri-d);
   border:2px solid var(--pri-l);box-shadow:none}
 .btn.nhonho:hover{background:var(--pri-l)}
+.chuoicard .chuoio{display:flex;gap:3px;flex-wrap:wrap;margin-top:10px}
+.chuoicard .chuoio i{width:14px;height:14px;border-radius:4px;background:#ece8ff;box-shadow:inset 0 0 0 2px #ddd5ff}
+.chuoicard .chuoio i.on{background:linear-gradient(135deg,#7c5cff,#37d67a);box-shadow:none}
+.chuoicard .chuoio i.sao{border-radius:50%}
+.chuoicard .chuoio i.ran{width:20px;background:#ffe9c9;box-shadow:inset 0 0 0 2px #ffcf8a}
+.chuoicard .chuoio i.ran.on{background:linear-gradient(135deg,#f5a524,#37d67a);box-shadow:none}
+.chuoicard .chuoio i.sutu{width:24px;background:#ffe0e8;box-shadow:inset 0 0 0 2px #ffb3c7}
+.chuoicard .chuoio i.sutu.on{background:linear-gradient(135deg,#ff5c8a,#ffd76e);box-shadow:none}
 .thikhoi{margin-top:16px;border-top:2px solid var(--line);padding-top:14px}
 .thikhoi h3{margin:0 0 6px;font-size:16px}
 .thikhoi.khoa{opacity:.72}
@@ -603,6 +611,20 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
 .dot.done{background:#d0bfff;color:#fff;border-color:#d0bfff}
 .ans.done{border-color:var(--line);background:#f4f2f7;color:var(--ink2)}
 .fb.wait{background:#f3f0ff;border-left:4px solid var(--pri);color:var(--pri-d)}
+.fb.thuongto{background:linear-gradient(135deg,#fff3d6,#ffe0ec);color:#8a3f5f;font-size:19px;
+  border:2px solid #ffcf8a;text-align:center;line-height:1.5}
+.card.homnay{border:2px solid var(--pri-l);background:linear-gradient(180deg,#fbfaff,#fff)}
+.hnso{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.hnso .o{background:#f6f4ff;border-radius:14px;padding:12px 10px;text-align:center}
+.hnso .o b{display:block;font-size:26px;color:var(--pri-d);line-height:1.1}
+.hnso .o span{font-size:12px;color:var(--ink2)}
+.hnso .o.ok{background:var(--ok-l)} .hnso .o.ok b{color:var(--ok)}
+.hnso .o.no{background:var(--no-l)} .hnso .o.no b{color:var(--no)}
+.hnthuong{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:14px;color:var(--ink2)}
+.hnthuong b{color:var(--ink)}
+.cungdau{border:1px solid var(--line);border-left:4px solid var(--no);border-radius:12px;
+  padding:12px 14px;margin-top:10px;background:#fffdfd}
+.cungdau .cd-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;margin-bottom:6px}
 .fb.wait small{display:block;margin-top:5px;font-weight:600;color:var(--ink2)}
 .done.thi .pc{font-size:.6em;opacity:.85;font-weight:700}
 .done.thi.pass{background:linear-gradient(180deg,#ebfbee,#fff)}
@@ -711,7 +733,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-11.sup8';
+var BAN_WEB = '2026-08-11.sup9';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -867,7 +889,7 @@ var BAN_WEB = '2026-08-11.sup8';
       pin: { bo: '', con: '' },
       cd: {}, video: {}, phien: [], thi: {}, moTay: {}, soLoi: [], chuoiSua: {},
       khoiDong: null, kdLichSu: [], soDangKD: 5, soNgayOn: 14, phao: 'moi',
-      sao: 0, huyHieu: [],
+      sao: 0, ran: 0, suTu: 0, chuoiDung: 0, chuoiKyLuc: 0, v3thuong: 1, huyHieu: [],
       chuoi: { ngay: '', so: 0, dai: 0 },
       ngay: {}, boHoanHao: 0, tao: Date.now()
     };
@@ -888,6 +910,17 @@ var BAN_WEB = '2026-08-11.sup8';
       if (!r.soDangKD) r.soDangKD = 5;
       if (r.soNgayOn === undefined) r.soNgayOn = 14;
       if (!r.phao) r.phao = 'moi';        /* 'moi' mỗi câu đúng · 'lon' chỉ dịp lớn · 'tat' */
+      /* Đổi luật thưởng: ngày xưa mỗi câu đúng 1 sao nên số sao phình lên mà
+         chẳng còn ý nghĩa gì. Từ bản này: 5 câu liền đúng mới được 1 sao, 20 câu
+         được 1 con rắn, 35 câu được 1 con sư tử rồi bắt đầu vòng mới.
+         Sao cũ tính theo thước cũ nên đặt lại về 0 — bố đã chọn như vậy. */
+      if (!r.v3thuong) {
+        r.sao = 0; r.ran = 0; r.suTu = 0; r.chuoiDung = 0; r.chuoiKyLuc = 0; r.v3thuong = 1;
+      }
+      if (r.ran === undefined) r.ran = 0;
+      if (r.suTu === undefined) r.suTu = 0;
+      if (r.chuoiDung === undefined) r.chuoiDung = 0;
+      if (r.chuoiKyLuc === undefined) r.chuoiKyLuc = 0;
       return r;
     }
     if (d.dang) {
@@ -1937,7 +1970,10 @@ var BAN_WEB = '2026-08-11.sup8';
         : q.ans.slice().sort(function (a, b) { return a - b; }).join(' ; ')),
       nhap: String(nhap || '').trim().slice(0, 40),
       thi: trongThi ? 1 : 0,
-      sua: 0
+      sua: 0,
+      thu: 0,        /* đã làm bao nhiêu câu để sửa câu này */
+      saiLai: 0,     /* trong đó sai lại mấy lần */
+      tCuoi: 0       /* lần gần nhất đụng tới */
     });
     donKho();
   };
@@ -1967,6 +2003,10 @@ var BAN_WEB = '2026-08-11.sup8';
     kho();
     var e = CTS.loiTheoId(id);
     if (!e) return { xong: false, chuoi: 0, can: CTS.CAN_DUNG_SUA };
+    /* đếm để biết câu nào con vật lộn mãi chưa xong */
+    e.thu = (e.thu || 0) + 1;
+    if (!dung) e.saiLai = (e.saiLai || 0) + 1;
+    e.tCuoi = Date.now();
     if (laGoc) {
       state.chuoiSua[id] = 0;
       return { xong: false, chuoi: 0, can: CTS.CAN_DUNG_SUA, goc: true, dungGoc: !!dung };
@@ -1982,6 +2022,17 @@ var BAN_WEB = '2026-08-11.sup8';
     }
     return { xong: false, chuoi: c, can: CTS.CAN_DUNG_SUA };
   };
+  /* Câu "cứng đầu": đã làm đi làm lại mà vẫn sai, chưa sửa xong.
+     Xếp câu nào sai lại nhiều nhất lên đầu — đó là chỗ bố cần ngồi giảng lại. */
+  CTS.dsCungDau = function (nguong) {
+    nguong = nguong === undefined ? 1 : nguong;
+    return kho().filter(function (x) {
+      return !x.sua && (x.saiLai || 0) >= nguong;
+    }).sort(function (a, b) {
+      return (b.saiLai || 0) - (a.saiLai || 0) || (b.thu || 0) - (a.thu || 0) || b.t - a.t;
+    });
+  };
+
   /* gom các câu sai chưa sửa theo dạng */
   CTS.nhomLoi = function () {
     var m = {}, ra = [];
@@ -2162,8 +2213,10 @@ var BAN_WEB = '2026-08-11.sup8';
     { id: 'chuoi7', ic: '⚡', ten: 'Một tuần không nghỉ', mo: 'Học 7 ngày liền', dat: function (s) { return s.chuoi.dai >= 7; } },
     { id: 'chuoi30', ic: '👑', ten: 'Siêu kiên trì', mo: 'Học 30 ngày liền', dat: function (s) { return s.chuoi.dai >= 30; } },
     { id: 'muctieu', ic: '✅', ten: 'Hoàn thành mục tiêu', mo: 'Đạt mục tiêu một ngày', dat: function (s) { return Object.keys(s.ngay).some(function (k) { return s.ngay[k].cau >= (s.mucTieu || 20); }); } },
-    { id: 'sao100', ic: '⭐', ten: '100 ngôi sao', mo: 'Kiếm được 100 sao', dat: function (s) { return s.sao >= 100; } },
-    { id: 'sao500', ic: '🌟', ten: '500 ngôi sao', mo: 'Kiếm được 500 sao', dat: function (s) { return s.sao >= 500; } }
+    { id: 'sao20', ic: '⭐', ten: '20 ngôi sao', mo: 'Kiếm được 20 sao', dat: function (s) { return (s.sao || 0) >= 20; } },
+    { id: 'ran1', ic: '🐍', ten: 'Con rắn đầu tiên', mo: '20 câu liền đúng', dat: function (s) { return (s.ran || 0) >= 1; } },
+    { id: 'suTu1', ic: '🦁', ten: 'Con sư tử đầu tiên', mo: '35 câu liền đúng', dat: function (s) { return (s.suTu || 0) >= 1; } },
+    { id: 'suTu3', ic: '👑', ten: 'Ba con sư tử', mo: 'Ba lần đạt 35 câu liền đúng', dat: function (s) { return (s.suTu || 0) >= 3; } }
   ];
   function tongCau() {
     var s = 0;
@@ -2216,6 +2269,29 @@ var BAN_WEB = '2026-08-11.sup8';
     return state.ngay[h] || { cau: 0, dung: 0 };
   };
 
+  /* =========================================================
+     PHẦN THƯỞNG THEO CHUỖI CÂU ĐÚNG LIÊN TIẾP
+       ·  5 câu liền đúng  → 1 ⭐ ngôi sao
+       · 20 câu liền đúng  → 1 🐍 con rắn
+       · 35 câu liền đúng  → 1 🦁 con sư tử, rồi chuỗi về 0 và săn vòng mới
+     Một vòng trọn vẹn 35 câu được: 7 sao + 1 rắn + 1 sư tử.
+     Sai một câu là chuỗi về 0 — nên phần thưởng mới thật sự đáng giá,
+     khác hẳn kiểu cũ cứ đúng một câu là được một sao.
+     ========================================================= */
+  CTS.MOC_SAO = 5; CTS.MOC_RAN = 20; CTS.MOC_SUTU = 35;
+  CTS.TEN_THUONG = { sao: '⭐ ngôi sao', ran: '🐍 con rắn', suTu: '🦁 con sư tử' };
+  CTS.thuong = null;      /* phần thưởng vừa nhận ở câu gần nhất */
+
+  /* còn bao nhiêu câu nữa tới mốc kế tiếp */
+  CTS.mocKeTiep = function () {
+    var c = state.chuoiDung || 0;
+    var ra = [];
+    ra.push({ ic: '⭐', con: CTS.MOC_SAO - (c % CTS.MOC_SAO) });
+    if (c < CTS.MOC_RAN) ra.push({ ic: '🐍', con: CTS.MOC_RAN - c });
+    if (c < CTS.MOC_SUTU) ra.push({ ic: '🦁', con: CTS.MOC_SUTU - c });
+    return ra;
+  };
+
   /* ---------- ghi nhận một câu trả lời ---------- */
   CTS.ghiNhan = function (cdId, dangId, dung, gy, ma, lapDe) {
     CTS.diemDanh();
@@ -2233,7 +2309,22 @@ var BAN_WEB = '2026-08-11.sup8';
     }
     var h = CTS.ngayHomNay();
     state.ngay[h].cau++; if (dung) state.ngay[h].dung++;
-    if (dung) state.sao = (state.sao || 0) + 1;
+    /* ---- phần thưởng theo CHUỖI CÂU ĐÚNG LIÊN TIẾP ---- */
+    CTS.thuong = null;
+    if (dung) {
+      state.chuoiDung = (state.chuoiDung || 0) + 1;
+      if (state.chuoiDung > (state.chuoiKyLuc || 0)) state.chuoiKyLuc = state.chuoiDung;
+      var got = [];
+      if (state.chuoiDung % CTS.MOC_SAO === 0) { state.sao = (state.sao || 0) + 1; got.push('sao'); }
+      if (state.chuoiDung === CTS.MOC_RAN) { state.ran = (state.ran || 0) + 1; got.push('ran'); }
+      if (state.chuoiDung === CTS.MOC_SUTU) {
+        state.suTu = (state.suTu || 0) + 1; got.push('suTu');
+        state.chuoiDung = 0;              /* xong một vòng, săn tiếp từ đầu */
+      }
+      if (got.length) CTS.thuong = got;
+    } else {
+      state.chuoiDung = 0;
+    }
     /* dọn bớt lịch sử ngày quá cũ */
     var ks = Object.keys(state.ngay);
     if (ks.length > 400) { ks.sort(); delete state.ngay[ks[0]]; }
@@ -18704,6 +18795,8 @@ var BAN_WEB = '2026-08-11.sup8';
       el('hd-sub').textContent = 'Toán nâng cao – Toán tư duy lớp 4';
       el('hd-right').innerHTML =
         '<span class="chip flat" id="c-sao">⭐ ' + (s.sao || 0) + '</span>' +
+        ((s.ran || 0) ? '<span class="chip flat">🐍 ' + s.ran + '</span>' : '') +
+        ((s.suTu || 0) ? '<span class="chip flat">🦁 ' + s.suTu + '</span>' : '') +
         '<span class="chip flat" id="c-chuoi" title="Chuỗi ngày học liên tiếp">🔥 ' +
         ((s.chuoi && s.chuoi.ngay === C.ngayHomNay()) ? s.chuoi.so : 0) + ' ngày</span>' +
         '<button class="chip" data-thoat="1">↩ Thoát</button>';
@@ -18953,6 +19046,8 @@ var BAN_WEB = '2026-08-11.sup8';
         : 'Hôm nay con muốn học chuyên đề nào?') + '</p>';
     h += '<div class="kpis">';
     h += '<div class="kpi"><b>⭐ ' + (s.sao || 0) + '</b><span>ngôi sao</span></div>';
+    h += '<div class="kpi"><b>🐍 ' + (s.ran || 0) + '</b><span>con rắn</span></div>';
+    h += '<div class="kpi"><b>🦁 ' + (s.suTu || 0) + '</b><span>con sư tử</span></div>';
     h += '<div class="kpi"><b>🔥 ' + ((s.chuoi && s.chuoi.ngay === C.ngayHomNay()) ? s.chuoi.so : 0) + '</b><span>ngày liên tiếp</span></div>';
     h += '<div class="kpi"><b>' + C.tongCau() + '</b><span>câu đã làm</span></div>';
     h += '<div class="kpi"><b>' + (s.huyHieu || []).length + '</b><span>huy hiệu</span></div>';
@@ -18997,7 +19092,29 @@ var BAN_WEB = '2026-08-11.sup8';
     }
 
 
-    /* ---- 🎓 ĐƯỜNG TỚI TỐT NGHIỆP: mỗi dạng phải làm đủ 100 câu ---- */
+    /* ---- 🔥 CHUỖI CÂU ĐÚNG LIÊN TIẾP ---- */
+    var cD = s.chuoiDung || 0;
+    var oChuoi = '';
+    for (var iC = 0; iC < C.MOC_SUTU; iC++) {
+      var moc = (iC + 1) === C.MOC_RAN ? ' ran' : ((iC + 1) === C.MOC_SUTU ? ' sutu'
+        : ((iC + 1) % C.MOC_SAO === 0 ? ' sao' : ''));
+      oChuoi += '<i class="' + (iC < cD ? 'on' : '') + moc + '"></i>';
+    }
+    h += '<div class="card chuoicard"><div class="row" style="align-items:center;gap:14px">';
+    h += '<div style="flex:1;min-width:240px"><h2 class="sec" style="margin:0 0 4px">🔥 Chuỗi câu đúng: <b>' +
+      cD + '</b></h2>';
+    h += '<p class="muted" style="margin:0">Cứ <b>' + C.MOC_SAO + ' câu liền đúng</b> con được <b>⭐ 1 ngôi sao</b>. ' +
+      '<b>' + C.MOC_RAN + ' câu</b> liền đúng được <b>🐍 một con rắn</b>. ' +
+      '<b>' + C.MOC_SUTU + ' câu</b> liền đúng được <b>🦁 một con sư tử</b>! ' +
+      '<span style="color:var(--no)">Sai một câu là chuỗi về 0</span> — nên phải cẩn thận từng câu.</p>';
+    h += '<div class="chuoio">' + oChuoi + '</div>';
+    var mk = C.mocKeTiep();
+    h += '<p class="muted" style="margin:8px 0 0">' + mk.map(function (x) {
+      return 'còn <b>' + x.con + ' câu</b> nữa được ' + x.ic;
+    }).join(' · ') + (s.chuoiKyLuc ? ' &nbsp;·&nbsp; kỷ lục của con: <b>' + s.chuoiKyLuc + ' câu</b>' : '') + '</p>';
+    h += '</div></div></div>';
+
+    /* ---- 🎓 ĐƯỜNG TỚI TỐT NGHIỆP ---- */
     var tn = C.tongTotNghiep();
     var cdTN = C.cdDangHoc() || dsMo[dsMo.length - 1];
     if (tn.tong) {
@@ -19648,6 +19765,7 @@ var BAN_WEB = '2026-08-11.sup8';
 
     p.ketQua[p.i] = ok ? 1 : 0;
     var gy = p.tHien ? Math.round((Date.now() - p.tHien) / 100) / 10 : 0;
+    var chuoiTruoc = st().chuoiDung || 0;
     var tnTruoc = C.daTotNghiep(q.cd, q.dang);
     var mtTruoc = C.homNay().cau >= (st().mucTieu || 20);
     C.ghiNhan(q.cd, q.dang, ok, gy, q.ma, q.lapDe);
@@ -19752,8 +19870,11 @@ var BAN_WEB = '2026-08-11.sup8';
       }
     }
     el('fb').innerHTML = (ok
-      ? '<div class="fb good">' + C.pick(khen) + ' <span style="float:right">+1 ⭐</span></div>' + tinVui
-      : '<div class="fb bad">Chưa đúng rồi.<small>Đáp án đúng: <b>' +
+      ? '<div class="fb good">' + C.pick(khen) +
+        '<span style="float:right">🔥 ' + (st().chuoiDung || 0) + ' câu liền</span></div>' + tinVui
+      : '<div class="fb bad">' + (chuoiTruoc >= C.MOC_SAO
+        ? '💔 Tiếc quá — đứt chuỗi <b>' + chuoiTruoc + ' câu</b> liền đúng, chuỗi về 0.<br>' : '') +
+        'Chưa đúng rồi.<small>Đáp án đúng: <b>' +
         (q.hienDapAn || dung.join(' ; ')) + '</b></small></div>') + themSua;
 
     var h = '';
@@ -19824,7 +19945,7 @@ var BAN_WEB = '2026-08-11.sup8';
     var dung = p.ketQua.filter(function (x) { return x === 1; }).length;
     var tong = p.cau.length;
     var hoanHao = dung === tong && tong >= 5;
-    if (hoanHao) { s.boHoanHao = (s.boHoanHao || 0) + 1; s.sao += 5; }
+    if (hoanHao) { s.boHoanHao = (s.boHoanHao || 0) + 1; s.sao = (s.sao || 0) + 1; }
     s.phien.push({
       t: Date.now(), cd: p.cd, ten: p.ten, kieu: typeof p.kieu === 'string' ? p.kieu : 'tuchon',
       dung: dung, tong: tong, them: p.them,
@@ -21148,50 +21269,119 @@ var BAN_WEB = '2026-08-11.sup8';
   function veBaoCao() {
     var s = st();
     var ngay30 = C.soLieuNgay(30);
-    var tongCau = C.tongCau();
-    var tongDung = 0;
-    C.DS_CD.forEach(function (cd) {
-      cd.DANG.forEach(function (d) { tongDung += C.dangOf(cd.id, d.id).dung; });
-    });
-    var tl = tongCau ? Math.round(tongDung / tongCau * 100) : 0;
-    var ngayHoc30 = ngay30.filter(function (x) { return x.cau > 0; }).length;
-    var cau30 = ngay30.reduce(function (a, x) { return a + x.cau; }, 0);
-    var bang = C.bangDang();
-    var yeu = bang.filter(function (x) { return x.muc === 1; });
-    var chua = bang.filter(function (x) { return x.muc === 0; });
-    var thanh = bang.filter(function (x) { return x.muc === 3; });
     var maxCau = Math.max(1, Math.max.apply(null, ngay30.map(function (x) { return x.cau; })));
+    var hn = C.homNay(), mt = s.mucTieu || 20;
+    var saiHN = Math.max(0, hn.cau - hn.dung);
+
+    /* thời gian học hôm nay lấy từ nhật ký (chính xác tới từng câu) */
+    var ngHN = C.ngayHomNay(), gyHN = 0, soCoGio = 0;
+    try {
+      (C.nhatKy(C.thangNay()) || []).forEach(function (e) {
+        if (e.cu || e.bu || !e.gy) return;
+        if (C.ngayCua(e.t) !== ngHN) return;
+        if (e.gy >= 600) return;                 /* trên 10 phút coi như rời máy */
+        gyHN += e.gy; soCoGio++;
+      });
+    } catch (er) { }
 
     var h = '<h2 class="sec">📊 Báo cáo học tập của ' + esc(s.ten || 'con') + '</h2>';
 
-    /* --- số liệu tổng quan --- */
-    h += '<div class="repgrid">';
-    h += '<div class="repcard"><b>' + tongCau + '</b><span>tổng số câu đã làm</span></div>';
-    h += '<div class="repcard"><b>' + tl + '%</b><span>tỉ lệ làm đúng</span></div>';
-    h += '<div class="repcard"><b>' + cau30 + '</b><span>câu trong 30 ngày</span></div>';
-    h += '<div class="repcard"><b>' + ngayHoc30 + '/30</b><span>ngày có học</span></div>';
-    h += '<div class="repcard"><b>' + ((s.chuoi && s.chuoi.dai) || 0) + '</b><span>chuỗi dài nhất (ngày)</span></div>';
-    h += '<div class="repcard"><b>' + thanh.length + '/' + bang.length + '</b><span>dạng đã thành thạo</span></div>';
+    /* ===== 1. HÔM NAY — thứ bố cần biết trước nhất ===== */
+    h += '<div class="card homnay"><h2 class="sec" style="margin-top:0">📌 Hôm nay ' +
+      hienNgay(Date.now()) + '</h2>';
+    if (!hn.cau) {
+      h += '<p class="muted" style="margin:0">Hôm nay con <b>chưa làm câu nào</b>.</p>';
+    } else {
+      h += '<div class="hnso">' +
+        '<div class="o"><b>' + hn.cau + '</b><span>câu đã làm</span></div>' +
+        '<div class="o ok"><b>' + hn.dung + '</b><span>câu ĐÚNG</span></div>' +
+        '<div class="o no"><b>' + saiHN + '</b><span>câu SAI</span></div>' +
+        '<div class="o"><b>' + Math.round(hn.dung / hn.cau * 100) + '%</b><span>tỉ lệ đúng</span></div>' +
+        '<div class="o"><b>' + nkPhut(gyHN) + '</b><span>thời gian học</span></div>' +
+        '<div class="o"><b>' + (soCoGio ? nkGiay(gyHN / soCoGio) : '—') + '</b><span>trung bình mỗi câu</span></div>' +
+        '</div>';
+      var pctMT = Math.min(100, Math.round(hn.cau / mt * 100));
+      h += '<div class="mini" style="margin-top:12px"><div style="width:' + pctMT +
+        '%;background:' + (pctMT >= 100 ? 'var(--ok)' : 'var(--pri)') + '"></div></div>';
+      h += '<p class="muted" style="margin:6px 0 0">Mục tiêu ngày <b>' + mt + ' câu</b> — ' +
+        (hn.cau >= mt ? '<b style="color:var(--ok)">đã đạt 🎉</b>'
+          : 'còn <b>' + (mt - hn.cau) + ' câu</b> nữa') + '</p>';
+    }
+    h += '<div class="hnthuong">Phần thưởng: <b>⭐ ' + (s.sao || 0) + '</b> sao · ' +
+      '<b>🐍 ' + (s.ran || 0) + '</b> rắn · <b>🦁 ' + (s.suTu || 0) + '</b> sư tử &nbsp;·&nbsp; ' +
+      'chuỗi đang chạy <b>' + (s.chuoiDung || 0) + ' câu</b>' +
+      ((s.chuoiKyLuc || 0) ? ' · kỷ lục <b>' + s.chuoiKyLuc + ' câu</b>' : '') + '</div>';
     h += '</div>';
 
-    /* --- nhận xét tự động --- */
-    h += '<div class="card"><h2 class="sec" style="margin-top:0">📝 Nhận xét nhanh</h2>';
-    var nx = [];
-    if (tongCau === 0) nx.push('Con <b>chưa làm bài nào</b>. Hãy cùng con mở chuyên đề đầu tiên nhé.');
-    else {
-      nx.push('Con đã làm <b>' + tongCau + ' câu</b>, đúng <b>' + tl + '%</b>. ' +
-        (tl >= 85 ? 'Kết quả rất tốt.' : tl >= 70 ? 'Kết quả khá, còn vài dạng cần củng cố.' :
-          tl >= 50 ? 'Còn sai khá nhiều — nên cho con làm chậm lại và đọc kỹ lý thuyết.' :
-            'Tỉ lệ đúng còn thấp — nên học lại lý thuyết từ đầu trước khi luyện tiếp.'));
-      nx.push('Trong 30 ngày qua con học <b>' + ngayHoc30 + ' ngày</b>' +
-        (ngayHoc30 >= 20 ? ' — rất đều đặn.' : ngayHoc30 >= 10 ? ' — tương đối đều.' : ' — còn thưa, nên đặt lịch cố định trong tuần.'));
-      if (yeu.length) {
-        nx.push('Có <b>' + yeu.length + ' dạng đang yếu</b>, đứng đầu là: <b>' +
-          yeu.slice(0, 3).map(function (x) { return x.dang.ten; }).join('</b>, <b>') + '</b>.');
-      } else nx.push('Hiện <b>không có dạng nào bị xếp loại yếu</b>.');
-      if (chua.length) nx.push('Còn <b>' + chua.length + ' dạng con chưa làm bao giờ</b> — nên cho con thử để biết sức.');
+    /* ===== 2. CÂU LÀM ĐI LÀM LẠI VẪN SAI ===== */
+    var cung = C.dsCungDau(1);
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">🔁 Câu làm đi làm lại vẫn sai (' +
+      cung.length + ')</h2>';
+    if (!cung.length) {
+      h += '<p class="muted" style="margin:0">Chưa có câu nào con phải làm lại nhiều lần mà vẫn sai. ' +
+        'Câu nào sai lần đầu rồi sửa được ngay thì không tính vào đây.</p>';
+    } else {
+      h += '<p class="muted">Đây là những câu con <b>đã làm lại mà vẫn sai</b> — chỗ này bố nên ngồi ' +
+        'giảng lại cho con thay vì để con tự mò. Xếp câu sai nhiều lần nhất lên đầu.</p>';
+      cung.slice(0, 12).forEach(function (x) {
+        var cd = C.CD[x.cd];
+        h += '<div class="cungdau">';
+        h += '<div class="cd-top"><span class="pill r">sai lại ' + (x.saiLai || 0) + ' lần</span>' +
+          '<span class="muted">đã làm ' + (x.thu || 0) + ' câu để sửa</span>' +
+          '<b>' + esc(x.tenDang || x.dang) + '</b>' +
+          (cd ? '<span class="muted">' + cd.icon + ' ' + esc(cd.tenNgan) + '</span>' : '') + '</div>';
+        h += '<div class="qb">' + x.de + '</div>';
+        h += '<div class="qa"><span class="sai">Con viết: <b>' + (esc(x.nhap) || '(bỏ trống)') + '</b></span>' +
+          ' <span class="dung">Đáp án: <b>' + esc(x.dapAn) + '</b></span></div>';
+        h += '<div class="row" style="margin-top:8px">' +
+          '<button class="btn sm ghost" data-loisol="' + x.id + '">Xem lời giải</button>' +
+          '<button class="btn sm ghost" data-ltcd="' + x.cd + '" data-ltid="' + x.dang + '">Luyện dạng này</button></div>';
+        h += '<div class="sol hide" id="loisol-' + x.id + '">' + x.sol + '</div>';
+        h += '</div>';
+      });
+      if (cung.length > 12) h += '<p class="muted">… và ' + (cung.length - 12) + ' câu nữa. Xem đủ trong 📕 Sổ lỗi.</p>';
     }
-    nx.forEach(function (t) { h += '<div class="nx">' + t + '</div>'; });
+    h += '</div>';
+
+    /* ===== 3. DẠNG CẦN TẬP TRUNG ===== */
+    var canHoc = [];
+    C.dsMo().forEach(function (cd) {
+      cd.DANG.forEach(function (d) {
+        if (C.daTotNghiep(cd.id, d.id)) return;
+        var x = C.dangOf(cd.id, d.id);
+        var tl2 = C.tlGan(cd.id, d.id);
+        var soLoi = C.dsLoi(true).filter(function (e) { return e.cd === cd.id && e.dang === d.id; }).length;
+        /* điểm càng cao càng cần học: sai nhiều + còn nợ sổ lỗi + chưa đụng bao giờ */
+        var diem = 0, vi = [];
+        if (tl2 !== null && tl2 < C.NGUONG_DUNG) { diem += (C.NGUONG_DUNG - tl2) * 100; vi.push('đúng mới ' + Math.round(tl2 * 100) + '%'); }
+        if (soLoi) { diem += soLoi * 12; vi.push(soLoi + ' câu còn nợ trong sổ lỗi'); }
+        if (!x.lam) { diem += 8; vi.push('chưa làm câu nào'); }
+        if (diem <= 0) return;
+        canHoc.push({ cd: cd, d: d, diem: diem, vi: vi, lam: x.lam,
+          chuoi: C.chuoiTN(cd.id, d.id) });
+      });
+    });
+    canHoc.sort(function (a, b) { return b.diem - a.diem; });
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">🎯 Dạng cần tập trung học (' + canHoc.length + ')</h2>';
+    if (!canHoc.length) {
+      h += '<p class="muted" style="margin:0">Không có dạng nào đáng lo. Cứ để con luyện tiếp theo lộ trình.</p>';
+    } else {
+      h += '<p class="muted">Xếp theo mức độ cần ưu tiên: dạng đang sai nhiều lên trước, rồi tới dạng ' +
+        'còn nợ câu trong sổ lỗi, rồi tới dạng chưa đụng bao giờ.</p>';
+      h += '<div style="overflow-x:auto"><table class="st-tbl"><tr><th class="n">#</th><th>Dạng bài</th>' +
+        '<th>Chuyên đề</th><th class="n">Đã làm</th><th class="n">Chuỗi</th><th>Vì sao cần học</th><th></th></tr>';
+      canHoc.slice(0, 15).forEach(function (x, i) {
+        h += '<tr><td class="n">' + (i + 1) + '</td>' +
+          '<td><b>' + esc(x.d.ten) + '</b></td>' +
+          '<td>' + x.cd.icon + ' ' + esc(x.cd.tenNgan) + '</td>' +
+          '<td class="n">' + x.lam + '</td>' +
+          '<td class="n">' + x.chuoi.chuoi + '/' + C.SO_CAU_TN + '</td>' +
+          '<td>' + esc(x.vi.join(' · ')) + '</td>' +
+          '<td><button class="btn sm ghost" data-ltcd="' + x.cd.id + '" data-ltid="' + x.d.id + '">Luyện</button></td></tr>';
+      });
+      h += '</table></div>';
+      if (canHoc.length > 15) h += '<p class="muted">… và ' + (canHoc.length - 15) + ' dạng nữa.</p>';
+    }
     h += '</div>';
 
     /* --- biểu đồ 30 ngày --- */
@@ -21301,42 +21491,6 @@ var BAN_WEB = '2026-08-11.sup8';
       'màu đỏ. Nếu thi đạt rồi, khoảng <b>2 tuần sau</b> cho thi lại một lần nữa — đạt tiếp thì kiến thức ' +
       'đã thật sự vào trí nhớ dài hạn.</div>';
     h += '</div>';
-
-    /* --- xếp hạng dạng yếu --- */
-    var sx = bang.slice().sort(function (a, b) {
-      if (a.muc !== b.muc) return a.muc - b.muc;
-      return (a.tl === -1 ? 999 : a.tl) - (b.tl === -1 ? 999 : b.tl);
-    });
-    h += '<div class="card"><h2 class="sec" style="margin-top:0">🎯 Dạng bài cần chú ý nhất</h2>';
-    h += '<p class="muted">Sắp xếp từ yếu nhất đến vững nhất. Bố có thể nhắc con luyện đúng những dạng đầu bảng.</p>';
-    h += '<div class="rank">';
-    sx.slice(0, 12).forEach(function (x) {
-      h += '<div class="rankitem m' + x.muc + '"><div class="rn"><b>' + x.dang.ten + '</b>' +
-        '<span>' + x.cd.icon + ' ' + x.cd.tenNgan + ' · Bài ' + x.dang.bai + ' · ' +
-        (x.lam ? 'làm ' + x.lam + ' câu, đúng ' + x.tl + '%' : 'chưa làm bao giờ') + '</span></div>' +
-        '<div class="hist">' + x.lichSu.slice(-10).map(function (v) { return '<i class="' + (v ? 'o' : 'x') + '"></i>'; }).join('') + '</div>' +
-        C.tag(x.muc) + '</div>';
-    });
-    h += '</div></div>';
-
-    /* --- bảng đầy đủ --- */
-    C.DS_CD.forEach(function (cd) {
-      h += '<div class="card"><h2 class="sec" style="margin-top:0">' + cd.icon + ' ' + cd.ten + ' — chi tiết từng dạng</h2>';
-      h += '<div style="overflow-x:auto"><table class="st-tbl"><tr><th>Dạng bài</th><th>Bài</th>' +
-        '<th class="n">Đã làm</th><th class="n">Đúng</th><th>Tỉ lệ</th><th>10 lần gần nhất</th><th>Mức độ</th></tr>';
-      cd.DANG.forEach(function (x) {
-        var d = C.dangOf(cd.id, x.id), m = C.mucDo(cd.id, x.id);
-        var t2 = d.lam ? Math.round(d.dung / d.lam * 100) : 0;
-        var mau = m === 3 ? 'var(--ok)' : m === 2 ? 'var(--warn)' : 'var(--no)';
-        h += '<tr><td><b>' + x.ten + '</b><br><span class="muted">' + x.goi + '</span></td><td>Bài ' + x.bai + '</td>' +
-          '<td class="n">' + d.lam + '</td><td class="n">' + d.dung + '</td>' +
-          '<td><div class="mini"><div style="width:' + t2 + '%;background:' + (d.lam ? mau : '#ddd') + '"></div></div>' +
-          '<span class="muted">' + (d.lam ? t2 + '%' : '—') + '</span></td>' +
-          '<td><div class="hist">' + d.lichSu.slice(-10).map(function (v) { return '<i class="' + (v ? 'o' : 'x') + '"></i>'; }).join('') + '</div></td>' +
-          '<td>' + C.tag(m) + '</td></tr>';
-      });
-      h += '</table></div></div>';
-    });
 
     /* --- lịch sử --- */
     h += '<div class="card"><h2 class="sec" style="margin-top:0">🕘 Lịch sử các buổi làm bài</h2>';
