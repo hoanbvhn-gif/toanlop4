@@ -733,7 +733,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-11.sup9';
+var BAN_WEB = '2026-08-11.sup10';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -1381,6 +1381,21 @@ var BAN_WEB = '2026-08-11.sup9';
   /* tải kho bài của một ngày về (gộp, không đè mất phần đang có trong máy) */
   CTS.napBai = function (ng) {
     if (BAI[ng] && !BAIban[ng] && BAIsha[ng] !== undefined) return Promise.resolve(BAI[ng]);
+    if (saveMode !== 'sup') return Promise.resolve(BAI[ng] || {});
+    return doc(fileBai(ng)).then(function (d) {
+      BAIsha[ng] = d.sha;
+      var cu = d.data || {}, moi = BAI[ng] || {};
+      Object.keys(moi).forEach(function (k) { cu[k] = moi[k]; });
+      BAI[ng] = cu;
+      baiLuuTam();
+      return BAI[ng];
+    }).catch(function () { return BAI[ng] || {}; });
+  };
+
+  /* ép tải lại kho bài của một ngày, kể cả khi đã có bản cũ trong máy —
+     dùng cho khung 🔴 Đang học: con vừa làm thêm câu nào thì bố thấy ngay
+     đề bài + lời giải của câu đó, không phải đợi mở lại trang. */
+  CTS.taiLaiBai = function (ng) {
     if (saveMode !== 'sup') return Promise.resolve(BAI[ng] || {});
     return doc(fileBai(ng)).then(function (d) {
       BAIsha[ng] = d.sha;
@@ -20672,7 +20687,15 @@ var BAN_WEB = '2026-08-11.sup9';
       /* ĐỀ BÀI — lấy bản đầy đủ trong kho bài nếu đã tải về, không thì dùng bản rút gọn */
       var kb = (!e.cu && !e.bu) ? C.baiTheoId(e.t, e.id) : null;
       var deHien = (kb && kb.de) || e.de || '';
-      if (deHien && !gonNhe) h += '<span class="nk-de nk-dedu">' + esc(deHien) + '</span>';
+      /* đề bài hiện ở MỌI chỗ — cả khung 🔴 Đang học lẫn phần theo ngày.
+         Ở khung trực tiếp, nếu kho bài chưa kịp về thì dùng bản rút gọn 200 ký tự
+         trong nhật ký, kèm dấu … cho bố biết là còn nữa. */
+      if (deHien) {
+        var thieu = gonNhe && !(kb && kb.de) && deHien.length >= 200;
+        h += '<span class="nk-de nk-dedu">' + esc(deHien) + (thieu ? ' …' : '') + '</span>';
+      } else if (!e.cu) {
+        h += '<span class="nk-de nk-chua">📄 câu này chưa có đề lưu kèm (làm trước khi web lưu đề)</span>';
+      }
 
       /* CON VIẾT / ĐÁP ÁN — hiện cho MỌI câu, đúng cũng như sai */
       if (!e.bu) {
@@ -20838,9 +20861,11 @@ var BAN_WEB = '2026-08-11.sup9';
     h += '</div>';
 
     if (moiNhat.length) {
+      var tam = moiNhat.slice(0, 8);
+      nkNapBaiCho(tam);          /* kéo đề bài + lời giải của 8 câu này về */
       h += '<p class="muted" style="margin:14px 0 4px"><b>8 câu gần nhất</b> — hiện lên ngay sau khi con bấm ' +
         '<i>Kiểm tra</i>, không phải đợi hết buổi:</p>';
-      h += nkBangCau(moiNhat.slice(0, 8), nguong, true);
+      h += nkBangCau(tam, nguong, true);
     }
     return h + '</div>';
   }
@@ -21196,7 +21221,10 @@ var BAN_WEB = '2026-08-11.sup9';
   function nkLamMoi() {
     var th = nkThang || C.thangNay();
     var truoc = C.nhatKy(th).length;
-    return Promise.all([C.taiLaiThang(th), C.docTienDo()]).then(function (kq) {
+    /* kho bài của hôm nay phải tải lại mỗi nhịp — con vừa làm thêm câu nào thì
+       đề bài và lời giải câu đó mới kịp hiện ở khung 🔴 Đang học */
+    return Promise.all([C.taiLaiThang(th), C.docTienDo(),
+      C.taiLaiBai(C.ngayHomNay()).catch(function () { })]).then(function (kq) {
       var ds = kq[0];
       if (kq[1]) nkTienDo = kq[1];
       nkLanTai = Date.now();
