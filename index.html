@@ -154,6 +154,18 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 .tag{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
 .tag.t4{background:#e7e0ff;color:#5b3fd6}
 .tag.tx{background:#e4efff;color:#2f6fd0}
+.btn.tolam{font-size:20px;font-weight:900;padding:18px 30px;border-radius:18px;
+  box-shadow:0 10px 26px rgba(124,92,255,.34);letter-spacing:.2px}
+.btn.nhonho{font-size:14px;padding:10px 16px;background:#fff;color:var(--pri-d);
+  border:2px solid var(--pri-l);box-shadow:none}
+.btn.nhonho:hover{background:var(--pri-l)}
+.thikhoi{margin-top:16px;border-top:2px solid var(--line);padding-top:14px}
+.thikhoi h3{margin:0 0 6px;font-size:16px}
+.thikhoi.khoa{opacity:.72}
+.thikhoi.passed{border-top-color:var(--ok)}
+canvas.phaohoa{position:fixed;inset:0;z-index:9998;pointer-events:none}
+.hero2 .btn.tolam{background:#fff;color:#5b3fd6}
+.hero2 .btn.nhonho{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.5)}
 .tncard .tnso{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13.5px;color:var(--ink2)}
 .tncard .tnso b{color:var(--pri-d);font-size:16px}
 .tnbang{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;font-size:13.5px}
@@ -163,10 +175,11 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 .tnrow.xong{opacity:.72}
 .tnrow.xong .tnbar i{background:#37d67a}
 .tnrow .nm{flex:1;min-width:170px}
-.tnbar{position:relative;width:130px;height:9px;border-radius:99px;background:#ece8ff;overflow:hidden;flex:none}
-.tnbar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#7c5cff,#37d67a);border-radius:99px}
-.tnbar u{position:absolute;top:0;bottom:0;width:2px;background:#fff;opacity:.9}
-.tnnum{font-variant-numeric:tabular-nums;font-weight:800;color:var(--pri-d);min-width:52px;text-align:right}
+.tnoo{display:inline-flex;gap:5px;flex:none}
+.tnoo i{width:17px;height:17px;border-radius:6px;background:#ece8ff;box-shadow:inset 0 0 0 2px #ddd5ff}
+.tnoo i.on{background:linear-gradient(135deg,#7c5cff,#37d67a);box-shadow:none}
+.tnnum{font-variant-numeric:tabular-nums;font-weight:800;color:var(--pri-d);min-width:44px;text-align:right}
+.tnngay{font-size:12px;color:var(--ink2);min-width:64px;text-align:right}
 .tag.t0{background:#eceaf5;color:#6b6390}
 .tag.t1{background:var(--no-l);color:var(--no)}
 .tag.t2{background:var(--warn-l);color:#b4740a}
@@ -205,6 +218,8 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
   border-radius:0 6px 6px 0;padding:5px 8px;margin-top:5px}
 .nk-da{margin-top:5px}
 .nk-chua{color:#a79fc4;font-style:italic}
+.nk-lap{display:inline-block;font-size:10.5px;font-weight:800;color:#b4740a;background:#fff6e0;
+  border-radius:99px;padding:1px 7px;margin-top:2px}
 .nk-giai{margin-top:6px;border:1px solid var(--line);border-radius:8px;background:#fcfcff}
 .nk-giai>summary{cursor:pointer;padding:5px 9px;font-size:12.5px;font-weight:800;color:var(--pri-d);
   list-style:none;user-select:none}
@@ -232,6 +247,9 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 .nk-tbl.nk-ngay tr.nk-r:hover td{background:var(--pri-l)}
 .nk-tbl.nk-ngay tr.nk-r.chon td{background:var(--pri-l);box-shadow:inset 0 0 0 2px var(--pri)}
 .nk-tbl.nk-ngay td .nk-de{margin-top:1px}
+.nk-tbl tr.nk-ct td{background:#fbfaff;padding:10px 12px 14px;border-bottom:3px solid var(--pri-l)}
+.nk-cthead{font-size:13.5px;color:var(--ink2);margin-bottom:6px}
+.nk-cthead b{color:var(--ink)}
 .tbl{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px;background:#fff}
 .tbl th,.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:left}
 .tbl th{background:var(--pri-l);font-weight:700;font-size:14px}
@@ -693,7 +711,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-11.sup5';
+var BAN_WEB = '2026-08-11.sup8';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -794,9 +812,44 @@ var BAN_WEB = '2026-08-11.sup5';
     CTS.CD[cd.id] = cd;
     CTS.DS_CD.sort(function (a, b) { return (a.so || 99) - (b.so || 99); });
   };
+  /* mã gọn của một đề, để nhận ra "lại đúng cái đề hôm trước" */
+  function maDe(q) {
+    var t = String(q.de || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    var h = 5381, i;
+    for (i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  }
+  CTS.maDe = maDe;
+  CTS.SO_DE_NHO = 20;      /* nhớ 20 đề gần nhất của mỗi dạng để tránh phát lại */
+
+  /* Sinh một câu, CỐ TRÁNH đề đã gặp gần đây.
+
+     Vì sao cần: đo trên toàn bộ 212 dạng thì có 3 dạng chỉ sinh được dưới 10 đề
+     khác nhau (dạng ít nhất chỉ 5 đề). Nếu bốc hoàn toàn ngẫu nhiên, con sẽ gặp
+     lại đúng đề cũ liên tục và chuyển sang NHỚ ĐÁP ÁN thay vì tính.
+
+     Giãn hai tầng, vì có dạng ít đề đến mức không thể giãn rộng:
+       · tầng 1 — cố tránh 20 đề gần nhất (dạng nhiều đề luôn đạt ở đây);
+       · tầng 2 — nếu chịu, hạ xuống chỉ cần khác 3 đề gần nhất, để dạng cạn đề
+         vẫn xoay vòng được mà không bao giờ ra hai câu giống nhau sát nhau;
+       · vẫn không xong (kho đề dưới 4 bài) thì mới đánh dấu q.lapDe, và câu đó
+         KHÔNG được tính vào chuỗi tốt nghiệp. */
+  CTS.SO_DE_GIAN_TOI_THIEU = 3;
   CTS.sinhCau = function (cdId, dangId) {
     var cd = CTS.CD[cdId], d = cd.BY_ID[dangId];
-    var q = d.gen();
+    var cu = [];
+    try { cu = (CTS.dangOf(cdId, dangId).deGan) || []; } catch (e) { }
+    var hep = cu.slice(-CTS.SO_DE_GIAN_TOI_THIEU);
+    var q = null, ma = '', i, tot = null, totMa = '';
+    for (i = 0; i < 16; i++) {
+      q = d.gen();
+      ma = maDe(q);
+      if (cu.indexOf(ma) < 0) { tot = q; totMa = ma; break; }        /* tầng 1: đạt luôn */
+      if (!tot && hep.indexOf(ma) < 0) { tot = q; totMa = ma; }      /* tầng 2: tạm giữ, vẫn thử tiếp */
+    }
+    if (tot) { q = tot; ma = totMa; }
+    else q.lapDe = 1;
+    q.ma = ma;
     q.cd = cdId; q.dang = dangId; q.tenDang = d.ten; q.bai = d.bai;
     return q;
   };
@@ -813,7 +866,7 @@ var BAN_WEB = '2026-08-11.sup5';
       v: 2, ten: '', soCau: 10, mucTieu: 20, amThanh: true,
       pin: { bo: '', con: '' },
       cd: {}, video: {}, phien: [], thi: {}, moTay: {}, soLoi: [], chuoiSua: {},
-      khoiDong: null, kdLichSu: [], soDangKD: 5, soNgayOn: 14,
+      khoiDong: null, kdLichSu: [], soDangKD: 5, soNgayOn: 14, phao: 'moi',
       sao: 0, huyHieu: [],
       chuoi: { ngay: '', so: 0, dai: 0 },
       ngay: {}, boHoanHao: 0, tao: Date.now()
@@ -834,6 +887,7 @@ var BAN_WEB = '2026-08-11.sup5';
       if (!r.kdLichSu) r.kdLichSu = [];
       if (!r.soDangKD) r.soDangKD = 5;
       if (r.soNgayOn === undefined) r.soNgayOn = 14;
+      if (!r.phao) r.phao = 'moi';        /* 'moi' mỗi câu đúng · 'lon' chỉ dịp lớn · 'tat' */
       return r;
     }
     if (d.dang) {
@@ -1597,6 +1651,8 @@ var BAN_WEB = '2026-08-11.sup5';
     if (!state.cd[cdId]) state.cd[cdId] = { dang: {} };
     var k = state.cd[cdId].dang;
     if (!k[id]) k[id] = { lam: 0, dung: 0, lichSu: [], lanCuoi: 0 };
+    if (!k[id].gan) k[id].gan = [];        /* vài câu gần nhất: đúng/sai, mấy giây, ngày nào, có lặp đề không */
+    if (!k[id].deGan) k[id].deGan = [];    /* mã của các đề gần đây, để khỏi phát lại */
     return k[id];
   };
   /* 0 chưa làm · 1 cần luyện thêm · 2 khá · 3 thành thạo */
@@ -1630,21 +1686,31 @@ var BAN_WEB = '2026-08-11.sup5';
     return s;
   };
 
-  /* =========================================================
-     ĐƯỜNG TỚI TỐT NGHIỆP — thước đo theo SỐ LƯỢNG câu mỗi dạng
+  /* ---------- THƯỚC ĐO TỐT NGHIỆP: LÀM ĐÚNG + LÀM NHANH + NHỚ LÂU ----------
 
-     Chạy SONG SONG với thang "Mức độ nắm bài" cũ, không thay thế:
-       · thang cũ  (Chưa làm → Thành thạo) vẫn dùng để mở khoá chuyên đề sau,
-         nên không ai bị mất tiến độ đã có;
-       · thang này thêm chặng dài hơi: mỗi dạng phải làm đủ 30 / 60 / 100 câu
-         VÀ 20 câu gần nhất đúng từ 85% trở lên.
+     Vì sao bỏ mốc "100 câu mỗi dạng":
+       · 212 dạng × 100 câu = 21.200 câu, với nhịp học thật của con thì mất ~2 năm;
+       · tệ hơn, đo trên toàn bộ 212 dạng thì 3 dạng chỉ sinh được dưới 10 đề khác
+         nhau (ít nhất là 5 đề). Bắt làm 100 câu ở đó nghĩa là mỗi đề gặp lại 20
+         lần — con chuyển sang NHỚ ĐÁP ÁN chứ không còn tính nữa.
 
-     Dạng đã TỐT NGHIỆP thì rút hẳn khỏi Luyện tập thông minh — từ đó chỉ gặp
-     lại theo lịch ôn cách quãng và trong bài thi, để mỗi buổi luyện dồn hết
-     sức vào những dạng còn thiếu.
-     ========================================================= */
-  CTS.MOC_CAU = [30, 60, 100];      /* Khá rồi · Thành thạo · Tốt nghiệp */
-  CTS.SO_CAU_XET = 20;              /* xét độ chính xác trên bấy nhiêu câu gần nhất */
+     Thước đo mới đo đúng cái cần đo — làm được, làm nhanh, và còn nhớ hôm sau:
+       · 5 câu gần nhất của dạng đó đều ĐÚNG,
+       · mỗi câu dưới NGƯỠNG THỜI GIAN (mặc định 4 phút),
+       · và 5 câu ấy trải ít nhất 2 NGÀY khác nhau — làm một mạch trong một buổi
+         lúc còn thuộc bài thì chưa tính là nhớ lâu.
+
+     Câu nào gặp lại đúng đề cũ (q.lapDe) thì KHÔNG tính vào chuỗi — nhớ đáp án
+     không được coi là thành thạo.
+
+     Van an toàn: dạng nào con đã làm đủ 40 câu và 20 câu gần nhất đúng ≥85% thì
+     cũng cho tốt nghiệp dù chưa đạt tốc độ. Không có van này thì mấy dạng khó
+     nhất (trung vị 5,4 phút/câu) sẽ kẹt vĩnh viễn. */
+  CTS.NGUONG_GIAY = 240;        /* 4 phút mỗi câu */
+  CTS.SO_CAU_TN = 5;            /* 5 câu liên tiếp */
+  CTS.SO_NGAY_TN = 2;           /* trải ít nhất 2 ngày */
+  CTS.VAN_SO_CAU = 40;          /* van an toàn: đủ bấy nhiêu câu thì thôi không đòi tốc độ */
+  CTS.SO_CAU_XET = 20;          /* xét độ chính xác trên bấy nhiêu câu gần nhất */
   CTS.NGUONG_DUNG = 0.85;
   CTS.MUC_LUONG_TEN = ['Chưa làm', 'Đang luyện', 'Khá rồi', 'Thành thạo', 'Tốt nghiệp'];
 
@@ -1657,46 +1723,86 @@ var BAN_WEB = '2026-08-11.sup5';
     return g.reduce(function (a, v) { return a + v; }, 0) / g.length;
   };
 
+  /* Chuỗi hiện tại: đếm ngược từ câu mới nhất, dừng lại khi gặp câu hỏng.
+     Bỏ qua hẳn những câu lặp đề và những câu không bấm giờ (dữ liệu cũ). */
+  CTS.chuoiTN = function (cdId, id) {
+    var d = CTS.dangOf(cdId, id), g = d.gan || [];
+    var chuoi = 0, ngay = {}, i, e;
+    for (i = g.length - 1; i >= 0; i--) {
+      e = g[i];
+      if (e.lap) continue;                       /* gặp lại đề cũ — không tính, cũng không phá chuỗi */
+      if (!e.ok) break;                          /* sai một câu là chuỗi đứt */
+      if (!e.gy) break;                          /* câu cũ không có số giây thì dừng đếm */
+      if (e.gy > CTS.NGUONG_GIAY) break;         /* quá chậm cũng coi như chưa thạo */
+      chuoi++; ngay[e.ng] = 1;
+      if (chuoi >= CTS.SO_CAU_TN) break;
+    }
+    var soNgay = Object.keys(ngay).length;
+    return {
+      chuoi: chuoi, ngay: soNgay,
+      duCau: chuoi >= CTS.SO_CAU_TN,
+      duNgay: soNgay >= CTS.SO_NGAY_TN,
+      conCau: Math.max(0, CTS.SO_CAU_TN - chuoi),
+      conNgay: Math.max(0, CTS.SO_NGAY_TN - soNgay)
+    };
+  };
+
+  /* van an toàn cho những dạng khó, làm mãi không nhanh lên được */
+  CTS.vanAnToan = function (cdId, id) {
+    var d = CTS.dangOf(cdId, id), tl = CTS.tlGan(cdId, id);
+    return d.lam >= CTS.VAN_SO_CAU && tl !== null && tl >= CTS.NGUONG_DUNG;
+  };
+
+  CTS.daTotNghiep = function (cdId, id) {
+    var c = CTS.chuoiTN(cdId, id);
+    if (c.duCau && c.duNgay) return true;
+    return CTS.vanAnToan(cdId, id);
+  };
+
   /* 0 chưa làm · 1 đang luyện · 2 khá rồi · 3 thành thạo · 4 tốt nghiệp */
   CTS.mucLuong = function (cdId, id) {
     var d = CTS.dangOf(cdId, id);
     if (!d.lam) return 0;
-    var t = CTS.tlGan(cdId, id);
-    if (t === null || t < CTS.NGUONG_DUNG) return 1;   /* chưa đủ chính xác thì đứng lại */
-    if (d.lam >= CTS.MOC_CAU[2]) return 4;
-    if (d.lam >= CTS.MOC_CAU[1]) return 3;
-    if (d.lam >= CTS.MOC_CAU[0]) return 2;
+    if (CTS.daTotNghiep(cdId, id)) return 4;
+    var c = CTS.chuoiTN(cdId, id);
+    if (c.duCau) return 3;                       /* đủ 5 câu nhanh, chỉ còn thiếu ngày thứ hai */
+    if (c.chuoi >= Math.ceil(CTS.SO_CAU_TN / 2)) return 2;
     return 1;
   };
-  CTS.daTotNghiep = function (cdId, id) { return CTS.mucLuong(cdId, id) === 4; };
 
   /* Nhãn cho một dạng. Tách rõ hai lý do khác hẳn nhau mà mức 1 gộp chung:
-       · làm đúng nhiều rồi, chỉ là CHƯA ĐỦ SỐ CÂU  -> "Đang luyện", màu xanh dịu
-       · đang SAI NHIỀU (20 câu gần nhất dưới 85%)  -> "Cần luyện thêm", màu đỏ
-     Không thì một dạng đúng 88% lại bị gắn nhãn đỏ, đọc như đang yếu. */
+       · làm đúng nhiều rồi, chỉ là CHƯA ĐỦ CHUỖI -> "Đang luyện", màu xanh dịu
+       · đang SAI NHIỀU (20 câu gần nhất dưới 85%) -> "Cần luyện thêm", màu đỏ */
   CTS.tagLuong = function (cdId, id) {
     var m = CTS.mucLuong(cdId, id), tl = CTS.tlGan(cdId, id);
     var yeu = tl !== null && tl < CTS.NGUONG_DUNG;
-    var cls = m === 0 ? 't0' : m === 4 ? 't4' : yeu ? 't1' : (m >= 2 ? 't2' : 'tx');
-    var ten = m === 0 ? 'Chưa làm' : yeu ? 'Cần luyện thêm' : CTS.MUC_LUONG_TEN[m];
-    if (m === 3) cls = 't3';
+    var cls = m === 0 ? 't0' : m === 4 ? 't4' : m === 3 ? 't3' : yeu ? 't1' : (m === 2 ? 't2' : 'tx');
+    var ten = m === 0 ? 'Chưa làm' : (m < 2 && yeu) ? 'Cần luyện thêm' : CTS.MUC_LUONG_TEN[m];
     return '<span class="tag ' + cls + '">' + ten + '</span>';
   };
 
-  /* mốc kế tiếp của một dạng: còn thiếu bao nhiêu câu nữa */
-  CTS.mocKe = function (cdId, id) {
-    var lam = CTS.dangOf(cdId, id).lam, M = CTS.MOC_CAU;
-    for (var i = 0; i < M.length; i++) if (lam < M[i]) {
-      return { moc: M[i], con: M[i] - lam, muc: i + 2 };
-    }
-    return { moc: M[2], con: 0, muc: 4 };
+  /* câu tiếp theo cần gì — dùng để hiện một dòng gợi ý cho con */
+  CTS.canGiTN = function (cdId, id) {
+    if (CTS.daTotNghiep(cdId, id)) return 'đã tốt nghiệp';
+    var c = CTS.chuoiTN(cdId, id), d = CTS.dangOf(cdId, id);
+    if (c.conCau) return 'còn ' + c.conCau + ' câu đúng dưới ' + Math.round(CTS.NGUONG_GIAY / 60) + ' phút';
+    if (c.conNgay) return 'đủ 5 câu rồi — mai làm thêm 1 câu nữa là xong';
+    return 'còn ' + Math.max(0, CTS.VAN_SO_CAU - d.lam) + ' câu';
   };
 
-  /* % đường tới tốt nghiệp của một chuyên đề = trung bình số câu / 100 mỗi dạng */
+  /* % đường tới tốt nghiệp: lấy đường nào con đang đi gần đích hơn */
+  CTS.diemTN = function (cdId, id) {
+    if (CTS.daTotNghiep(cdId, id)) return 1;
+    var c = CTS.chuoiTN(cdId, id), d = CTS.dangOf(cdId, id);
+    var a = (Math.min(c.chuoi, CTS.SO_CAU_TN) / CTS.SO_CAU_TN) * 0.8 +
+      (Math.min(c.ngay, CTS.SO_NGAY_TN) / CTS.SO_NGAY_TN) * 0.2;
+    var b = Math.min(d.lam, CTS.VAN_SO_CAU) / CTS.VAN_SO_CAU;
+    return Math.max(a, b);
+  };
   CTS.tienDoTN = function (cd) {
     if (!cd.DANG || !cd.DANG.length) return 0;
-    var s = 0, M = CTS.MOC_CAU[2];
-    cd.DANG.forEach(function (d) { s += Math.min(CTS.dangOf(cd.id, d.id).lam, M) / M; });
+    var s = 0;
+    cd.DANG.forEach(function (d) { s += CTS.diemTN(cd.id, d.id); });
     return Math.round(s / cd.DANG.length * 100);
   };
   CTS.soTotNghiepCD = function (cd) {
@@ -1704,31 +1810,28 @@ var BAN_WEB = '2026-08-11.sup5';
     (cd.DANG || []).forEach(function (d) { if (CTS.daTotNghiep(cd.id, d.id)) n++; });
     return n;
   };
-  /* toàn bộ các chuyên đề ĐÃ MỞ */
   CTS.tongTotNghiep = function () {
-    var xong = 0, tong = 0, cau = 0, can = 0, M = CTS.MOC_CAU[2];
+    var xong = 0, tong = 0, diem = 0;
     CTS.dsMo().forEach(function (cd) {
       cd.DANG.forEach(function (d) {
         tong++;
-        var lam = CTS.dangOf(cd.id, d.id).lam;
-        cau += Math.min(lam, M);
-        can += M;
+        diem += CTS.diemTN(cd.id, d.id);
         if (CTS.daTotNghiep(cd.id, d.id)) xong++;
       });
     });
-    return { xong: xong, tong: tong, cau: cau, can: can,
-      pct: can ? Math.round(cau / can * 100) : 0 };
+    return { xong: xong, tong: tong, pct: tong ? Math.round(diem / tong * 100) : 0 };
   };
-  /* những dạng còn thiếu nhiều câu nhất — chính là chỗ cần dồn sức */
+  /* những dạng còn xa đích nhất — chính là chỗ cần dồn sức */
   CTS.dsThieu = function (cd, n) {
     var ra = [];
     (cd.DANG || []).forEach(function (d) {
-      var x = CTS.dangOf(cd.id, d.id);
       if (CTS.daTotNghiep(cd.id, d.id)) return;
-      ra.push({ id: d.id, ten: d.ten, lam: x.lam,
-        tl: CTS.tlGan(cd.id, d.id), muc: CTS.mucLuong(cd.id, d.id), ke: CTS.mocKe(cd.id, d.id) });
+      var x = CTS.dangOf(cd.id, d.id);
+      ra.push({ id: d.id, ten: d.ten, lam: x.lam, diem: CTS.diemTN(cd.id, d.id),
+        c: CTS.chuoiTN(cd.id, d.id), tl: CTS.tlGan(cd.id, d.id),
+        muc: CTS.mucLuong(cd.id, d.id), can: CTS.canGiTN(cd.id, d.id) });
     });
-    ra.sort(function (a, b) { return a.lam - b.lam; });
+    ra.sort(function (a, b) { return a.diem - b.diem; });
     return n ? ra.slice(0, n) : ra;
   };
 
@@ -1760,16 +1863,22 @@ var BAN_WEB = '2026-08-11.sup5';
 
   /* ---------- LỘ TRÌNH: học lần lượt, xong mới mở chuyên đề sau ---------- */
   /* "hoàn thiện" = luyện đủ 100% (mọi dạng thành thạo) VÀ thi cuối chuyên đề đạt */
+  /* Bài thi chỉ mở khi MỌI dạng của chuyên đề đã tốt nghiệp — bài thi và
+     Đường tới tốt nghiệp là hai chặng của cùng một việc, nên gộp làm một. */
+  CTS.moThi = function (cd) {
+    return CTS.soTotNghiepCD(cd) >= cd.DANG.length;
+  };
   CTS.daXong = function (cd) {
-    return CTS.tienDoCD(cd) >= 100 && !!CTS.thiCua(cd.id).dat;
+    return CTS.moThi(cd) && !!CTS.thiCua(cd.id).dat;
   };
   /* còn thiếu gì để hoàn thiện — trả về mảng câu chữ */
   CTS.conThieu = function (cd) {
     var t = [];
-    var pc = CTS.tienDoCD(cd);
-    if (pc < 100) {
-      var chua = cd.DANG.filter(function (d) { return CTS.mucDo(cd.id, d.id) < 3; }).length;
-      t.push('luyện cho <b>' + chua + ' dạng</b> nữa đạt mức “Thành thạo” (tiến độ ' + pc + '% → 100%)');
+    var con = cd.DANG.length - CTS.soTotNghiepCD(cd);
+    if (con) {
+      t.push('cho <b>' + con + ' dạng</b> nữa tốt nghiệp — mỗi dạng cần <b>' + CTS.SO_CAU_TN +
+        ' câu liền đúng</b>, mỗi câu dưới ' + Math.round(CTS.NGUONG_GIAY / 60) + ' phút, trải <b>' +
+        CTS.SO_NGAY_TN + ' ngày</b>');
     }
     if (!CTS.thiCua(cd.id).dat) t.push('<b>thi cuối chuyên đề</b> đạt từ ' + CTS.NGUONG_THI + '%');
     return t;
@@ -2108,13 +2217,20 @@ var BAN_WEB = '2026-08-11.sup5';
   };
 
   /* ---------- ghi nhận một câu trả lời ---------- */
-  CTS.ghiNhan = function (cdId, dangId, dung) {
+  CTS.ghiNhan = function (cdId, dangId, dung, gy, ma, lapDe) {
     CTS.diemDanh();
     var d = CTS.dangOf(cdId, dangId);
     d.lam++; if (dung) d.dung++;
     d.lichSu.push(dung ? 1 : 0);
     if (d.lichSu.length > 40) d.lichSu = d.lichSu.slice(-40);
     d.lanCuoi = Date.now();
+    /* nhật ký ngắn phục vụ thước đo tốt nghiệp */
+    d.gan.push({ ok: dung ? 1 : 0, gy: Math.round(gy || 0), ng: CTS.ngayHomNay(), lap: lapDe ? 1 : 0 });
+    if (d.gan.length > 12) d.gan = d.gan.slice(-12);
+    if (ma) {
+      d.deGan.push(ma);
+      if (d.deGan.length > CTS.SO_DE_NHO) d.deGan = d.deGan.slice(-CTS.SO_DE_NHO);
+    }
     var h = CTS.ngayHomNay();
     state.ngay[h].cau++; if (dung) state.ngay[h].dung++;
     if (dung) state.sao = (state.sao || 0) + 1;
@@ -2864,6 +2980,70 @@ var BAN_WEB = '2026-08-11.sup5';
     return out;
   })();
 
+  /* ---------- KHO ĐỀ 3 CHỮ SỐ cho D12 / D13 / D14 ----------
+     Bản 2 chữ số chỉ sinh được 8–21 đề, con làm vài buổi là thuộc lòng đáp án.
+     Mở sang số có 3 chữ số thì kho đề lên hàng trăm, mà cách giải vẫn vừa sức
+     lớp 4: không cần đại số, chỉ cần DUYỆT CÓ HỆ THỐNG rồi thử lại.  */
+  function tongCS(n) {
+    var s = 0; n = Math.abs(n);
+    while (n > 0) { s += n % 10; n = Math.floor(n / 10); }
+    return s;
+  }
+  POOL.D12b = (function () {          /* số 3 chữ số gấp k lần TỔNG các chữ số */
+    var out = [];
+    for (var k = 11; k <= 90; k++) {
+      var ans = [];
+      for (var N = 100; N <= 999; N++) if (N === k * tongCS(N)) ans.push(N);
+      if (ans.length >= 1 && ans.length <= 4) out.push({ k: k, ans: ans });
+    }
+    return out;
+  })();
+  POOL.D13b = (function () {          /* số 3 chữ số gấp k lần chữ số HÀNG CHỤC */
+    var out = [];
+    for (var k = 12; k <= 999; k++) {
+      var ans = [];
+      for (var b = 1; b <= 9; b++) {
+        var N = k * b;
+        if (N >= 100 && N <= 999 && Math.floor(N / 10) % 10 === b) ans.push(N);
+      }
+      if (ans.length >= 1 && ans.length <= 3) out.push({ k: k, ans: ans });
+    }
+    return out;
+  })();
+  POOL.D14b = (function () {          /* số 3 chữ số gấp k lần chữ số HÀNG ĐƠN VỊ */
+    var out = [];
+    for (var k = 12; k <= 999; k++) {
+      var ans = [];
+      for (var c = 1; c <= 9; c++) {
+        var N = k * c;
+        if (N >= 100 && N <= 999 && N % 10 === c) ans.push(N);
+      }
+      if (ans.length >= 1 && ans.length <= 3) out.push({ k: k, ans: ans });
+    }
+    return out;
+  })();
+
+  /* Lời giải chung cho ba dạng 3 chữ số: duyệt ứng viên rồi THỬ LẠI.
+     tenPhan  – 'tổng các chữ số' | 'chữ số hàng chục' | 'chữ số hàng đơn vị'
+     ds       – danh sách ứng viên đã duyệt: [{x, N, dat, vi}] */
+  function giai3CS(k, tenPhan, canX, ds, ans, kyHieu, giaiThich) {
+    var bang = '<table class="tbl"><tr><th>' + kyHieu + '</th><th>Số = ' + k + ' × ' + kyHieu +
+      '</th><th>Thử lại</th></tr>';
+    ds.forEach(function (r) {
+      bang += '<tr class="' + (r.dat ? 'ok' : 'no') + '"><td>' + r.x + '</td><td>' +
+        (r.N > 999 ? '<span class="muted">' + r.N + ' — quá 3 chữ số</span>' : r.N) + '</td><td>' +
+        r.vi + '</td></tr>';
+    });
+    bang += '</table>';
+    return B('Bước 1 · Nhìn ra điều mấu chốt',
+      'Số cần tìm <b>gấp ' + k + ' lần ' + tenPhan + '</b> của chính nó. Nghĩa là nếu gọi ' +
+      kyHieu + ' là ' + tenPhan + ' thì:' + EQ('Số cần tìm = ' + k + ' × ' + kyHieu) +
+      'Vậy chỉ cần đi tìm ' + kyHieu + ', chứ không phải mò từng số trong 900 số có 3 chữ số.') +
+      B('Bước 2 · ' + kyHieu + ' chỉ có thể là mấy giá trị', canX) +
+      B('Bước 3 · Thử lần lượt rồi kiểm tra lại', giaiThich + bang) +
+      B('Kết luận', '<b class="hl">' + ans.join(' ; ') + '</b>');
+  }
+
   /* D13 – số 2 chữ số gấp k lần chữ số HÀNG CHỤC */
   POOL.D13 = (function () {
     var out = [];
@@ -3294,6 +3474,34 @@ var BAN_WEB = '2026-08-11.sup5';
     ten: 'Số gấp k lần TỔNG các chữ số của nó',
     goi: 'Liên hệ giữa số và tổng các chữ số',
     gen: function () {
+      /* một nửa số lần ra bản 3 CHỮ SỐ — kho đề rộng hơn hẳn, con khỏi thuộc đáp án */
+      if (POOL.D12b.length && Math.random() < 0.55) {
+        var c3 = pick(POOL.D12b), k3 = c3.k;
+        var lo = Math.max(1, Math.ceil(100 / k3)), ds = [];
+        for (var S = lo; S <= 27; S++) {
+          var N3 = k3 * S, t3 = tongCS(N3), dat = N3 <= 999 && t3 === S;
+          ds.push({ x: S, N: N3, dat: dat,
+            vi: N3 > 999 ? '—' : ('tổng các chữ số của ' + N3 + ' là <b>' + t3 + '</b> ' +
+              (dat ? '= S ✔' : '≠ ' + S + ' ✘')) });
+          if (N3 > 999) break;
+        }
+        var nhieu3 = c3.ans.length > 1;
+        return {
+          de: (nhieu3 ? 'Tìm <b>tất cả</b> các số' : 'Tìm số') + ' tự nhiên có <b>3 chữ số</b>, biết rằng số đó ' +
+            '<b>gấp ' + k3 + ' lần tổng các chữ số</b> của nó.' +
+            (nhieu3 ? '<div class="note">Bài này có nhiều đáp án — con hãy viết tất cả, cách nhau bằng dấu phẩy.</div>' : ''),
+          ans: c3.ans,
+          sol: giai3CS(k3, 'tổng các chữ số',
+            'S là tổng của <b>3 chữ số</b>, mà mỗi chữ số nhiều nhất là 9, nên ' +
+            EQ('S ≤ 9 + 9 + 9 = 27') +
+            'Mặt khác số cần tìm có 3 chữ số nên nó ≥ 100, mà nó = ' + k3 + ' × S, suy ra:' +
+            EQ('S ≥ 100 : ' + k3 + ' → S ≥ ' + lo) +
+            'Vậy S chỉ có thể là một trong các số từ <b>' + lo + '</b> đến <b>27</b> — thử hết là xong.',
+            ds, c3.ans, 'S',
+            'Với mỗi S, lấy ' + k3 + ' × S rồi <b>cộng lại các chữ số của kết quả</b> xem có đúng bằng S không. ' +
+            'Bằng thì nhận, khác thì loại:')
+        };
+      }
       var c = pick(POOL.D12), k = c.k;
       var P = 10 - k, Q = k - 1, g = gcd(P, Q), P2 = P / g, Q2 = Q / g;
       var nhieu = c.ans.length > 1;
@@ -3337,6 +3545,29 @@ var BAN_WEB = '2026-08-11.sup5';
     ten: 'Số gấp k lần chữ số HÀNG CHỤC của nó',
     goi: 'Liên hệ giữa số và chữ số hàng chục',
     gen: function () {
+      if (POOL.D13b.length && Math.random() < 0.55) {
+        var c3 = pick(POOL.D13b), k3 = c3.k, ds = [];
+        for (var b3 = 1; b3 <= 9; b3++) {
+          var N3 = k3 * b3, hc = Math.floor(N3 / 10) % 10;
+          var dat = N3 >= 100 && N3 <= 999 && hc === b3;
+          ds.push({ x: b3, N: N3, dat: dat,
+            vi: N3 > 999 ? '—' : (N3 < 100 ? 'chưa đủ 3 chữ số ✘'
+              : ('chữ số hàng chục của ' + N3 + ' là <b>' + hc + '</b> ' + (dat ? '= b ✔' : '≠ ' + b3 + ' ✘'))) });
+        }
+        var nhieu3 = c3.ans.length > 1;
+        return {
+          de: (nhieu3 ? 'Tìm <b>tất cả</b> các số' : 'Tìm số') + ' tự nhiên có <b>3 chữ số</b>, biết rằng số đó ' +
+            '<b>gấp ' + k3 + ' lần chữ số hàng chục</b> của nó.' +
+            (nhieu3 ? '<div class="note">Bài này có nhiều đáp án — con hãy viết tất cả, cách nhau bằng dấu phẩy.</div>' : ''),
+          ans: c3.ans,
+          sol: giai3CS(k3, 'chữ số hàng chục',
+            'b là <b>một chữ số</b> nên b chỉ có thể từ 0 đến 9. ' +
+            'Nếu b = 0 thì số cần tìm = ' + k3 + ' × 0 = 0, không phải số có 3 chữ số. ' +
+            'Vậy <b>b từ 1 đến 9</b> — chỉ có 9 khả năng, thử hết rất nhanh.',
+            ds, c3.ans, 'b',
+            'Với mỗi b, lấy ' + k3 + ' × b rồi <b>nhìn vào chữ số hàng chục của kết quả</b> xem có đúng bằng b không:')
+        };
+      }
       var c = pick(POOL.D13), k = c.k, m = k - 10;
       var nhieu = c.ans.length > 1;
       var de = (nhieu ? 'Tìm <b>tất cả</b> các số' : 'Tìm số') + ' tự nhiên có <b>2 chữ số</b>, biết rằng số đó ' +
@@ -3373,6 +3604,29 @@ var BAN_WEB = '2026-08-11.sup5';
     ten: 'Số gấp k lần chữ số HÀNG ĐƠN VỊ của nó',
     goi: 'Liên hệ giữa số và chữ số hàng đơn vị',
     gen: function () {
+      if (POOL.D14b.length && Math.random() < 0.55) {
+        var c3 = pick(POOL.D14b), k3 = c3.k, ds = [];
+        for (var c4 = 1; c4 <= 9; c4++) {
+          var N3 = k3 * c4, dv = N3 % 10;
+          var dat = N3 >= 100 && N3 <= 999 && dv === c4;
+          ds.push({ x: c4, N: N3, dat: dat,
+            vi: N3 > 999 ? '—' : (N3 < 100 ? 'chưa đủ 3 chữ số ✘'
+              : ('chữ số hàng đơn vị của ' + N3 + ' là <b>' + dv + '</b> ' + (dat ? '= c ✔' : '≠ ' + c4 + ' ✘'))) });
+        }
+        var nhieu3 = c3.ans.length > 1;
+        return {
+          de: (nhieu3 ? 'Tìm <b>tất cả</b> các số' : 'Tìm số') + ' tự nhiên có <b>3 chữ số</b>, biết rằng số đó ' +
+            '<b>gấp ' + k3 + ' lần chữ số hàng đơn vị</b> của nó.' +
+            (nhieu3 ? '<div class="note">Bài này có nhiều đáp án — con hãy viết tất cả, cách nhau bằng dấu phẩy.</div>' : ''),
+          ans: c3.ans,
+          sol: giai3CS(k3, 'chữ số hàng đơn vị',
+            'c là <b>một chữ số</b> nên c chỉ từ 0 đến 9. Nếu c = 0 thì số cần tìm = ' + k3 + ' × 0 = 0, ' +
+            'không phải số có 3 chữ số. Vậy <b>c từ 1 đến 9</b> — chỉ 9 khả năng.',
+            ds, c3.ans, 'c',
+            'Với mỗi c, lấy ' + k3 + ' × c rồi <b>nhìn chữ số cuối cùng của kết quả</b> xem có đúng bằng c không. ' +
+            'Chú ý: chữ số cuối của tích chỉ phụ thuộc chữ số cuối của hai thừa số:')
+        };
+      }
       var c = pick(POOL.D14), k = c.k;
       var P = 10, Q = k - 1, g = gcd(P, Q), P2 = P / g, Q2 = Q / g;
       var nhieu = c.ans.length > 1;
@@ -4975,7 +5229,7 @@ var BAN_WEB = '2026-08-11.sup5';
     id: 'P9', bai: 3, ten: 'Số chẵn / lẻ / chia hết cho 5 có các chữ số khác nhau',
     goi: 'Khi chữ số 0 được phép ở hàng đơn vị thì phải chia trường hợp',
     gen: function () {
-      var dk = pick(['chan', 'le', 'chia5']), khac = Math.random() < 0.7, k = rnd(3, 5);
+      var dk = pick(['chan', 'le', 'chia5']), khac = Math.random() < 0.7, k = rnd(3, 6);
       var uv = dk === 'chan' ? [0, 2, 4, 6, 8] : (dk === 'le' ? [1, 3, 5, 7, 9] : [0, 5]);
       var tenDK = dk === 'chan' ? 'chẵn' : (dk === 'le' ? 'lẻ' : 'chia hết cho 5');
       var moTa = dk === 'chia5'
@@ -18260,6 +18514,111 @@ var BAN_WEB = '2026-08-11.sup5';
   var vaiTro = null;          /* 'con' | 'bo' */
   var cdHT = null, baiHT = null, phien = null;
 
+  /* =========================================================
+     🎆 PHÁO HOA
+     Vẽ trên một canvas phủ toàn màn hình, không nhận chuột nên không cản bé bấm
+     nút tiếp theo. Mỗi chùm khoảng 46 hạt, tự tắt sau hơn một giây rồi gỡ canvas
+     đi — không để chạy nền, không tốn pin máy tính bảng.
+     ========================================================= */
+  var phCanvas = null, phCtx = null, phHat = [], phHen = null;
+  var PH_MAU = ['#ffd76e', '#ff8fb1', '#7c5cff', '#37d67a', '#4dc9ff', '#ff9f45', '#ff5c8a'];
+
+  function phDung() {
+    if (phHen) { cancelAnimationFrame(phHen); phHen = null; }
+    if (phCanvas && phCanvas.parentNode) phCanvas.parentNode.removeChild(phCanvas);
+    phCanvas = null; phCtx = null; phHat = [];
+  }
+  function phMo() {
+    if (phCanvas) return;
+    phCanvas = document.createElement('canvas');
+    phCanvas.className = 'phaohoa';
+    phCanvas.width = window.innerWidth;
+    phCanvas.height = window.innerHeight;
+    document.body.appendChild(phCanvas);
+    phCtx = phCanvas.getContext('2d');
+  }
+  function phChum(x, y, soHat, manh) {
+    for (var i = 0; i < soHat; i++) {
+      var goc = Math.random() * Math.PI * 2;
+      var toc = (1.6 + Math.random() * 4.6) * manh;
+      phHat.push({
+        x: x, y: y,
+        vx: Math.cos(goc) * toc,
+        vy: Math.sin(goc) * toc - 1.6 * manh,
+        r: 2 + Math.random() * 3.2,
+        m: PH_MAU[Math.floor(Math.random() * PH_MAU.length)],
+        s: 1, tan: 0.014 + Math.random() * 0.014
+      });
+    }
+  }
+  function phVe() {
+    if (!phCtx) return;
+    phCtx.clearRect(0, 0, phCanvas.width, phCanvas.height);
+    var con = 0, i, h;
+    for (i = 0; i < phHat.length; i++) {
+      h = phHat[i];
+      if (h.s <= 0) continue;
+      h.x += h.vx; h.y += h.vy;
+      h.vy += 0.13;                 /* trọng lực */
+      h.vx *= 0.99; h.vy *= 0.99;
+      h.s -= h.tan;
+      if (h.s <= 0) continue;
+      con++;
+      phCtx.globalAlpha = Math.max(0, h.s);
+      phCtx.fillStyle = h.m;
+      phCtx.beginPath();
+      phCtx.arc(h.x, h.y, h.r, 0, Math.PI * 2);
+      phCtx.fill();
+    }
+    phCtx.globalAlpha = 1;
+    if (con) phHen = requestAnimationFrame(phVe);
+    else phDung();
+  }
+
+  /* muc: 'nho' = một chùm ngay chỗ ô nhập · 'to' = pháo hoa đầy màn hình */
+  function phaoHoa(muc, nut) {
+    var che = st().phao;
+    if (che === 'tat') return;
+    if (che === 'lon' && muc !== 'to') return;
+    phMo();
+    var W = phCanvas.width, H = phCanvas.height;
+    if (muc === 'to') {
+      var lan = 0;
+      var ban = function () {
+        phChum(W * (0.15 + Math.random() * 0.7), H * (0.15 + Math.random() * 0.4), 46, 1.15);
+        if (++lan < 6) setTimeout(ban, 170);
+      };
+      ban();
+    } else {
+      var x = W / 2, y = H * 0.42;
+      try {
+        var n = nut || el('inp');
+        if (n) { var r = n.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top + r.height / 2; }
+      } catch (e) { }
+      phChum(x, y, 40, 0.95);
+    }
+    if (!phHen) phHen = requestAnimationFrame(phVe);
+  }
+  window.addEventListener('resize', phDung);
+  C.phaoHoa = phaoHoa;      /* để khu cài đặt và bài kiểm thử gọi được */
+
+  /* một dòng trong bảng Đường tới tốt nghiệp: 5 ô vuông = 5 câu của chuỗi */
+  function tnDong(cdId, x) {
+    var c = x.c || C.chuoiTN(cdId, x.id);
+    var xong = C.daTotNghiep(cdId, x.id);
+    var o = '';
+    for (var i = 0; i < C.SO_CAU_TN; i++) {
+      o += '<i class="' + (xong || i < c.chuoi ? 'on' : '') + '"></i>';
+    }
+    return '<div class="tnrow' + (xong ? ' xong' : '') + '" data-ltcd="' + cdId + '" data-ltid="' + x.id + '">' +
+      '<span class="nm">' + (xong ? '🎓 ' : '') + esc(x.ten) + '</span>' +
+      '<span class="tnoo">' + o + '</span>' +
+      '<span class="tnnum">' + (xong ? '✔' : c.chuoi + '/' + C.SO_CAU_TN) + '</span>' +
+      '<span class="tnngay">' + (xong ? '' : (c.ngay + '/' + C.SO_NGAY_TN + ' ngày')) + '</span>' +
+      C.tagLuong(cdId, x.id) +
+      '<button class="btn sm">' + (xong ? 'Ôn lại' : 'Luyện') + '</button></div>';
+  }
+
   /* ---------- vòng tròn tiến độ ---------- */
   function ring(pct, size, day, mau, giua, nen) {
     var r = (size - day) / 2, cv = 2 * Math.PI * r;
@@ -18599,12 +18958,19 @@ var BAN_WEB = '2026-08-11.sup5';
     h += '<div class="kpi"><b>' + (s.huyHieu || []).length + '</b><span>huy hiệu</span></div>';
     h += '</div>';
     var dsMo = C.dsMo();
-    var cuoi = (s.phien || []).slice(-1)[0];
-    var cdCuoi = (cuoi && C.CD[cuoi.cd] && C.moKhoa(C.CD[cuoi.cd])) ? C.CD[cuoi.cd] : C.cdDangHoc();
+    /* MỘT nút to duy nhất — bé mở web ra không phải chọn gì cả.
+       Nút phụ "ôn lại bài cũ" chỉ hiện khi đã học đủ nhiều để có cái mà ôn. */
+    var cdCuoi = C.cdDangHoc();
+    var daHocDu = 0;
+    C.dsMo().forEach(function (x) {
+      x.DANG.forEach(function (d) { if (C.dangOf(x.id, d.id).lam > 0) daHocDu++; });
+    });
     if (cdCuoi) {
-      h += '<div class="row" style="margin-top:16px">' +
-        '<button class="btn" style="background:#fff;color:#5b3fd6" data-tieptuc="' + cdCuoi.id + '">' +
-        (cuoi ? '▶ Học tiếp: ' : '▶ Bắt đầu: ') + cdCuoi.tenNgan + '</button></div>';
+      h += '<div class="row" style="margin-top:18px;align-items:center">' +
+        '<button class="btn tolam" data-tieptuc="' + cdCuoi.id + '">▶ Học tiếp — ' +
+        esc(cdCuoi.tenNgan) + '</button>';
+      if (daHocDu >= 6) h += '<button class="btn nhonho" data-lttron="1">🔁 Ôn lại bài cũ</button>';
+      h += '</div>';
     }
     var saiHN = Math.max(0, hn.cau - hn.dung);
     h += '</div><div class="goalring">' +
@@ -18630,18 +18996,6 @@ var BAN_WEB = '2026-08-11.sup5';
         '<button class="btn ghost" data-go="soloi">Xem sổ lỗi</button></div></div>';
     }
 
-    var soMo = C.dsMo().length, daHoc = 0;
-    C.dsMo().forEach(function (cd) {
-      cd.DANG.forEach(function (d) { if (C.mucDo(cd.id, d.id) > 0) daHoc++; });
-    });
-    if (daHoc >= 6) {
-      h += '<div class="card tron"><div class="row" style="align-items:center">' +
-        '<div style="flex:1;min-width:220px"><b>🌀 Ôn tập tổng hợp</b>' +
-        '<div class="muted" style="margin-top:4px">Trộn ngẫu nhiên câu từ <b>' + soMo +
-        ' chuyên đề</b> con đã học (' + daHoc + ' dạng), <b>không nói dạng bài</b> — ' +
-        'giống đề thi thật nhất.</div></div>' +
-        '<button class="btn" data-lttron="1">🌀 Làm ' + (s.soCau || 10) + ' câu</button></div></div>';
-    }
 
     /* ---- 🎓 ĐƯỜNG TỚI TỐT NGHIỆP: mỗi dạng phải làm đủ 100 câu ---- */
     var tn = C.tongTotNghiep();
@@ -18652,29 +19006,20 @@ var BAN_WEB = '2026-08-11.sup5';
         '<span style="font-size:20px">' + tn.pct + '%</span>', '#ece8ff');
       h += '<div style="flex:1;min-width:230px">';
       h += '<h2 class="sec" style="margin:0 0 4px">🎓 Đường tới tốt nghiệp</h2>';
-      h += '<p class="muted" style="margin:0">Một dạng được coi là <b>tốt nghiệp</b> khi con làm đủ ' +
-        '<b>' + C.MOC_CAU[2] + ' câu</b> và <b>' + C.SO_CAU_XET + ' câu gần nhất đúng từ ' +
-        Math.round(C.NGUONG_DUNG * 100) + '%</b>. Tốt nghiệp rồi thì dạng đó <b>nghỉ</b> — ' +
-        'chỉ thỉnh thoảng quay lại ôn cho khỏi quên, để con dồn sức vào dạng còn thiếu.</p>';
-      h += '<div class="tnso"><span><b>' + tn.xong + '</b>/' + tn.tong + ' dạng đã tốt nghiệp</span>' +
-        '<span><b>' + tn.cau + '</b>/' + tn.can + ' câu</span></div>';
+      h += '<p class="muted" style="margin:0">Một dạng <b>tốt nghiệp</b> khi con làm được ' +
+        '<b>' + C.SO_CAU_TN + ' câu liền đúng</b>, mỗi câu <b>dưới ' + Math.round(C.NGUONG_GIAY / 60) + ' phút</b>, ' +
+        'và ' + C.SO_CAU_TN + ' câu ấy phải ở <b>ít nhất ' + C.SO_NGAY_TN + ' ngày khác nhau</b> — ' +
+        'làm một mạch trong một buổi thì mới là thuộc bài, chưa phải nhớ lâu.<br>' +
+        'Tốt nghiệp rồi thì dạng đó <b>nghỉ</b>, chỉ thỉnh thoảng quay lại ôn cho khỏi quên.</p>';
+      h += '<div class="tnso"><span><b>' + tn.xong + '</b>/' + tn.tong + ' dạng đã tốt nghiệp</span></div>';
       h += '</div></div>';
 
       if (cdTN) {
         var thieu = C.dsThieu(cdTN, 5);
         h += '<div class="tnbang"><b>' + cdTN.icon + ' ' + esc(cdTN.tenNgan) + '</b> — ' +
           C.soTotNghiepCD(cdTN) + '/' + cdTN.DANG.length + ' dạng tốt nghiệp' +
-          (thieu.length ? ' · những dạng còn thiếu nhiều câu nhất:' : ' · <b>xong hết rồi! 🎉</b>');
-        thieu.forEach(function (x) {
-          var pc = Math.min(100, Math.round(x.lam / C.MOC_CAU[2] * 100));
-          h += '<div class="tnrow" data-ltcd="' + cdTN.id + '" data-ltid="' + x.id + '">' +
-            '<span class="nm">' + esc(x.ten) + '</span>' +
-            '<span class="tnbar"><i style="width:' + pc + '%"></i>' +
-              '<u style="left:' + (C.MOC_CAU[0]) + '%"></u><u style="left:' + (C.MOC_CAU[1]) + '%"></u></span>' +
-            '<span class="tnnum">' + x.lam + '/' + C.MOC_CAU[2] + '</span>' +
-            C.tagLuong(cdTN.id, x.id) +
-            '<button class="btn sm">Luyện</button></div>';
-        });
+          (thieu.length ? ' · những dạng còn xa đích nhất:' : ' · <b>xong hết rồi! 🎉</b>');
+        thieu.forEach(function (x) { h += tnDong(cdTN.id, x); });
         h += '</div>';
       }
       h += '</div>';
@@ -18779,77 +19124,64 @@ var BAN_WEB = '2026-08-11.sup5';
     }
 
     h += '<div class="card"><div class="row">';
-    h += '<button class="btn big" data-lt="smart">✨ Luyện tập thông minh</button>';
-    h += '<button class="btn ghost" data-lt="all">🎲 Ôn tập tổng hợp</button>';
-    h += '<button class="btn ghost" data-go2="chon">🎯 Tự chọn dạng bài</button>';
-    h += '<button class="btn ghost" data-go2="theory">📘 Học lý thuyết</button>';
+    h += '<button class="btn tolam" data-lt="smart">▶ Luyện tập — ' + (s.soCau || 10) + ' câu</button>';
+    h += '<button class="btn nhonho" data-go2="theory">📘 Học lý thuyết</button>';
+    h += '<button class="btn nhonho" data-lt="all">🌀 Ôn tập tổng hợp</button>';
     h += '</div>';
-    h += '<div class="row" style="margin-top:14px"><span class="muted">Mỗi lần luyện:</span>' +
-      '<input class="numbox" id="so-cau" inputmode="numeric" maxlength="3" value="' + (s.soCau || 10) + '"> ' +
-      '<span class="muted">câu</span>';
-    [5, 10, 20, 30, 50].forEach(function (n) {
-      h += '<button class="btn sm ghost" data-socau="' + n + '">' + n + '</button>';
-    });
-    h += '</div>';
-    h += '<p class="muted" style="margin:10px 0 0">Con tự điền số câu muốn làm (từ 1 đến 100). ' +
-      '“Luyện tập thông minh” tự chọn nhiều câu ở những dạng con còn yếu hoặc chưa làm bao giờ.</p></div>';
+    h += '<p class="muted" style="margin:12px 0 0">Web tự chọn dạng bài cho con — ưu tiên dạng chưa làm ' +
+      'và dạng hay sai. Con cứ bấm nút to là học được ngay.</p></div>';
 
     /* ---- 🎓 Đường tới tốt nghiệp của riêng chuyên đề này ---- */
     var pcTN = C.tienDoTN(cd), soTN = C.soTotNghiepCD(cd);
     h += '<div class="card tncard"><div class="row" style="align-items:center;gap:18px">';
     h += ring(pcTN, 96, 10, '#7c5cff', '<span style="font-size:20px">' + pcTN + '%</span>', '#ece8ff');
     h += '<div style="flex:1;min-width:230px"><h2 class="sec" style="margin:0 0 4px">🎓 Đường tới tốt nghiệp</h2>';
-    h += '<p class="muted" style="margin:0">Mỗi dạng cần <b>' + C.MOC_CAU[2] + ' câu</b> và <b>' +
-      C.SO_CAU_XET + ' câu gần nhất đúng ≥' + Math.round(C.NGUONG_DUNG * 100) + '%</b>. ' +
-      'Hai vạch trắng trên thanh là mốc <b>' + C.MOC_CAU[0] + '</b> (Khá rồi) và <b>' + C.MOC_CAU[1] + '</b> (Thành thạo).</p>';
+    h += '<p class="muted" style="margin:0"><b>' + C.SO_CAU_TN + ' câu liền đúng</b>, mỗi câu <b>dưới ' +
+      Math.round(C.NGUONG_GIAY / 60) + ' phút</b>, và trải <b>ít nhất ' + C.SO_NGAY_TN + ' ngày</b> là tốt nghiệp. ' +
+      'Năm ô vuông bên phải là 5 câu đó — làm sai hoặc làm quá chậm thì các ô về lại từ đầu. ' +
+      'Câu nào gặp lại đúng đề cũ thì <b>không được tính</b>.<br>' +
+      '<span class="muted">Dạng nào khó quá, làm mãi chưa nhanh lên được: đủ <b>' + C.VAN_SO_CAU +
+      ' câu</b> mà 20 câu gần nhất đúng ≥' + Math.round(C.NGUONG_DUNG * 100) + '% thì cũng cho tốt nghiệp.</span></p>';
     h += '<div class="tnso"><span><b>' + soTN + '</b>/' + cd.DANG.length + ' dạng đã tốt nghiệp</span>' +
       '<span><b>' + C.tongCauCD(cd) + '</b> câu đã làm</span></div></div></div>';
     h += '<div class="tnbang">';
     cd.DANG.slice().sort(function (a, b) {
-      return C.dangOf(cd.id, a.id).lam - C.dangOf(cd.id, b.id).lam;
+      return C.diemTN(cd.id, a.id) - C.diemTN(cd.id, b.id);
     }).forEach(function (d) {
-      var x = C.dangOf(cd.id, d.id), m = C.mucLuong(cd.id, d.id);
-      var pc = Math.min(100, Math.round(x.lam / C.MOC_CAU[2] * 100));
-      var tl = C.tlGan(cd.id, d.id);
-      h += '<div class="tnrow' + (m === 4 ? ' xong' : '') + '" data-ltcd="' + cd.id + '" data-ltid="' + d.id + '">' +
-        '<span class="nm">' + (m === 4 ? '🎓 ' : '') + esc(d.ten) + '</span>' +
-        '<span class="tnbar"><i style="width:' + pc + '%"></i>' +
-          '<u style="left:' + C.MOC_CAU[0] + '%"></u><u style="left:' + C.MOC_CAU[1] + '%"></u></span>' +
-        '<span class="tnnum">' + x.lam + '/' + C.MOC_CAU[2] + '</span>' +
-        '<span class="tnnum" style="min-width:44px;color:' +
-          (tl === null ? 'var(--ink2)' : tl >= C.NGUONG_DUNG ? 'var(--ok)' : 'var(--no)') + '">' +
-          (tl === null ? '—' : Math.round(tl * 100) + '%') + '</span>' +
-        C.tagLuong(cd.id, d.id) +
-        '<button class="btn sm">' + (m === 4 ? 'Ôn lại' : 'Luyện') + '</button></div>';
+      h += tnDong(cd.id, { id: d.id, ten: d.ten });
     });
-    h += '</div></div>';
+    h += '</div>';
 
-    /* --- bài thi cuối chuyên đề --- */
-    var thi = C.thiCua(cd.id), pcCd = C.tienDoCD(cd);
+    /* ---- BÀI THI nằm luôn trong thẻ này: tốt nghiệp hết dạng mới mở ra ---- */
+    var thi = C.thiCua(cd.id);
     var soCauThi = Math.max(C.SO_CAU_THI, cd.DANG.length);
-    h += '<div class="card exam' + (thi.dat ? ' passed' : '') + '">';
-    h += '<h2 class="sec" style="margin-top:0">🎓 Bài thi cuối chuyên đề</h2>';
-    h += '<p class="muted"><b>' + soCauThi + ' câu</b> trộn ngẫu nhiên, <b>mỗi dạng ít nhất một câu</b>. ' +
-      'Trong lúc thi: <b>không hiện đúng/sai, không lời giải, không mở lý thuyết</b>, và đề ' +
-      '<b>không nói dạng bài</b> — con phải tự nhận ra như khi đi thi thật. ' +
-      'Đúng từ <b>' + C.NGUONG_THI + '%</b> (' + C.canDung(soCauThi) + '/' + soCauThi + ' câu) là <b>đạt</b>.</p>';
-    if (thi.dat) {
-      h += '<div class="tip">🎉 <b>Đã tốt nghiệp</b> ngày <b>' + hienNgay(thi.dat.t) +
-        '</b> — điểm cao nhất <b>' + thi.dat.pct + '%</b>. Con vẫn có thể thi lại để phá kỷ lục.</div>';
-    } else if (pcCd < 60) {
-      h += '<div class="warn">Tiến độ chuyên đề mới <b>' + pcCd + '%</b>. Nên học hết các bài và ' +
-        'luyện cho hết dạng màu đỏ rồi hãy thi, sẽ chắc hơn.</div>';
+    var conTN = cd.DANG.length - soTN;
+    h += '<div class="thikhoi' + (thi.dat ? ' passed' : (conTN ? ' khoa' : '')) + '">';
+    h += '<h3>🎓 Bài thi cuối chuyên đề</h3>';
+    if (conTN) {
+      h += '<p class="muted" style="margin:0">🔒 Còn <b>' + conTN + ' dạng</b> nữa tốt nghiệp là bài thi mở ra. ' +
+        'Thi xong đạt từ <b>' + C.NGUONG_THI + '%</b> thì chuyên đề tiếp theo tự mở.</p>';
+    } else {
+      h += '<p class="muted" style="margin:0"><b>' + soCauThi + ' câu</b> trộn ngẫu nhiên, ' +
+        '<b>mỗi dạng ít nhất một câu</b>. Trong lúc thi: <b>không hiện đúng/sai, không lời giải, ' +
+        'không mở lý thuyết</b>, và đề <b>không nói dạng bài</b> — con phải tự nhận ra như thi thật. ' +
+        'Đúng từ <b>' + C.NGUONG_THI + '%</b> (' + C.canDung(soCauThi) + '/' + soCauThi + ' câu) là <b>đạt</b>.</p>';
+      if (thi.dat) {
+        h += '<div class="tip" style="margin-top:10px">🎉 <b>Đã đạt</b> ngày <b>' + hienNgay(thi.dat.t) +
+          '</b> — điểm cao nhất <b>' + thi.dat.pct + '%</b>. Con vẫn có thể thi lại để phá kỷ lục.</div>';
+      }
+      if (thi.lan.length) {
+        h += '<div class="examlog">';
+        thi.lan.slice().reverse().slice(0, 6).forEach(function (x, i2) {
+          h += '<span class="pill ' + (x.dat ? 'g' : 'r') + '">' + (i2 === 0 ? 'Gần nhất: ' : '') +
+            x.dung + '/' + x.tong + ' · ' + x.pct + '% · ' + hienNgay(x.t) + '</span>';
+        });
+        h += '</div>';
+      }
+      h += '<div class="row" style="margin-top:12px"><button class="btn tolam" data-lt="thi">🎓 ' +
+        (thi.lan.length ? 'Thi lại (đề mới)' : 'Bắt đầu thi') + '</button></div>';
     }
-    if (thi.lan.length) {
-      h += '<div class="examlog">';
-      thi.lan.slice().reverse().slice(0, 6).forEach(function (x, i) {
-        h += '<span class="pill ' + (x.dat ? 'g' : 'r') + '">' + (i === 0 ? 'Gần nhất: ' : '') +
-          x.dung + '/' + x.tong + ' · ' + x.pct + '% · ' + hienNgay(x.t) + '</span>';
-      });
-      h += '</div>';
-    }
-    h += '<div class="row" style="margin-top:12px"><button class="btn big" data-lt="thi">🎓 ' +
-      (thi.lan.length ? 'Thi lại (đề mới)' : 'Bắt đầu thi') + '</button></div></div>';
+    h += '</div></div>';
 
     var yeu = cd.DANG.filter(function (d) { return C.mucDo(cd.id, d.id) <= 1; })
       .sort(function (a, b) { return C.mucDo(cd.id, a.id) - C.mucDo(cd.id, b.id); });
@@ -19010,23 +19342,27 @@ var BAN_WEB = '2026-08-11.sup5';
      ========================================================= */
   /* Bốc câu cho "Luyện tập thông minh".
      Hai nguyên tắc:
-       1. Dạng ĐÃ TỐT NGHIỆP (đủ 100 câu, 20 câu gần nhất đúng ≥85%) bị rút hẳn —
-          từ đó chỉ gặp lại theo lịch ôn cách quãng và trong bài thi.
-       2. Trong số còn lại, dạng nào ít câu nhất thì ra nhiều nhất, nên mấy dạng
-          bỏ trống chưa đụng tới sẽ được kéo lên trước. Dạng hay sai được cộng thêm. */
+       1. Dạng ĐÃ TỐT NGHIỆP bị rút hẳn — từ đó chỉ gặp lại theo lịch ôn cách
+          quãng và trong bài thi.
+       2. Trong số còn lại, dạng nào còn xa đích nhất thì ra nhiều nhất: chưa đụng
+          bao giờ ưu tiên cao nhất, rồi tới dạng đang sai nhiều, rồi tới dạng chuỗi
+          còn ngắn. Dạng chỉ còn thiếu "ngày thứ hai" thì cho ra ít thôi — hôm nay
+          làm thêm cũng không giúp gì, phải để sang mai. */
   function chonThongMinh(cd, n) {
-    var kho = [], khoPhu = [], MOC = C.MOC_CAU[2];
+    var kho = [], khoPhu = [];
     cd.DANG.forEach(function (d) {
-      var lam = C.dangOf(cd.id, d.id).lam;
-      var tn = C.daTotNghiep(cd.id, d.id);
+      var x = C.dangOf(cd.id, d.id);
       var w;
-      if (tn) w = 0;
+      if (C.daTotNghiep(cd.id, d.id)) w = 0;
       else {
-        /* càng xa mốc 100 càng ra nhiều: 0 câu → 10 · 50 câu → 5 · 95 câu → 1 */
-        w = Math.max(1, Math.ceil((MOC - Math.min(lam, MOC)) / 10));
-        var tl = C.tlGan(cd.id, d.id);
-        if (tl !== null && tl < C.NGUONG_DUNG) w += 4;      /* đang sai nhiều → dồn thêm */
-        if (lam === 0) w += 4;                              /* chưa đụng bao giờ → ưu tiên nhất */
+        var c = C.chuoiTN(cd.id, d.id);
+        if (c.duCau && !c.duNgay) w = 1;                    /* chỉ còn chờ sang ngày mới */
+        else {
+          w = 2 + (C.SO_CAU_TN - c.chuoi) * 2;              /* chuỗi càng ngắn càng ra nhiều */
+          var tl = C.tlGan(cd.id, d.id);
+          if (tl !== null && tl < C.NGUONG_DUNG) w += 5;    /* đang sai nhiều → dồn thêm */
+          if (x.lam === 0) w += 6;                          /* chưa đụng bao giờ → ưu tiên nhất */
+        }
       }
       for (var i = 0; i < w; i++) kho.push(d.id);
       khoPhu.push(d.id);
@@ -19059,7 +19395,10 @@ var BAN_WEB = '2026-08-11.sup5';
 
     if (kieu === 'sualoi') return batDauSuaLoi(opt.ds, opt.khoiDong, opt.dsOn);
     if (kieu === 'tron') return batDauTron();
-    if (kieu === 'thi') { ids = chonDeThi(cd); ten = '🎓 Bài thi cuối chuyên đề'; }
+    if (kieu === 'thi') {
+      if (!C.moThi(cd)) { alert('Con cần cho tất cả các dạng tốt nghiệp trước đã, rồi bài thi mới mở ra nhé!'); return; }
+      ids = chonDeThi(cd); ten = '🎓 Bài thi cuối chuyên đề';
+    }
     else if (kieu === 'smart') { ids = chonThongMinh(cd, n); ten = '✨ Luyện tập thông minh'; }
     else if (kieu === 'all') {
       ids = []; var kho = C.shuffle(cd.DANG.map(function (d) { return d.id; }));
@@ -19308,10 +19647,13 @@ var BAN_WEB = '2026-08-11.sup5';
     var ok = !boQua && nhap.length === dung.length && nhap.every(function (v, i) { return v === dung[i]; });
 
     p.ketQua[p.i] = ok ? 1 : 0;
-    C.ghiNhan(q.cd, q.dang, ok);
-
-    /* ---- nhật ký từng câu: bao lâu, dạng gì, làm trong buổi nào ---- */
     var gy = p.tHien ? Math.round((Date.now() - p.tHien) / 100) / 10 : 0;
+    var tnTruoc = C.daTotNghiep(q.cd, q.dang);
+    var mtTruoc = C.homNay().cau >= (st().mucTieu || 20);
+    C.ghiNhan(q.cd, q.dang, ok, gy, q.ma, q.lapDe);
+    var vuaTN = !tnTruoc && C.daTotNghiep(q.cd, q.dang);
+    var vuaDatMT = !mtTruoc && C.homNay().cau >= (st().mucTieu || 20);
+
     var loai = p.thi ? 'thi'
       : (p.sualoi ? (p.khoiDong ? 'kd' : 'sua')
         : (p.tron ? 'tron' : 'lt'));
@@ -19331,6 +19673,7 @@ var BAN_WEB = '2026-08-11.sup5';
     };
     if (nhan) bn.n = nhan;
     if (boQua) bn.bq = 1;
+    if (q.lapDe) bn.lap = 1;      /* gặp lại đúng đề cũ — không tính vào chuỗi tốt nghiệp */
     /* con viết gì thì ghi cho MỌI câu, kể cả câu đúng — để bố soi được bé
        viết đủ số hay thiếu số, viết đúng thứ tự hay không */
     bn.tl = String(inp.value || '').trim().slice(0, 200);
@@ -19347,7 +19690,10 @@ var BAN_WEB = '2026-08-11.sup5';
       } else p.suaTin = null;
     }
     C.luu();
-    if (!p.thi) { veHeader(); C.keu(ok ? 'dung' : 'sai'); }
+    if (!p.thi) {
+      veHeader(); C.keu(ok ? 'dung' : 'sai');
+      if (ok) phaoHoa(vuaTN || vuaDatMT ? 'to' : 'nho');
+    }
 
     inp.classList.add(p.thi ? 'done' : (ok ? 'good' : 'bad'));
     inp.disabled = true;
@@ -19368,7 +19714,22 @@ var BAN_WEB = '2026-08-11.sup5';
       return;
     }
 
-    var khen = ['Giỏi lắm! 🎉', 'Chính xác! ⭐', 'Tuyệt vời! 👏', 'Đúng rồi! 🌟', 'Xuất sắc! 🏆', 'Quá đỉnh! 🚀'];
+    var khen = ['Giỏi lắm! 🎉', 'Chính xác! ⭐', 'Tuyệt vời! 👏', 'Đúng rồi! 🌟', 'Xuất sắc! 🏆',
+      'Quá đỉnh! 🚀', 'Chuẩn không cần chỉnh! ✅', 'Con làm tốt lắm! 💪', 'Bài này khó mà con làm được! 🔥',
+      'Hay quá! 🎯', 'Đúng luôn! 🌈', 'Giỏi thật đấy! 🥇'];
+    var tinVui = '';
+    if (ok && vuaTN) tinVui = '<div class="fb good" style="margin-top:8px">🎓 <b>Chúc mừng con!</b> ' +
+      'Dạng <b>' + esc(q.tenDang || '') + '</b> đã <b>TỐT NGHIỆP</b> — ' + C.SO_CAU_TN +
+      ' câu liền đúng, làm nhanh, và nhớ được qua ' + C.SO_NGAY_TN + ' ngày. Dạng này được nghỉ rồi!</div>';
+    else if (ok && vuaDatMT) tinVui = '<div class="fb good" style="margin-top:8px">🎉 <b>Xong mục tiêu hôm nay!</b> ' +
+      'Con đã làm đủ <b>' + (st().mucTieu || 20) + ' câu</b>. Học thêm nữa thì càng giỏi, mà nghỉ cũng được rồi.</div>';
+    else if (ok) {
+      var ch = C.chuoiTN(q.cd, q.dang);
+      if (ch.chuoi > 0 && ch.chuoi < C.SO_CAU_TN)
+        tinVui = '<div class="fb wait" style="margin-top:8px">🔥 Chuỗi <b>' + ch.chuoi + '/' + C.SO_CAU_TN +
+          '</b> câu liền đúng ở dạng này. ' + (ch.chuoi >= C.SO_CAU_TN - 1
+            ? 'Thêm một câu nữa thôi!' : 'Cố lên nào!') + '</div>';
+    }
     var themSua = '';
     if (p.sualoi && p.suaTin) {
       var can = p.suaTin.can || C.CAN_DUNG_SUA;
@@ -19391,7 +19752,7 @@ var BAN_WEB = '2026-08-11.sup5';
       }
     }
     el('fb').innerHTML = (ok
-      ? '<div class="fb good">' + C.pick(khen) + ' <span style="float:right">+1 ⭐</span></div>'
+      ? '<div class="fb good">' + C.pick(khen) + ' <span style="float:right">+1 ⭐</span></div>' + tinVui
       : '<div class="fb bad">Chưa đúng rồi.<small>Đáp án đúng: <b>' +
         (q.hienDapAn || dung.join(' ; ')) + '</b></small></div>') + themSua;
 
@@ -20086,7 +20447,7 @@ var BAN_WEB = '2026-08-11.sup5';
   var nkBaiDaTai = {};            /* 'YYYY-MM-DD' -> 1 nếu đã tải kho bài của ngày đó */
   var nkBaiHangDoi = [];          /* những ngày đang xếp hàng chờ tải kho bài */
   var nkDangTaiBai = false;
-  var nkNgayChon = null;          /* toDateString() của ngày đang mở chi tiết */
+  var nkNgayChon = null;          /* {toDateString: 1} — các ngày đang bung chi tiết */
   var nkTheoDoi = true;           /* có đang bật theo dõi trực tiếp không */
   var nkHen = null;               /* setInterval của khung trực tiếp */
   var nkLanTai = 0;               /* mốc lần tải gần nhất */
@@ -20109,7 +20470,12 @@ var BAN_WEB = '2026-08-11.sup5';
 
   function nkGiay(x) {
     if (x >= NK_NGHI) return '—';
-    if (x >= 60) return Math.floor(x / 60) + 'ph' + String(Math.round(x % 60)).padStart(2, '0');
+    if (x >= 60) {
+      /* làm tròn TỔNG số giây trước rồi mới tách phút — không thì 239,7 giây
+         ra thành "3ph60" thay vì "4ph00" */
+      var t = Math.round(x);
+      return Math.floor(t / 60) + 'ph' + String(t % 60).padStart(2, '0');
+    }
     return (x < 10 ? x.toFixed(1) : Math.round(x)) + 's';
   }
   function nkGio(t) {
@@ -20177,6 +20543,7 @@ var BAN_WEB = '2026-08-11.sup5';
       h += '<td>' + (e.bq ? '<span class="muted">bỏ qua</span>' : (e.ok ? '✅' : '❌')) + '</td>';
       h += '<td><span class="nk-k ' + e.k + '">' + NK_TEN[e.k] + '</span>' +
         (e.cu ? '<br><span class="nk-cu-tag">📦 dữ liệu cũ</span>' : '') +
+        (e.lap ? '<br><span class="nk-lap">♻️ gặp lại đề cũ</span>' : '') +
         (e.n ? '<br><span class="muted" style="font-size:11px">' + NK_NHAN[e.n] + '</span>' : '') + '</td>';
       h += '<td><b>' + esc(e.dt || e.d) + '</b> <span class="muted">' +
         (cd ? cd.icon + ' ' + esc(cd.tenNgan) : '') + '</span>';
@@ -20488,16 +20855,22 @@ var BAN_WEB = '2026-08-11.sup5';
 
     /* ----- 📅 bảng tiến trình theo ngày ----- */
     var ngays = nkGomNgay(lam);
-    if (nkNgayChon === null && ngays.length) nkNgayChon = ngays[0].key;
+    /* lần đầu vào: tự bung ngày gần nhất cho bố thấy ngay có gì */
+    if (nkNgayChon === null && ngays.length) { nkNgayChon = {}; nkNgayChon[ngays[0].key] = 1; }
 
     var mt = s.mucTieu || 20;
+    var soMo = Object.keys(nkNgayChon || {}).length;
     h += '<div class="card"><h2 class="sec" style="margin-top:0">📅 Tiến trình theo ngày</h2>';
-    h += '<p class="muted">Mỗi ngày một dòng. Bấm vào một ngày để bung danh sách từng câu của riêng ngày đó.</p>';
+    h += '<div class="row" style="align-items:center;margin:0 0 10px">' +
+      '<span class="muted" style="flex:1;min-width:220px">Bấm vào một ngày là danh sách từng câu bung ra ' +
+      '<b>ngay dưới ngày đó</b>. Mở bao nhiêu ngày cùng lúc cũng được, để so ngày này với ngày kia.</span>' +
+      '<button class="btn sm ghost" id="nk-mohet">▾ Mở hết ' + ngays.length + ' ngày</button>' +
+      (soMo ? '<button class="btn sm ghost" id="nk-donghet">▴ Đóng hết</button>' : '') + '</div>';
     h += '<div style="overflow-x:auto"><table class="nk-tbl nk-ngay"><tr>' +
       '<th>Ngày</th><th class="n">Câu</th><th class="n">Đúng</th><th class="n">Mục tiêu</th>' +
       '<th class="n">Làm bài</th><th class="n">Mỗi câu</th><th>Buổi học</th><th>Dạng yếu nhất hôm đó</th><th></th></tr>';
     ngays.forEach(function (n) {
-      var chon = n.key === nkNgayChon;
+      var chon = !!(nkNgayChon && nkNgayChon[n.key]);
       var tl = n.cau ? Math.round(n.dung / n.cau * 100) : 0;
       var pct = Math.min(100, Math.round(n.cau / mt * 100));
       h += '<tr class="nk-r ' + (chon ? 'chon' : '') + '" data-nkngay="' + n.key + '">';
@@ -20520,27 +20893,36 @@ var BAN_WEB = '2026-08-11.sup5';
         ? '<b>' + esc(n.yeu.dt) + '</b><span class="nk-de">sai ' + n.yeu.sai + '/' + n.yeu.lam + ' câu' +
           (C.CD[n.yeu.cd] ? ' · ' + C.CD[n.yeu.cd].icon + ' ' + esc(C.CD[n.yeu.cd].tenNgan) : '') + '</span>'
         : '<span class="muted">không sai câu nào 🎉</span>') + '</td>';
-      h += '<td class="n">' + (chon ? '<b>▾ đang mở</b>' : '<span class="muted">▸ xem</span>') + '</td>';
+      var coCT = n.ct.some(function (e) { return !e.bu; });
+      h += '<td class="n">' + (chon ? '<b>▾ đang mở</b>'
+        : (coCT ? '<span class="muted">▸ xem từng câu</span>'
+          : '<span class="muted" style="font-size:11.5px">chỉ có tổng kết</span>')) + '</td>';
       h += '</tr>';
+
+      /* ---- chi tiết bung NGAY DƯỚI dòng ngày đó ---- */
+      if (chon) {
+        var ct = n.ct.slice().sort(function (a, b) { return b.t - a.t; }).filter(function (e) {
+          if (nkLoc.chi === 'sai') return !e.ok && !e.bu;
+          if (nkLoc.chi === 'cham') return !e.cu && !e.bu && e.gy >= nguong && e.gy < NK_NGHI;
+          return true;
+        });
+        nkNapBaiCho(ct);
+        h += '<tr class="nk-ct"><td colspan="9">';
+        h += '<div class="nk-cthead">📋 <b>' + nkNgay(n.t) + '</b> — ' + n.cau + ' câu · đúng ' + n.dung +
+          ' · sai ' + Math.max(0, n.cau - n.dung) + ' · làm bài ' + nkPhut(n.giay) +
+          (ct.length !== n.ct.length ? ' · <b>đang lọc</b> còn ' + ct.length + ' dòng' : '') +
+          '. Mới nhất ở trên.' + (nkDangTaiBai ? ' <b>⏳ đang tải đề &amp; lời giải…</b>' : '') + '</div>';
+        if (!coCT) {
+          h += '<div class="warn" style="margin:8px 0">Hôm này web <b>chưa ghi từng câu</b> — ' +
+            'buổi học này diễn ra trước khi có mục Nhật ký từng câu, lúc đó chỉ lưu được ' +
+            '<b>tổng kết cả buổi</b> (số câu, số đúng, tổng thời gian). Chi tiết từng câu của hôm đó ' +
+            'không lấy lại được nữa. Từ ngày có tính năng này trở đi thì câu nào cũng có đủ.</div>';
+        }
+        h += ct.length ? nkBangCau(ct, nguong) : '<p class="muted">Không có dòng nào khớp bộ lọc.</p>';
+        h += '</td></tr>';
+      }
     });
     h += '</table></div></div>';
-
-    /* ----- 📋 chi tiết đúng một ngày ----- */
-    var ngayHT = ngays.filter(function (n) { return n.key === nkNgayChon; })[0];
-    if (ngayHT) {
-      var ct = ngayHT.ct.slice().sort(function (a, b) { return b.t - a.t; }).filter(function (e) {
-        if (nkLoc.chi === 'sai') return !e.ok && !e.bu;
-        if (nkLoc.chi === 'cham') return !e.cu && !e.bu && e.gy >= nguong && e.gy < NK_NGHI;
-        return true;
-      });
-      nkNapBaiCho(ct);
-      h += '<div class="card"><h2 class="sec" style="margin-top:0">📋 ' + nkNgay(ngayHT.t) + '</h2>';
-      h += '<p class="muted">' + ngayHT.cau + ' câu · đúng ' + ngayHT.dung + ' · làm bài ' + nkPhut(ngayHT.giay) +
-        (ct.length !== ngayHT.ct.length ? ' · đang lọc còn ' + ct.length + ' dòng' : '') +
-        '. Mới nhất ở trên.' + (nkDangTaiBai ? ' <b>⏳ đang tải đề &amp; lời giải…</b>' : '') + '</p>';
-      h += ct.length ? nkBangCau(ct, nguong) : '<p class="muted">Không có dòng nào khớp bộ lọc.</p>';
-      h += '</div>';
-    }
     }
 
     /* ----- số liệu cả tháng ----- */
@@ -20625,7 +21007,9 @@ var BAN_WEB = '2026-08-11.sup5';
     });
     n.querySelectorAll('[data-nkngay]').forEach(function (r) {
       r.addEventListener('click', function () {
-        nkNgayChon = nkNgayChon === r.dataset.nkngay ? null : r.dataset.nkngay;
+        if (!nkNgayChon) nkNgayChon = {};
+        var k = r.dataset.nkngay;
+        if (nkNgayChon[k]) delete nkNgayChon[k]; else nkNgayChon[k] = 1;
         veNhatKy();
       });
     });
@@ -20645,6 +21029,14 @@ var BAN_WEB = '2026-08-11.sup5';
       nkThang = t.trim(); nkNgayChon = null; nkTai(nkThang);
     });
     if (el('nk-csv')) el('nk-csv').addEventListener('click', nkXuatCSV);
+    if (el('nk-mohet')) el('nk-mohet').addEventListener('click', function () {
+      nkNgayChon = {};
+      n.querySelectorAll('[data-nkngay]').forEach(function (r) { nkNgayChon[r.dataset.nkngay] = 1; });
+      veNhatKy();
+    });
+    if (el('nk-donghet')) el('nk-donghet').addEventListener('click', function () {
+      nkNgayChon = {}; veNhatKy();
+    });
 
     n.querySelectorAll('[data-nkmode]').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -20722,7 +21114,7 @@ var BAN_WEB = '2026-08-11.sup5';
     }).sort(function (a, b) { return a.t - b.t; });
 
     var cot = ['Ngày', 'Giờ', 'Số giây', 'Đúng/Sai', 'Loại buổi', 'Ghi chú buổi',
-      'Chuyên đề', 'Dạng bài', 'Đề bài', 'Con viết', 'Đáp án đúng', 'Lời giải', 'Nguồn'];
+      'Chuyên đề', 'Dạng bài', 'Đề bài', 'Con viết', 'Đáp án đúng', 'Lời giải', 'Gặp lại đề cũ', 'Nguồn'];
     function o(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
     var dong = [cot.map(o).join(',')];
     ds.forEach(function (e) {
@@ -20741,6 +21133,7 @@ var BAN_WEB = '2026-08-11.sup5';
         e.bu ? '' : (e.tl === undefined || e.tl === '' ? (e.ok ? e.da : '') : e.tl),
         e.da || '',
         (kb && kb.gi) || '',
+        e.lap ? 'Có' : '',
         e.bu ? 'Buổi học cũ (gộp cả buổi)' : (e.cu ? 'Dữ liệu cũ từ sổ lỗi' : 'Bấm giờ từng câu')
       ].map(o).join(','));
     });
@@ -21178,6 +21571,22 @@ var BAN_WEB = '2026-08-11.sup5';
       '<button class="btn sm ' + (s.amThanh !== false ? '' : 'ghost') + '" data-am="1">🔊 Bật</button>' +
       '<button class="btn sm ' + (s.amThanh === false ? '' : 'ghost') + '" data-am="0">🔇 Tắt</button></div></div>';
 
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">🎆 Pháo hoa khen thưởng</h2><div class="row">' +
+      [['moi', 'Mỗi câu đúng'], ['lon', 'Chỉ dịp lớn'], ['tat', 'Tắt hẳn']].map(function (x) {
+        return '<button class="btn sm ' + ((s.phao || 'moi') === x[0] ? '' : 'ghost') +
+          '" data-phao="' + x[0] + '">' + x[1] + '</button>';
+      }).join('') + '<button class="btn sm ghost" id="cd-thuphao">Xem thử 🎇</button></div>';
+    h += '<p class="muted" style="margin-top:10px"><b>Dịp lớn</b> là: một dạng vừa tốt nghiệp, ' +
+      'hoặc con vừa đủ mục tiêu câu trong ngày. Nếu thấy bắn nhiều quá làm con mất tập trung ' +
+      'thì chuyển sang <b>Chỉ dịp lớn</b>.</p></div>';
+
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">📝 Mỗi lần luyện bao nhiêu câu</h2><div class="row">';
+    [5, 10, 15, 20, 30].forEach(function (n) {
+      h += '<button class="btn sm ' + ((s.soCau || 10) === n ? '' : 'ghost') + '" data-socau="' + n + '">' + n + ' câu</button>';
+    });
+    h += '</div><p class="muted" style="margin-top:10px">Khu của con giờ chỉ còn <b>một nút to</b> — ' +
+      'bấm là vào học ngay, không phải chọn số câu nữa. Số câu mỗi lượt do bố đặt ở đây.</p></div>';
+
     var ghOn = C.saveMode() === 'sup';
     var cfg = C.cauHinh() || { url: '', key: '', ma: '' };
     h += '<div class="card"><h2 class="sec" style="margin-top:0">☁️ Kho dữ liệu (Supabase)</h2>';
@@ -21211,6 +21620,8 @@ var BAN_WEB = '2026-08-11.sup5';
     function ghMsg(t, xanh) {
       var n = el('cd-ghmsg'); if (n) n.innerHTML = '<span style="color:var(--' + (xanh ? 'ok' : 'no') + ')">' + t + '</span>';
     }
+
+    if (el('cd-thuphao')) el('cd-thuphao').addEventListener('click', function () { phaoHoa('to'); });
 
     if (el('cd-ghdoi')) el('cd-ghdoi').addEventListener('click', function () {
       var c0 = C.cauHinh() || { url: '', key: '', ma: '' };
@@ -21357,7 +21768,7 @@ var BAN_WEB = '2026-08-11.sup5';
      ========================================================= */
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-ai],[data-go],[data-go2],[data-cd],[data-lt],[data-ltbai],[data-baily],' +
-      '[data-th],[data-socau],[data-mt],[data-am],[data-ltcd],[data-tieptuc],[data-thoat],[data-thoatphien],' +
+      '[data-th],[data-socau],[data-mt],[data-am],[data-phao],[data-ltcd],[data-tieptuc],[data-thoat],[data-thoatphien],' +
       '[data-pick],[data-tick],[data-vadd],[data-vdel],[data-vup],[data-vdown],[data-xemvid],[data-solthi],' +
       '[data-motay],[data-sualai],[data-sua1],[data-loitab],[data-loicd],[data-loisol],' +
       '[data-loixoa],[data-loidon],[data-kdbatdau],[data-sodangkd],[data-lttron],[data-songayon],' +
@@ -21514,6 +21925,7 @@ var BAN_WEB = '2026-08-11.sup5';
     else if (d.socau) { luuSoCau(d.socau); }
     else if (d.mt) { st().mucTieu = +d.mt; C.luu(); veCaiDat(); }
     else if (d.am) { st().amThanh = d.am === '1'; C.luu(); veCaiDat(); if (d.am === '1') C.keu('dung'); }
+    else if (d.phao) { st().phao = d.phao; C.luu(); veCaiDat(); if (d.phao !== 'tat') phaoHoa('to'); }
     else if (d.pick) {
       var i = chonTam.indexOf(d.pick);
       if (i >= 0) chonTam.splice(i, 1); else chonTam.push(d.pick);
