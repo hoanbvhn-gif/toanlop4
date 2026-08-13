@@ -167,6 +167,45 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 .chuoicard .chuoio i.ran.on{background:linear-gradient(135deg,#f5a524,#37d67a);box-shadow:none}
 .chuoicard .chuoio i.sutu{width:24px;background:#ffe0e8;box-shadow:inset 0 0 0 2px #ffb3c7}
 .chuoicard .chuoio i.sutu.on{background:linear-gradient(135deg,#ff5c8a,#ffd76e);box-shadow:none}
+/* ---- dải chuỗi câu đúng, luôn nằm trên đầu màn hình làm bài ---- */
+.chbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 12px;padding:12px 16px;
+  border-radius:16px;background:linear-gradient(135deg,#fff4e0,#ffe9f0);border:2px solid #ffd9a8}
+.chbar.dut{background:linear-gradient(135deg,#ffe9e9,#fff1f1);border-color:#ffb3b3}
+.chbar .cb-so{display:flex;align-items:baseline;gap:8px;min-width:120px}
+.chbar .cb-so b{font-size:38px;line-height:1;color:#e8590c;font-variant-numeric:tabular-nums}
+.chbar.dut .cb-so b{color:#c92a2a}
+.chbar .cb-so span{font-size:13px;font-weight:700;color:var(--ink2);max-width:74px;line-height:1.2}
+.chbar .cb-giua{flex:1;min-width:200px}
+.chbar .cb-o{display:flex;gap:3px;flex-wrap:wrap}
+.chbar .cb-o i{width:13px;height:13px;border-radius:4px;background:#fff;box-shadow:inset 0 0 0 2px #ffd0a0}
+.chbar .cb-o i.on{background:linear-gradient(135deg,#ff922b,#37d67a);box-shadow:none}
+.chbar .cb-o i.sao{border-radius:50%}
+.chbar .cb-o i.ran{width:19px;background:#fff;box-shadow:inset 0 0 0 2px #f5a524}
+.chbar .cb-o i.ran.on{background:linear-gradient(135deg,#f5a524,#37d67a);box-shadow:none}
+.chbar .cb-o i.sutu{width:23px;background:#fff;box-shadow:inset 0 0 0 2px #ff8fab}
+.chbar .cb-o i.sutu.on{background:linear-gradient(135deg,#ff5c8a,#ffd76e);box-shadow:none}
+.chbar .cb-moc{margin-top:7px;font-size:13.5px;color:#8a5a00;font-weight:600}
+.chbar .cb-moc b{color:#e8590c;font-size:15px}
+.chbar .cb-ky{font-size:12px;color:var(--ink2);text-align:center;line-height:1.3}
+.chbar .cb-ky b{display:block;font-size:20px;color:var(--ink)}
+.cb-nhac{margin:-6px 0 12px;padding:9px 14px;border-radius:12px;background:#fff1f1;color:#c92a2a;
+  font-weight:700;font-size:14px}
+.cb-thuong{margin:8px 0 0;padding:12px 14px;border-radius:14px;font-weight:800;font-size:16px;
+  background:linear-gradient(135deg,#fff3bf,#ffd8a8);color:#7a4b00;text-align:center}
+@media(max-width:520px){
+  .chbar{gap:10px;padding:10px 12px}
+  .chbar .cb-so b{font-size:30px}
+  .chbar .cb-ky{display:none}
+}
+/* ---- thanh báo có bản mới, dán dưới đáy màn hình ---- */
+#banmoi{position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;display:flex;align-items:center;
+  gap:12px;flex-wrap:wrap;justify-content:center;padding:12px 18px;border-radius:16px;
+  background:#1f1b3a;color:#fff;font-weight:600;font-size:14.5px;
+  box-shadow:0 10px 30px rgba(0,0,0,.28)}
+#banmoi b{color:#ffd76e}
+#banmoi button{font:inherit;font-weight:800;border:0;border-radius:99px;padding:8px 16px;cursor:pointer}
+#banmoi #bm-tai{background:#37d67a;color:#08331d}
+#banmoi #bm-bo{background:rgba(255,255,255,.15);color:#fff}
 .thikhoi{margin-top:16px;border-top:2px solid var(--line);padding-top:14px}
 .thikhoi h3{margin:0 0 6px;font-size:16px}
 .thikhoi.khoa{opacity:.72}
@@ -343,6 +382,9 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
 .saveinfo{font-size:12px;padding:4px 10px;border-radius:99px;background:#eceaf5;color:var(--ink2);display:inline-block}
 .saveinfo.on{background:var(--ok-l);color:var(--ok)}
 .saveinfo.off{background:var(--warn-l);color:#b4740a}
+.mini-lam{margin-left:8px;font:inherit;font-weight:700;border:1px solid currentColor;background:#fff;
+  color:inherit;border-radius:99px;padding:2px 10px;cursor:pointer}
+.mini-lam:hover{background:#fff8e8}
 
 @media(max-width:640px){
   body{font-size:16px}
@@ -426,6 +468,8 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
   transition:height .4s}
 .chart .cb .bar2.zero{background:#e7e3f5}
 .chart .cb .bar2.good{background:linear-gradient(180deg,#3ddc97,#12b886)}
+/* cột phụ màu cam: câu sửa lỗi, xếp CHỒNG lên trên cột câu học mới */
+.chart .cb .bar2.sua{background:linear-gradient(180deg,#ffd8a8,#ffc078);border-radius:5px 5px 0 0;margin-bottom:1px}
 .chart .cb .lb{font-size:9.5px;color:var(--ink2);text-align:center;margin-top:3px;white-space:nowrap}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin-top:6px}
 .legend i{width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:5px}
@@ -733,7 +777,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-11.sup10';
+var BAN_WEB = '2026-08-13.sup13';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -879,6 +923,16 @@ var BAN_WEB = '2026-08-11.sup10';
   /* ---------- trạng thái ---------- */
   var KEY = 'cautaoso_v2', KEY_CU = 'cautaoso_v1', KEY_V = 'cautaoso_video';
   var state = null, saveMode = 'local', videoMode = 'local';
+  /* MẤT KẾT NỐI khác hẳn CHƯA KHAI BÁO KẾT NỐI:
+     · chưa khai báo  -> máy này vốn không có kho đám mây, lưu trong máy là đúng
+     · mất kết nối    -> có kho, nhưng lúc mở trang gọi không được; bài con đang
+                         làm nằm tạm trong máy và PHẢI được đẩy lên khi có mạng lại.
+     Bản trước gộp hai cái làm một câu thông báo nên bố tưởng máy chưa cài gì. */
+  var motKetNoi = false;
+  var henNoiLai = null;
+  var tinDongBo = null;      /* {chon:'may'|'may-chu', may:số câu, mc:số câu} — kể lại cho bố */
+  CTS.motKetNoi = function () { return motKetNoi; };
+  CTS.tinDongBo = function () { return tinDongBo; };
   CTS.getState = function () { return state; };
   CTS.saveMode = function () { return saveMode; };
   CTS.videoMode = function () { return videoMode; };
@@ -1581,10 +1635,18 @@ var BAN_WEB = '2026-08-11.sup10';
       Object.keys(tam).forEach(function (k) { if ((tam[k] || []).length) NKban[k] = true; });
       nkLuuTam();
 
-      /* lần đầu chưa có dữ liệu trên đám mây → đẩy dữ liệu đang có trong máy này lên */
+      /* ---- CHỌN BẢN NÀO LÀM CHUẨN ----
+         Bản cũ luôn lấy bản trên đám mây, nên nếu hôm trước máy mất mạng, con vẫn
+         học bình thường (dữ liệu nằm trong máy) thì hôm sau nối lại là bị đè mất
+         sạch phần đó. Giờ so TỔNG SỐ CÂU ĐÃ LÀM của hai bản — số này chỉ tăng —
+         bản nào đi xa hơn thì lấy bản đó, rồi đẩy ngược lên cho khớp. */
       var raw = null;
-      if (!s.data) { try { raw = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(KEY_CU)); } catch (e) { } }
-      state = diTru(s.data && (s.data.v || s.data.dang) ? s.data : raw);
+      try { raw = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(KEY_CU)); } catch (e) { }
+      var mayChu = (s.data && (s.data.v || s.data.dang)) ? s.data : null;
+      var cMC = demCau(mayChu), cMay = demCau(raw);
+      var dungMay = !mayChu || cMay > cMC;
+      if (mayChu && raw) tinDongBo = { chon: dungMay ? 'may' : 'may-chu', may: cMay, mc: cMC };
+      state = diTru(dungMay ? raw : mayChu);
 
       if (v.data && Object.keys(v.data).length) state.video = v.data;
       else {
@@ -1594,15 +1656,55 @@ var BAN_WEB = '2026-08-11.sup10';
       }
       if (!state.video) state.video = {};
 
-      if (!s.data) CTS.luu();
+      if (dungMay) CTS.luu();          /* bản trong máy đi xa hơn → đẩy ngược lên ngay */
       if (!v.data && Object.keys(state.video).length) CTS.luuVideo();
       if (!state.nkKeoCu) { CTS.keoDuLieuCu(); state.nkKeoCu = 1; CTS.luu(); }
       if (Object.keys(NKban).length) nkDay(false);
       if (Object.keys(BAIban).length) baiDay(false);
       cb();
     }).catch(function () {
+      motKetNoi = !!token();
       ngoaiTuyen();
-      bao('err');
+      bao(motKetNoi ? 'err' : 'local');
+      if (motKetNoi) henThuLai();
+    });
+  };
+
+  /* ---------- tự nối lại khi có mạng trở lại ----------
+     Bản cũ thử MỘT lần lúc mở trang, hỏng là nằm im tới khi bố tải lại trang —
+     mạng có lại nó cũng không biết. Giờ cứ 60 giây thử một lần, và bắt luôn
+     sự kiện "online" của trình duyệt cho nhanh. */
+  function henThuLai() {
+    clearTimeout(henNoiLai);
+    henNoiLai = setTimeout(function () { CTS.noiLai(); }, 60000);
+  }
+  window.addEventListener('online', function () { if (motKetNoi) CTS.noiLai(); });
+
+  CTS.noiLai = function () {
+    if (!token() || saveMode === 'sup') return Promise.resolve(false);
+    return doc(F_STATE).then(function (s) {
+      var mayChu = (s.data && (s.data.v || s.data.dang)) ? s.data : null;
+      var cMC = demCau(mayChu), cMay = demCau(state);
+      /* đám mây đi xa hơn máy này (máy khác vừa học) → không tự đè, mời bố tải lại
+         trang để đi qua đúng đường nạp dữ liệu, khỏi trộn lẫn hai buổi học */
+      if (mayChu && cMC > cMay) { bao('moi'); return false; }
+
+      shaState = s.sha;
+      saveMode = 'sup'; videoMode = 'sup';
+      motKetNoi = false;
+      tinDongBo = mayChu ? { chon: 'may', may: cMay, mc: cMC } : null;
+      clearTimeout(henNoiLai); henNoiLai = null;
+
+      CTS.luu();
+      clearTimeout(timer); goiLen(false);      /* đẩy NGAY, không chờ 6 giây gộp lệnh */
+      if (Object.keys(state.video || {}).length) CTS.luuVideo();
+      /* nhật ký + kho đề/lời giải làm lúc mất mạng: đánh dấu chưa đẩy rồi đẩy nốt */
+      Object.keys(NK).forEach(function (k) { if ((NK[k] || []).length) NKban[k] = true; });
+      Object.keys(BAI).forEach(function (k) { if (Object.keys(BAI[k] || {}).length) BAIban[k] = true; });
+      nkDay(false); baiDay(false);
+      return true;
+    }).catch(function () {
+      bao('err'); henThuLai(); return false;
     });
   };
 
@@ -1663,7 +1765,7 @@ var BAN_WEB = '2026-08-11.sup10';
   CTS.luu = function () {
     if (ngungLuu) return;
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { }
-    if (saveMode !== 'sup') { bao('local'); return; }
+    if (saveMode !== 'sup') { bao(motKetNoi ? 'err' : 'local'); return; }
     bao('dang');
     clearTimeout(timer);
     timer = setTimeout(function () { goiLen(false); }, 6000);   /* gộp nhiều lần lưu thành một commit */
@@ -1689,10 +1791,40 @@ var BAN_WEB = '2026-08-11.sup10';
     var n = document.getElementById('saveinfo'); if (!n) return;
     if (k === 'sup') { n.className = 'saveinfo on'; n.textContent = '☁️ Đã lưu lên đám mây'; }
     else if (k === 'dang') { n.className = 'saveinfo on'; n.textContent = '☁️ Đang lưu…'; }
-    else if (k === 'local') { n.className = 'saveinfo off'; n.textContent = '💾 Chỉ lưu trên trình duyệt này'; }
-    else { n.className = 'saveinfo off'; n.textContent = '⚠️ Chưa lưu lên đám mây được — kiểm tra mạng hoặc mã kết nối'; }
+    else if (k === 'local') {
+      n.className = 'saveinfo off';
+      n.textContent = '💾 Máy này chưa khai báo kết nối — chỉ lưu trong trình duyệt';
+    } else if (k === 'moi') {
+      n.className = 'saveinfo off';
+      n.innerHTML = '☁️ Trên đám mây có bản mới hơn máy này ' +
+        '<button class="mini-lam" id="si-tai">Tải lại trang</button>';
+    } else {
+      n.className = 'saveinfo off';
+      n.innerHTML = '⚠️ Mất kết nối đám mây — bài con làm đang giữ tạm <b>an toàn trong máy này</b>, ' +
+        'sẽ tự đẩy lên khi nối lại được ' +
+        '<button class="mini-lam" id="si-thu">Thử nối lại ngay</button>';
+    }
   }
   CTS.bao = bao;
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t || !t.id) return;
+    if (t.id === 'si-thu') { bao('dang'); CTS.noiLai(); }
+    else if (t.id === 'si-tai') location.reload();
+  });
+
+  /* đếm tổng số câu đã làm trong một bản tiến độ — dùng để biết bản nào "đi xa hơn".
+     Con số này chỉ tăng chứ không bao giờ giảm, nên rất hợp để so hai bản. */
+  function demCau(d) {
+    if (!d || !d.cd) return -1;
+    var n = 0;
+    Object.keys(d.cd).forEach(function (c) {
+      var dg = (d.cd[c] || {}).dang || {};
+      Object.keys(dg).forEach(function (k) { n += (dg[k].lam || 0); });
+    });
+    return n;
+  }
+  CTS.demCau = demCau;
 
   /* ---------- thống kê từng dạng ---------- */
   CTS.dangOf = function (cdId, id) {
@@ -2270,7 +2402,8 @@ var BAN_WEB = '2026-08-11.sup10';
   /* ---------- chuỗi ngày & mục tiêu ---------- */
   CTS.diemDanh = function () {
     var h = CTS.ngayHomNay();
-    if (!state.ngay[h]) state.ngay[h] = { cau: 0, dung: 0 };
+    if (!state.ngay[h]) state.ngay[h] = { cau: 0, dung: 0, sua: 0, suaDung: 0 };
+    if (state.ngay[h].sua === undefined) { state.ngay[h].sua = 0; state.ngay[h].suaDung = 0; }
     var c = state.chuoi;
     if (c.ngay !== h) {
       if (c.ngay && CTS.ngayTruoc(h, 1) === c.ngay) c.so = (c.so || 0) + 1;
@@ -2280,8 +2413,8 @@ var BAN_WEB = '2026-08-11.sup10';
     }
   };
   CTS.homNay = function () {
-    var h = CTS.ngayHomNay();
-    return state.ngay[h] || { cau: 0, dung: 0 };
+    var h = CTS.ngayHomNay(), n = state.ngay[h] || {};
+    return { cau: n.cau || 0, dung: n.dung || 0, sua: n.sua || 0, suaDung: n.suaDung || 0 };
   };
 
   /* =========================================================
@@ -2308,7 +2441,7 @@ var BAN_WEB = '2026-08-11.sup10';
   };
 
   /* ---------- ghi nhận một câu trả lời ---------- */
-  CTS.ghiNhan = function (cdId, dangId, dung, gy, ma, lapDe) {
+  CTS.ghiNhan = function (cdId, dangId, dung, gy, ma, lapDe, laSua) {
     CTS.diemDanh();
     var d = CTS.dangOf(cdId, dangId);
     d.lam++; if (dung) d.dung++;
@@ -2322,8 +2455,14 @@ var BAN_WEB = '2026-08-11.sup10';
       d.deGan.push(ma);
       if (d.deGan.length > CTS.SO_DE_NHO) d.deGan = d.deGan.slice(-CTS.SO_DE_NHO);
     }
+    /* ---- đếm vào ngày hôm nay ----
+       Câu SỬA LỖI / KHỞI ĐỘNG đếm riêng, không cộng vào "số câu hôm nay" và không
+       tính vào mục tiêu ngày. Nếu tính chung thì con có thể đủ chỉ tiêu chỉ bằng
+       cách làm lại mấy câu cũ, mà mục tiêu là để đo phần học MỚI. Công sửa lỗi
+       vẫn được ghi nhận đầy đủ, hiện thành dòng riêng cho bố xem. */
     var h = CTS.ngayHomNay();
-    state.ngay[h].cau++; if (dung) state.ngay[h].dung++;
+    if (laSua) { state.ngay[h].sua++; if (dung) state.ngay[h].suaDung++; }
+    else { state.ngay[h].cau++; if (dung) state.ngay[h].dung++; }
     /* ---- phần thưởng theo CHUỖI CÂU ĐÚNG LIÊN TIẾP ---- */
     CTS.thuong = null;
     if (dung) {
@@ -2419,8 +2558,8 @@ var BAN_WEB = '2026-08-11.sup10';
     var ra = [];
     for (var i = soNgay - 1; i >= 0; i--) {
       var d = CTS.ngayTruoc(CTS.ngayHomNay(), i);
-      var v = state.ngay[d] || { cau: 0, dung: 0 };
-      ra.push({ ngay: d, cau: v.cau, dung: v.dung });
+      var v = state.ngay[d] || {};
+      ra.push({ ngay: d, cau: v.cau || 0, dung: v.dung || 0, sua: v.sua || 0, suaDung: v.suaDung || 0 });
     }
     return ra;
   };
@@ -19092,6 +19231,7 @@ var BAN_WEB = '2026-08-11.sup10';
         (hn.cau >= mt
           ? '<span><i style="background:rgba(255,255,255,.5)"></i>xong rồi 🎉</span>'
           : '<span><i style="background:rgba(255,255,255,.35)"></i>còn ' + (mt - hn.cau) + '</span>') +
+        (hn.sua ? '<span style="opacity:.85">🩹 + ' + hn.sua + ' câu sửa lỗi</span>' : '') +
       '</div></div></div></div></div>';
 
     var nLoiH = C.demLoi();
@@ -19672,11 +19812,47 @@ var BAN_WEB = '2026-08-11.sup10';
     if (conO.length) p.cau.push(cauOn(conO[0]));
   }
 
+  /* ---------- DẢI CHUỖI CÂU ĐÚNG ----------
+     Trước đây con chỉ thấy con số chuỗi loé lên một giây trong ô khen rồi mất,
+     sang câu sau là không biết mình đang đúng liền mấy câu nữa — chẳng có gì để
+     mà cố. Giờ dải này nằm cố định trên đầu màn hình làm bài, câu nào cũng thấy. */
+  function htmlChuoi(vuaDut) {
+    var s = st(), c = s.chuoiDung || 0, ky = s.chuoiKyLuc || 0;
+    var o = '';
+    for (var i = 0; i < C.MOC_SUTU; i++) {
+      var m = (i + 1) === C.MOC_RAN ? ' ran' : ((i + 1) === C.MOC_SUTU ? ' sutu'
+        : ((i + 1) % C.MOC_SAO === 0 ? ' sao' : ''));
+      o += '<i class="' + (i < c ? 'on' : '') + m + '"></i>';
+    }
+    /* gộp các mốc rơi vào cùng một số câu — chuỗi 17 thì cả ⭐ lẫn 🐍 đều "còn 3 câu",
+       viết tách ra thành hai vế giống hệt nhau đọc rất rối */
+    var gom = [], theoCon = {};
+    C.mocKeTiep().forEach(function (x) {
+      if (theoCon[x.con]) { theoCon[x.con].ic += x.ic; return; }
+      theoCon[x.con] = { con: x.con, ic: x.ic }; gom.push(theoCon[x.con]);
+    });
+    var h = '<div class="chbar' + (vuaDut ? ' dut' : '') + '">';
+    h += '<div class="cb-so"><b>' + (vuaDut ? 0 : c) + '</b><span>' +
+      (vuaDut ? 'chuỗi về 0' : 'câu liền đúng') + '</span></div>';
+    h += '<div class="cb-giua"><div class="cb-o">' + o + '</div>';
+    h += '<div class="cb-moc">' + gom.map(function (x) {
+      return 'còn <b>' + x.con + '</b> câu nữa được ' + x.ic;
+    }).join(' &nbsp;·&nbsp; ') + '</div></div>';
+    if (ky) h += '<div class="cb-ky">🏅 kỷ lục<b>' + ky + '</b></div>';
+    h += '</div>';
+    if (vuaDut) h += '<div class="cb-nhac">💔 Sai một câu là mất hết chuỗi. Bắt đầu lại từ đầu nào, con làm được mà!</div>';
+    return h;
+  }
+  function capNhatChuoi(vuaDut) {
+    var n = el('ch-strip'); if (n) n.innerHTML = htmlChuoi(vuaDut);
+  }
+
   function veCau() {
     var p = phien, q = p.cau[p.i], cd = C.CD[q.cd || p.cd];
     p.tHien = Date.now();          /* mốc bắt đầu bấm giờ cho đúng câu này */
     var h = '<div class="crumb"><button data-go2="cd">← ' + cd.icon + ' ' + cd.tenNgan + '</button>' +
       '<button data-thoatphien="1">Dừng buổi học</button></div>';
+    h += '<div id="ch-strip">' + htmlChuoi(false) + '</div>';
     h += '<div class="card">';
     h += '<div class="pr-top"><div class="t">' + p.ten + '</div>' +
       '<span class="muted">Câu ' + (p.i + 1) + ' / ' + p.cau.length + '</span></div>';
@@ -19783,7 +19959,7 @@ var BAN_WEB = '2026-08-11.sup10';
     var chuoiTruoc = st().chuoiDung || 0;
     var tnTruoc = C.daTotNghiep(q.cd, q.dang);
     var mtTruoc = C.homNay().cau >= (st().mucTieu || 20);
-    C.ghiNhan(q.cd, q.dang, ok, gy, q.ma, q.lapDe);
+    C.ghiNhan(q.cd, q.dang, ok, gy, q.ma, q.lapDe, p.sualoi ? 1 : 0);
     var vuaTN = !tnTruoc && C.daTotNghiep(q.cd, q.dang);
     var vuaDatMT = !mtTruoc && C.homNay().cau >= (st().mucTieu || 20);
 
@@ -19825,7 +20001,8 @@ var BAN_WEB = '2026-08-11.sup10';
     C.luu();
     if (!p.thi) {
       veHeader(); C.keu(ok ? 'dung' : 'sai');
-      if (ok) phaoHoa(vuaTN || vuaDatMT ? 'to' : 'nho');
+      /* chạm mốc thưởng cũng là dịp lớn — bắn pháo hoa to như lúc tốt nghiệp */
+      if (ok) phaoHoa(vuaTN || vuaDatMT || (C.thuong && C.thuong.length) ? 'to' : 'nho');
     }
 
     inp.classList.add(p.thi ? 'done' : (ok ? 'good' : 'bad'));
@@ -19884,9 +20061,24 @@ var BAN_WEB = '2026-08-11.sup10';
           ' bài bổ sung từ đầu</b> — đúng hết mới được tính là xong.</div>';
       }
     }
+    /* dải chuỗi trên đầu màn hình đổi theo ngay lập tức */
+    capNhatChuoi(!ok && chuoiTruoc > 0);
+
+    /* vừa chạm mốc thưởng thì hô to lên cho con biết — trước đây máy có ghi nhận
+       phần thưởng nhưng chẳng hiện ra đâu cả, con không biết mình vừa được gì */
+    var oThuong = '';
+    if (C.thuong && C.thuong.length) {
+      var ten = C.thuong.map(function (k) { return C.TEN_THUONG[k]; }).join(' và ');
+      oThuong = '<div class="cb-thuong">🎁 ' + (chuoiTruoc + 1) + ' câu liền đúng — con vừa được <b>' +
+        ten + '</b>!' +
+        (C.thuong.indexOf('suTu') >= 0
+          ? '<br><span style="font-weight:600;font-size:14px">Trọn một vòng ' + C.MOC_SUTU +
+            ' câu! Chuỗi bắt đầu lại từ 0 để con săn vòng mới.</span>' : '') + '</div>';
+    }
+
     el('fb').innerHTML = (ok
       ? '<div class="fb good">' + C.pick(khen) +
-        '<span style="float:right">🔥 ' + (st().chuoiDung || 0) + ' câu liền</span></div>' + tinVui
+        '<span style="float:right">🔥 ' + (st().chuoiDung || 0) + ' câu liền</span></div>' + oThuong + tinVui
       : '<div class="fb bad">' + (chuoiTruoc >= C.MOC_SAO
         ? '💔 Tiếc quá — đứt chuỗi <b>' + chuoiTruoc + ' câu</b> liền đúng, chuỗi về 0.<br>' : '') +
         'Chưa đúng rồi.<small>Đáp án đúng: <b>' +
@@ -19989,7 +20181,8 @@ var BAN_WEB = '2026-08-11.sup10';
     h += '<div class="score">' + dung + ' / ' + tong + '</div><p>' + loi + '</p>';
     if (p.them) h += '<p class="muted">Trong đó có ' + p.them + ' bài luyện lại sau khi đọc lý thuyết.</p>';
     h += '<div class="row" style="justify-content:center"><span class="pill">⭐ ' + s.sao + ' sao</span>' +
-      '<span class="pill ' + (hn.cau >= mt ? 'g' : '') + '">Hôm nay: ' + hn.cau + '/' + mt + ' câu</span></div>';
+      '<span class="pill ' + (hn.cau >= mt ? 'g' : '') + '">Hôm nay: ' + hn.cau + '/' + mt + ' câu</span>' +
+      (hn.sua ? '<span class="pill">🩹 ' + hn.sua + ' câu sửa lỗi</span>' : '') + '</div>';
     if (dsSai.length) {
       h += '<div class="warn" style="text-align:left"><b>Dạng con còn sai lần này:</b><div class="weak-list" style="margin-top:10px">';
       dsSai.forEach(function (k) {
@@ -21297,7 +21490,7 @@ var BAN_WEB = '2026-08-11.sup10';
   function veBaoCao() {
     var s = st();
     var ngay30 = C.soLieuNgay(30);
-    var maxCau = Math.max(1, Math.max.apply(null, ngay30.map(function (x) { return x.cau; })));
+    var maxCau = Math.max(1, Math.max.apply(null, ngay30.map(function (x) { return Math.max(x.cau, x.sua || 0); })));
     var hn = C.homNay(), mt = s.mucTieu || 20;
     var saiHN = Math.max(0, hn.cau - hn.dung);
 
@@ -21317,8 +21510,12 @@ var BAN_WEB = '2026-08-11.sup10';
     /* ===== 1. HÔM NAY — thứ bố cần biết trước nhất ===== */
     h += '<div class="card homnay"><h2 class="sec" style="margin-top:0">📌 Hôm nay ' +
       hienNgay(Date.now()) + '</h2>';
-    if (!hn.cau) {
+    if (!hn.cau && !hn.sua) {
       h += '<p class="muted" style="margin:0">Hôm nay con <b>chưa làm câu nào</b>.</p>';
+    } else if (!hn.cau) {
+      h += '<p class="muted" style="margin:0">Hôm nay con chưa làm câu học mới nào, ' +
+        'nhưng đã làm <b>' + hn.sua + ' câu sửa lỗi</b> (đúng ' + hn.suaDung + '). ' +
+        'Câu sửa lỗi không tính vào mục tiêu ngày.</p>';
     } else {
       h += '<div class="hnso">' +
         '<div class="o"><b>' + hn.cau + '</b><span>câu đã làm</span></div>' +
@@ -21327,13 +21524,16 @@ var BAN_WEB = '2026-08-11.sup10';
         '<div class="o"><b>' + Math.round(hn.dung / hn.cau * 100) + '%</b><span>tỉ lệ đúng</span></div>' +
         '<div class="o"><b>' + nkPhut(gyHN) + '</b><span>thời gian học</span></div>' +
         '<div class="o"><b>' + (soCoGio ? nkGiay(gyHN / soCoGio) : '—') + '</b><span>trung bình mỗi câu</span></div>' +
+        (hn.sua ? '<div class="o"><b>' + hn.sua + '</b><span>câu sửa lỗi (đúng ' + hn.suaDung + ')</span></div>' : '') +
         '</div>';
       var pctMT = Math.min(100, Math.round(hn.cau / mt * 100));
       h += '<div class="mini" style="margin-top:12px"><div style="width:' + pctMT +
         '%;background:' + (pctMT >= 100 ? 'var(--ok)' : 'var(--pri)') + '"></div></div>';
       h += '<p class="muted" style="margin:6px 0 0">Mục tiêu ngày <b>' + mt + ' câu</b> — ' +
         (hn.cau >= mt ? '<b style="color:var(--ok)">đã đạt 🎉</b>'
-          : 'còn <b>' + (mt - hn.cau) + ' câu</b> nữa') + '</p>';
+          : 'còn <b>' + (mt - hn.cau) + ' câu</b> nữa') +
+        (hn.sua ? '. Ngoài ra con còn làm <b>' + hn.sua + ' câu sửa lỗi</b> — ' +
+          'phần này <b>không tính</b> vào mục tiêu, vì mục tiêu là để đo phần học mới.' : '') + '</p>';
     }
     h += '<div class="hnthuong">Phần thưởng: <b>⭐ ' + (s.sao || 0) + '</b> sao · ' +
       '<b>🐍 ' + (s.ran || 0) + '</b> rắn · <b>🦁 ' + (s.suTu || 0) + '</b> sư tử &nbsp;·&nbsp; ' +
@@ -21417,14 +21617,18 @@ var BAN_WEB = '2026-08-11.sup10';
     h += '<div class="chart">';
     ngay30.forEach(function (x, i) {
       var cao = Math.round(x.cau / maxCau * 100);
+      var caoS = Math.round((x.sua || 0) / maxCau * 100);
       var cls = x.cau === 0 ? 'zero' : (x.cau >= (s.mucTieu || 20) ? 'good' : '');
-      h += '<div class="cb" title="' + x.ngay + ': ' + x.cau + ' câu, đúng ' + x.dung + '">' +
+      h += '<div class="cb" title="' + x.ngay + ': ' + x.cau + ' câu học mới (đúng ' + x.dung + ')' +
+        ((x.sua || 0) ? ' + ' + x.sua + ' câu sửa lỗi' : '') + '">' +
+        ((x.sua || 0) ? '<div class="bar2 sua" style="height:' + Math.max(caoS, 3) + '%"></div>' : '') +
         '<div class="bar2 ' + cls + '" style="height:' + Math.max(cao, x.cau ? 4 : 2) + '%"></div>' +
         '<div class="lb">' + (i % 5 === 0 || i === 29 ? x.ngay.slice(8) + '/' + x.ngay.slice(5, 7) : '') + '</div></div>';
     });
     h += '</div>';
     h += '<div class="legend"><span><i style="background:#12b886"></i>Đạt mục tiêu ngày (' + (s.mucTieu || 20) + ' câu)</span>' +
       '<span><i style="background:#7c5cff"></i>Có học nhưng chưa đạt</span>' +
+      '<span><i style="background:#ffc078"></i>Câu sửa lỗi (không tính vào mục tiêu)</span>' +
       '<span><i style="background:#e7e3f5"></i>Không học</span></div></div>';
 
     /* --- theo chuyên đề --- */
@@ -21772,8 +21976,29 @@ var BAN_WEB = '2026-08-11.sup10';
     var ghOn = C.saveMode() === 'sup';
     var cfg = C.cauHinh() || { url: '', key: '', ma: '' };
     h += '<div class="card"><h2 class="sec" style="margin-top:0">☁️ Kho dữ liệu (Supabase)</h2>';
+    var mat = C.motKetNoi();
     h += '<p class="muted">Trạng thái thiết bị này: <b style="color:var(--' +
-      (ghOn ? 'ok' : 'no') + ')">' + (ghOn ? '✔ Đã kết nối — dùng chung mọi thiết bị' : '⚠️ Chưa kết nối — chỉ lưu trong trình duyệt này') + '</b></p>';
+      (ghOn ? 'ok' : 'no') + ')">' + (ghOn ? '✔ Đã kết nối — dùng chung mọi thiết bị'
+        : (mat ? '⚠️ CÓ khai báo kết nối nhưng đang gọi máy chủ không được'
+               : '⚠️ Máy này chưa khai báo kết nối — chỉ lưu trong trình duyệt này')) + '</b></p>';
+    if (mat) {
+      h += '<div class="card" style="background:#fff8e8;border:1px solid #f3d99b;margin:0 0 12px">' +
+        '<p style="margin:0"><b>Bài con làm vẫn an toàn trong máy này.</b> Máy tự thử nối lại mỗi phút; ' +
+        'nối được là đẩy hết lên đám mây. Đừng xoá dữ liệu trình duyệt và đừng học trên máy khác ' +
+        'cho tới khi thấy chữ <b>☁️ Đã lưu lên đám mây</b>.</p>' +
+        '<div class="row" style="margin-top:10px">' +
+        '<button class="btn sm" id="cd-thunoi">🔄 Thử nối lại ngay</button>' +
+        '<button class="btn sm ghost" id="cd-xuat2">💾 Tải file sao lưu cho chắc</button></div></div>';
+      h += '<p class="muted">Dự án đang khai báo: <code>' + esc(cfg.url.replace(/^https?:\/\//, '')) +
+        '</code> · mã lớp <code>' + esc(cfg.ma) + '</code></p>';
+    }
+    var tds = C.tinDongBo();
+    if (tds && tds.chon === 'may' && tds.may > tds.mc) {
+      h += '<p class="muted" style="color:var(--ok)"><b>✔ Đã giữ lại bài con làm lúc mất mạng.</b> ' +
+        'Bản trong máy có <b>' + tds.may + ' câu</b>, bản trên đám mây mới có <b>' + tds.mc +
+        ' câu</b> — máy lấy bản trong máy làm chuẩn và đẩy lên, không để mất ' +
+        (tds.may - tds.mc) + ' câu đó.</p>';
+    }
     if (ghOn) {
       h += '<p class="muted">Dự án: <code>' + esc(cfg.url.replace(/^https?:\/\//, '')) + '</code><br>' +
         'Mã lớp học: <code>' + esc(cfg.ma) + '</code> <span style="color:var(--no)">— mã này là chìa khoá vào dữ liệu của con, đừng đăng lên chỗ công khai.</span></p>';
@@ -21782,7 +22007,7 @@ var BAN_WEB = '2026-08-11.sup10';
       '<button class="btn sm ghost" id="cd-ghdoi">' + (ghOn ? 'Đổi kết nối' : 'Khai báo kết nối') + '</button>' +
       (ghOn ? '<button class="btn sm ghost" id="cd-ghlink">🔗 Tạo link cài đặt cho máy khác</button>' +
               '<button class="btn sm ghost" id="cd-ghday">Đẩy lên ngay</button>' +
-              '<button class="btn sm ghost" id="cd-ghnap">⬆️ Nạp dữ liệu cũ từ GitHub</button>' +
+              '<button class="btn sm ghost" id="cd-ghnap">⬆️ Nạp file sao lưu / dữ liệu cũ</button>' +
               '<input type="file" id="cd-ghfile" accept=".json,application/json" multiple style="display:none">' +
               '<button class="btn sm ghost" id="cd-ghxoa" style="color:var(--no);border-color:#fbd5d5">Gỡ kết nối khỏi máy này</button>' : '') +
       '<button class="btn sm ghost" id="cd-ghsql">📋 Xem đoạn SQL tạo bảng</button>' +
@@ -21797,6 +22022,18 @@ var BAN_WEB = '2026-08-11.sup10';
       '<button class="btn ghost" id="cd-xoa" style="color:var(--no);border-color:#fbd5d5">Xoá toàn bộ tiến độ</button></div>';
     h += '<p class="muted" style="margin-top:10px">Nút trên tải một bản JSON về máy — dùng khi muốn giữ bản rời ngoài đám mây.</p></div>';
 
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">🔄 Bản web</h2>';
+    h += '<p class="muted" style="margin:0">Máy này đang chạy bản <b>' + BAN_WEB + '</b>.</p>';
+    h += '<div class="row" style="margin-top:12px">' +
+      '<button class="btn sm" id="cd-ktban">Kiểm tra có bản mới không</button>' +
+      '<button class="btn sm ghost" id="cd-epban">⚡ Ép tải lại bỏ qua bộ nhớ đệm</button></div>';
+    h += '<p class="muted" id="cd-banmsg" style="margin-top:10px"></p>';
+    h += '<p class="muted" style="margin-top:6px">Trình duyệt hay giữ bản cũ trong bộ nhớ đệm nên bấm ' +
+      'tải lại mấy lần vẫn ra bản cũ. Nút <b>⚡ Ép tải lại</b> mở trang bằng một địa chỉ khác đi ' +
+      '(thêm <code>?v=…</code>) nên trình duyệt buộc phải lấy bản mới nhất từ máy chủ. ' +
+      'Dữ liệu học của con <b>không bị ảnh hưởng</b> — nó nằm trong máy và trên Supabase, ' +
+      'không dính gì tới địa chỉ trang.</p></div>';
+
     el('pg-caidat').innerHTML = h;
 
     function ghMsg(t, xanh) {
@@ -21804,6 +22041,35 @@ var BAN_WEB = '2026-08-11.sup10';
     }
 
     if (el('cd-thuphao')) el('cd-thuphao').addEventListener('click', function () { phaoHoa('to'); });
+
+    function banMsg(t, xanh) {
+      var n = el('cd-banmsg'); if (n) n.innerHTML = '<span style="color:var(--' + (xanh ? 'ok' : 'no') + ')">' + t + '</span>';
+    }
+    if (el('cd-epban')) el('cd-epban').addEventListener('click', function () { C.doiSangBanMoi(); });
+    if (el('cd-ktban')) el('cd-ktban').addEventListener('click', function () {
+      banMsg('⏳ Đang hỏi máy chủ…', true);
+      C.kiemTraBanMoi(true).then(function (b) {
+        if (b === null || b === undefined) banMsg('⚠️ Không hỏi được máy chủ — kiểm tra mạng.');
+        else if (!b) banMsg('⚠️ Không đọc được số hiệu bản trên máy chủ.');
+        else if (b === BAN_WEB) banMsg('✔ Máy này đang chạy đúng bản mới nhất (' + b + ').', true);
+        else banMsg('🆕 Trên máy chủ đã có bản <b>' + b + '</b> — bấm <b>⚡ Ép tải lại</b> để cập nhật.', true);
+      });
+    });
+
+    function taiSaoLuu() {
+      var b = new Blob([JSON.stringify(st(), null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      /* đặt luôn tên "tien-do.json" để bố nạp lại được ngay, khỏi phải đổi tên tay */
+      a.href = URL.createObjectURL(b); a.download = 'tien-do.json'; a.click();
+    }
+    if (el('cd-xuat2')) el('cd-xuat2').addEventListener('click', taiSaoLuu);
+    if (el('cd-thunoi')) el('cd-thunoi').addEventListener('click', function () {
+      ghMsg('⏳ Đang thử nối lại…', true);
+      C.noiLai().then(function (ok) {
+        if (ok) { ghMsg('✔ Nối lại được, đã đẩy hết bài con làm lên đám mây.', true); veCaiDat(); }
+        else ghMsg('⚠️ Vẫn chưa gọi được máy chủ. Kiểm tra mạng, và xem dự án Supabase có đang <b>Paused</b> không.');
+      });
+    });
 
     if (el('cd-ghdoi')) el('cd-ghdoi').addEventListener('click', function () {
       var c0 = C.cauHinh() || { url: '', key: '', ma: '' };
@@ -21928,11 +22194,7 @@ var BAN_WEB = '2026-08-11.sup10';
       C.luu(); veHeader();
       el('cd-loi').innerHTML = '<span style="color:var(--ok)">✔ Đã lưu.</span>';
     });
-    el('cd-xuat').addEventListener('click', function () {
-      var b = new Blob([JSON.stringify(s, null, 2)], { type: 'application/json' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(b); a.download = 'tien-do-hoc-toan.json'; a.click();
-    });
+    el('cd-xuat').addEventListener('click', taiSaoLuu);
     el('cd-xoa').addEventListener('click', function () {
       if (!confirm('Xoá TOÀN BỘ tiến độ học tập của tất cả chuyên đề?\n(Tên, mã PIN và các link video bài giảng vẫn được giữ lại.)')) return;
       var ten = s.ten, pin = s.pin, mt = s.mucTieu, vid = s.video;
@@ -22139,6 +22401,76 @@ var BAN_WEB = '2026-08-11.sup10';
   }
 
   try { el('banso').textContent = 'bản ' + BAN_WEB; } catch (e) { }
+
+  /* =========================================================
+     TỰ BIẾT CÓ BẢN MỚI
+     GitHub Pages (và Safari) giữ bản cũ trong bộ nhớ đệm, bấm tải lại mấy
+     lần vẫn ra bản cũ — bố đã mất cả buổi vì chuyện này. Giờ máy tự đi hỏi
+     máy chủ xem file trên đó là bản nào, khác bản đang chạy thì hiện một
+     thanh mời cập nhật. Bấm vào là tải lại kèm ?v=<mốc thời gian> — địa chỉ
+     khác đi nên trình duyệt BẮT BUỘC phải lấy bản mới, không cãi được.
+     Chỉ đọc ~120 KB đầu file rồi ngắt, không tải hết 1,3 MB.
+     ========================================================= */
+  var BANMOI = null;
+  function doiSangBanMoi() {
+    var u = location.pathname + '?v=' + Date.now();
+    location.replace(u);
+  }
+  /* vào bằng địa chỉ có ?v=… thì dọn lại cho sạch, khỏi lưu dấu vết */
+  (function donV() {
+    if (!/[?&]v=\d+/.test(location.search)) return;
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { }
+  })();
+
+  function docBanTrenMayChu() {
+    var u = location.pathname + '?ktr=' + Date.now();
+    return fetch(u, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok || !r.body || !r.body.getReader) {
+        /* trình duyệt cũ không đọc được theo dòng → thôi, đọc cả file */
+        return r.text().then(catBan);
+      }
+      var rd = r.body.getReader(), de = new TextDecoder(), gom = '', da = 0;
+      function tiep() {
+        return rd.read().then(function (x) {
+          if (x.done) return catBan(gom);
+          gom += de.decode(x.value, { stream: true });
+          da += x.value.length;
+          var b = catBan(gom);
+          if (b || da > 200000) { try { rd.cancel(); } catch (e) { } return b; }
+          return tiep();
+        });
+      }
+      return tiep();
+    }).catch(function () { return null; });
+  }
+  function catBan(t) {
+    var m = /var BAN_WEB = '([^']+)'/.exec(t || '');
+    return m ? m[1] : null;
+  }
+
+  function thanhBanMoi(b) {
+    if (document.getElementById('banmoi')) return;
+    var d = document.createElement('div');
+    d.id = 'banmoi';
+    d.innerHTML = '<span>🆕 Có bản mới <b>' + b + '</b> (máy này đang chạy ' + BAN_WEB +
+      ')</span><button id="bm-tai">Cập nhật ngay</button><button id="bm-bo">Để sau</button>';
+    document.body.appendChild(d);
+    document.getElementById('bm-tai').addEventListener('click', doiSangBanMoi);
+    document.getElementById('bm-bo').addEventListener('click', function () { d.remove(); });
+  }
+
+  C.kiemTraBanMoi = function (baoLuonKhiTrung) {
+    return docBanTrenMayChu().then(function (b) {
+      BANMOI = b;
+      if (b && b !== BAN_WEB) { thanhBanMoi(b); return b; }
+      if (baoLuonKhiTrung) return b;      /* null = không hỏi được máy chủ */
+      return null;
+    });
+  };
+  C.banMoi = function () { return BANMOI; };
+  C.doiSangBanMoi = doiSangBanMoi;
+  /* hỏi một lần sau khi trang đã chạy ổn, khỏi làm chậm lúc mở */
+  setTimeout(function () { C.kiemTraBanMoi(); }, 6000);
 
   C.tai(function () {
     C.bao(C.saveMode());
