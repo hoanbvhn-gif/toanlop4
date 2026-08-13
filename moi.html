@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Mở bản mới nhất · Góc học Toán</title>
+<style>
+  :root{--pri:#7c5cff;--ok:#12b886;--no:#e03131;--ink:#221f38;--ink2:#6b6785;--line:#e7e3f5}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);
+    background:linear-gradient(160deg,#efeaff,#ffeef6)}
+  .hop{width:100%;max-width:560px;background:#fff;border-radius:24px;padding:30px 28px;
+    box-shadow:0 18px 50px rgba(60,40,120,.16);text-align:center}
+  .bl{font-size:52px;line-height:1}
+  h1{margin:12px 0 4px;font-size:24px}
+  p.sub{margin:0 0 20px;color:var(--ink2);font-size:14.5px}
+  .o{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:18px 0}
+  .the{flex:1;min-width:150px;border:2px solid var(--line);border-radius:16px;padding:14px 12px;background:#fbfaff}
+  .the b{display:block;font-size:19px;margin-top:4px;font-variant-numeric:tabular-nums;word-break:break-all}
+  .the span{font-size:12.5px;color:var(--ink2);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+  .the.ok{border-color:#8ce0b8;background:#f0fbf5}
+  .the.ok b{color:var(--ok)}
+  .nut{display:block;width:100%;font:inherit;font-size:19px;font-weight:800;border:0;cursor:pointer;
+    border-radius:99px;padding:17px 20px;background:linear-gradient(135deg,#7c5cff,#b06bff);color:#fff;
+    box-shadow:0 8px 22px rgba(124,92,255,.38)}
+  .nut:active{transform:translateY(1px)}
+  .nut.phu{margin-top:10px;background:#fff;color:var(--pri);border:2px solid var(--line);
+    box-shadow:none;font-size:15px;padding:12px 18px}
+  .ghi{margin:16px 0 0;font-size:13px;color:var(--ink2);text-align:left;background:#fbfaff;
+    border-radius:14px;padding:12px 14px}
+  .ghi b{color:var(--ink)}
+  .cho{color:var(--ink2);font-size:14px}
+  .loi{color:var(--no);font-weight:700}
+</style>
+</head>
+<body>
+<div class="hop">
+  <div class="bl">🎒</div>
+  <h1>Góc học Toán</h1>
+  <p class="sub">Trang này chỉ làm một việc: mở web bằng <b>bản mới nhất trên máy chủ</b>,
+    bỏ qua bản cũ trình duyệt đang giữ.</p>
+
+  <div class="o">
+    <div class="the" id="the-mc"><span>Trên máy chủ</span><b id="v-mc" class="cho">đang hỏi…</b></div>
+    <div class="the" id="the-may"><span>Máy này đang mở</span><b id="v-may" class="cho">—</b></div>
+  </div>
+
+  <button class="nut" id="mo">🚀 Mở bản mới nhất</button>
+  <button class="nut phu" id="hoi">🔄 Hỏi lại máy chủ</button>
+
+  <p class="ghi">
+    Bấm nút trên là trang học mở kèm một cái đuôi <b>?v=…</b> khác nhau mỗi lần, nên Safari,
+    GitHub Pages và máy chủ biên đều buộc phải đi lấy file mới nhất — không được phép đưa bản cũ ra.
+    <br><br>
+    <b>Dữ liệu học của con không bị ảnh hưởng.</b> Tiến độ nằm trong bộ nhớ của trình duyệt
+    (tính theo tên miền, không theo đuôi địa chỉ) và trên Supabase.
+    <br><br>
+    Lưu trang này vào dấu trang. Mỗi lần bố vừa đẩy file mới lên GitHub thì mở nó, xem số hiệu
+    hai bên, rồi bấm nút.
+  </p>
+</div>
+
+<script>
+/* Đọc số hiệu bản trong index.html trên máy chủ.
+   File index.html nặng ~1,3 MB nhưng dòng BAN_WEB nằm ở khoảng 49 KB đầu,
+   nên đọc theo dòng rồi NGẮT sớm, không tải hết. */
+var DICH = './index.html';
+function catBan(t) {
+  var m = /var BAN_WEB = '([^']+)'/.exec(t || '');
+  return m ? m[1] : null;
+}
+function hoiMayChu() {
+  var n = document.getElementById('v-mc');
+  n.className = 'cho'; n.textContent = 'đang hỏi…';
+  document.getElementById('the-mc').className = 'the';
+  return fetch(DICH + '?ktr=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+    if (!r.ok) throw 0;
+    if (!r.body || !r.body.getReader) return r.text().then(catBan);
+    var rd = r.body.getReader(), de = new TextDecoder(), gom = '', da = 0;
+    function tiep() {
+      return rd.read().then(function (x) {
+        if (x.done) return catBan(gom);
+        gom += de.decode(x.value, { stream: true });
+        da += x.value.length;
+        var b = catBan(gom);
+        if (b || da > 250000) { try { rd.cancel(); } catch (e) {} return b; }
+        return tiep();
+      });
+    }
+    return tiep();
+  }).then(function (b) {
+    if (!b) throw 0;
+    n.className = ''; n.textContent = b;
+    document.getElementById('the-mc').className = 'the ok';
+    return b;
+  }).catch(function () {
+    n.className = 'loi'; n.textContent = 'không hỏi được';
+    return null;
+  });
+}
+
+/* Bản mà TRÌNH DUYỆT đang giữ trong bộ nhớ đệm — hỏi lại đúng địa chỉ trang học,
+   KHÔNG kèm gì cả, để lộ ra chính cái bản cũ mà Safari sẽ đưa ra nếu bố bấm tải lại. */
+function hoiMayNay() {
+  var n = document.getElementById('v-may');
+  return fetch(DICH, { cache: 'force-cache' }).then(function (r) {
+    return r.text();
+  }).then(function (t) {
+    var b = catBan(t);
+    n.className = b ? '' : 'loi';
+    n.textContent = b || 'chưa rõ';
+    return b;
+  }).catch(function () { n.className = 'cho'; n.textContent = '—'; return null; });
+}
+
+document.getElementById('mo').addEventListener('click', function () {
+  location.href = './?v=' + Date.now();
+});
+document.getElementById('hoi').addEventListener('click', function () {
+  hoiMayChu(); hoiMayNay();
+});
+hoiMayChu();
+hoiMayNay();
+</script>
+</body>
+</html>
