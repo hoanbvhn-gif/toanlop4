@@ -214,6 +214,37 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 @keyframes nhay{0%,100%{opacity:1}50%{opacity:.25}}
 .bclive button{margin-left:auto}
 .bclive button + button{margin-left:0}
+.lesson.daxong{box-shadow:inset 0 0 0 2px #b2e5c6}
+.lesson.khoa{opacity:.6}
+.lsmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.lshai{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.lshai .btn{flex:1;min-width:130px;justify-content:center}
+.lsnhac{margin:8px 0 0;font-size:12.5px;color:var(--ink2);background:#fbfaff;border-radius:10px;padding:8px 10px}
+.cdcard.khoa{opacity:.72;cursor:default}
+.cdcard.khoa:hover{transform:none;box-shadow:none}
+.dokho{display:inline-flex;gap:2px;vertical-align:middle}
+.dokho i{font-style:normal;font-size:15px;line-height:1;color:#e3dcf5}
+.dokho i.on{color:#f5a524}
+.dokho-chu{margin-left:8px;font-size:12.5px;font-weight:700;color:#8a5a00}
+/* ---- thẻ CHUYÊN ĐỀ ĐANG HỌC trên màn hình chính của con ---- */
+.cdnow{padding:0;overflow:hidden}
+.cdnow .dau{padding:18px 20px;color:#fff;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.cdnow .dau .ic{font-size:40px;line-height:1}
+.cdnow .dau .nho{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;opacity:.85}
+.cdnow .dau h2{margin:2px 0 0;font-size:23px}
+.cdnow .dau .dokho i{color:rgba(255,255,255,.45)}
+.cdnow .dau .dokho i.on{color:#ffd76e}
+.cdnow .dau .dokho-chu{color:#fff;opacity:.9}
+.cdnow .than{padding:16px 20px 20px}
+.cdnow .chon{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.cdnow .chon button{font:inherit;font-size:16px;font-weight:800;border:0;cursor:pointer;border-radius:16px;
+  padding:16px 14px;text-align:left;line-height:1.3}
+.cdnow .chon button small{display:block;font-size:12.5px;font-weight:600;opacity:.85;margin-top:3px}
+.cdnow .chon .moi{background:linear-gradient(135deg,#7c5cff,#b06bff);color:#fff}
+.cdnow .chon .cu{background:#fff4e6;color:#b0700a;box-shadow:inset 0 0 0 2px #ffd9a8}
+.cdnow .chon .cu.sach{background:#f1f8f4;color:#2b8a3e;box-shadow:inset 0 0 0 2px #b2e5c6}
+.cdnow .chon button:disabled{opacity:.55;cursor:default}
+@media(max-width:560px){.cdnow .chon{grid-template-columns:1fr}}
 .dahieu{margin-top:18px;padding:20px 18px;border-radius:18px;text-align:center;
   background:linear-gradient(135deg,#eafaf1,#e8f3ff);border:2px solid #8ce0b8}
 .dahieu b{font-size:18px;display:block;margin-bottom:6px}
@@ -793,7 +824,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-17.sup15';
+var BAN_WEB = '2026-08-17.sup16';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -2081,20 +2112,69 @@ var BAN_WEB = '2026-08-17.sup15';
     if (!CTS.thiCua(cd.id).dat) t.push('<b>thi cuối chuyên đề</b> đạt từ ' + CTS.NGUONG_THI + '%');
     return t;
   };
+  /* ---------- ĐỘ KHÓ CỦA TỪNG CHUYÊN ĐỀ ----------
+     Chấm theo mức tư duy mà bài đòi hỏi ở học sinh lớp 4, không theo số dạng:
+       ⭐        làm được ngay sau khi đọc lý thuyết, chỉ cần cộng trừ cẩn thận
+       ⭐⭐      phải tự dựng ra con số / phải nhớ một quy tắc
+       ⭐⭐⭐    phải kết hợp hai ba bước, dễ nhầm nếu đọc lướt đề
+       ⭐⭐⭐⭐   phải nghĩ ra cách quy đổi, không có công thức sẵn
+       ⭐⭐⭐⭐⭐ phải lập luận trừu tượng, chứng minh "chắc chắn"          */
+  CTS.SAO_KHO = {
+    cd7: 1,
+    cd1: 2, cd3: 2, cd6: 2, cd8: 2,
+    cd2: 3, cd4: 3, cd5: 3, cd9: 3, cd10: 3, cd12: 3,
+    cd11: 4, cd13: 4,
+    cd14: 5
+  };
+  CTS.LOI_KHO = {
+    1: 'Dễ — đọc xong là làm được',
+    2: 'Hơi khó — cần nhớ quy tắc',
+    3: 'Khó vừa — phải làm nhiều bước',
+    4: 'Khó — phải tự nghĩ ra cách',
+    5: 'Rất khó — phải lập luận'
+  };
+  CTS.saoKho = function (cdId) { return CTS.SAO_KHO[cdId] || 3; };
+  /* thứ tự học: DỄ TRƯỚC, KHÓ SAU. Cùng độ khó thì giữ thứ tự sách. */
+  CTS.thuTuHoc = function () {
+    return CTS.DS_CD.slice().sort(function (a, b) {
+      return CTS.saoKho(a.id) - CTS.saoKho(b.id) || (a.so || 99) - (b.so || 99);
+    });
+  };
+  /* đã đụng tới chuyên đề này chưa (có làm câu nào không) */
+  CTS.daDung = function (cdId) {
+    var cd = CTS.CD[cdId]; if (!cd) return false;
+    return cd.DANG.some(function (d) { return CTS.dangOf(cdId, d.id).lam > 0; });
+  };
   CTS.moKhoa = function (cd) {
     if (!state.moTay) state.moTay = {};
     if (state.moTay[cd.id] !== undefined) return !!state.moTay[cd.id];
-    var i = CTS.DS_CD.indexOf(cd);
-    if (i <= 0) return true;                      /* chuyên đề đầu tiên luôn mở */
-    var truoc = CTS.DS_CD[i - 1];
+    /* đã học dở rồi thì luôn mở — không bao giờ khoá lại phần con đang làm */
+    if (CTS.daDung(cd.id)) return true;
+    var ds = CTS.thuTuHoc();
+    var i = ds.indexOf(cd);
+    if (i <= 0) return true;                      /* chuyên đề dễ nhất luôn mở */
+    var truoc = ds[i - 1];
     return CTS.moKhoa(truoc) && CTS.daXong(truoc);
   };
-  CTS.dsMo = function () { return CTS.DS_CD.filter(function (cd) { return CTS.moKhoa(cd); }); };
-  /* chuyên đề bé đang học = chuyên đề đã mở đầu tiên mà chưa hoàn thiện */
+  CTS.dsMo = function () { return CTS.thuTuHoc().filter(function (cd) { return CTS.moKhoa(cd); }); };
+  /* Chuyên đề con ĐANG học = chuyên đề con vừa đụng tới gần đây nhất mà chưa xong.
+     Không lấy "cái đầu tiên trong danh sách" nữa — đổi thứ tự sang dễ-đến-khó mà
+     vẫn lấy cái đầu tiên thì con đang học dở chuyên đề này lại bị kéo sang cái khác. */
   CTS.cdDangHoc = function () {
     var mo = CTS.dsMo();
+    var tot = null, motMoc = -1;
+    mo.forEach(function (cd) {
+      if (CTS.daXong(cd)) return;
+      var moc = 0;
+      cd.DANG.forEach(function (d) {
+        var x = CTS.dangOf(cd.id, d.id);
+        if (x.lanCuoi && x.lanCuoi > moc) moc = x.lanCuoi;
+      });
+      if (moc > motMoc) { motMoc = moc; tot = cd; }
+    });
+    if (tot && motMoc > 0) return tot;
     for (var i = 0; i < mo.length; i++) if (!CTS.daXong(mo[i])) return mo[i];
-    return mo[mo.length - 1] || CTS.DS_CD[0];
+    return mo[mo.length - 1] || CTS.thuTuHoc()[0];
   };
   CTS.datMoTay = function (cdId, v) {
     if (!state.moTay) state.moTay = {};
@@ -19000,6 +19080,17 @@ var BAN_WEB = '2026-08-17.sup15';
       '<span style="font-size:13px;font-weight:600;opacity:.85">/' + mt + '</span></div></div>';
   }
 
+  /* ⭐ ĐỘ KHÓ của chuyên đề — khác hẳn ★ mức nắm bài ở dưới mỗi thẻ.
+     Cố ý dùng hai ký hiệu khác nhau cho con khỏi lẫn:
+       ⭐ vàng = bài này khó cỡ nào (không đổi)
+       ★  tím  = con đã nắm được tới đâu (tăng dần khi con học) */
+  function khoHtml(cdId, coChu) {
+    var n = C.saoKho(cdId), h = '<span class="dokho" title="Độ khó">';
+    for (var i = 0; i < 5; i++) h += '<i class="' + (i < n ? 'on' : '') + '">★</i>';
+    h += '</span>';
+    if (coChu) h += '<span class="dokho-chu">' + C.LOI_KHO[n] + '</span>';
+    return h;
+  }
   function saoHtml(n) {
     var s = '';
     for (var i = 0; i < 3; i++) s += '<span class="' + (i < n ? '' : 'off') + '">★</span>';
@@ -19035,6 +19126,11 @@ var BAN_WEB = '2026-08-17.sup15';
     if (t !== 'nhatky') nkTatNhip();          /* rời trang thì thôi tải lại nền */
     if (t !== 'bao') bcTatNhip();             /* báo cáo cũng vậy */
     TRANG.forEach(function (x) { el('pg-' + x).classList.toggle('hide', x !== t); });
+    /* LỖI CŨ: veBaoCao() chạy TRƯỚC moTrang('bao') nên lúc nó định bật đồng hồ thì
+       trang báo cáo vẫn còn ẩn, đồng hồ không bao giờ khởi động — bố phải bấm tay
+       nút "Cập nhật ngay" thì mới có số mới. Giờ bật đồng hồ ở đây, sau khi trang
+       đã hiện, và kéo dữ liệu về ngay một lần cho khỏi phải chờ nhịp đầu. */
+    if (t === 'bao') setTimeout(function () { try { bcMoTrang(); } catch (e) { } }, 60);
     /* vừa rời màn hình làm bài mà đang có bản mới nằm chờ → cập nhật ngay lúc này */
     if (t !== 'practice') setTimeout(function () { try { C.xongBuoiThiCapNhat(); } catch (e) { } }, 400);
     el('topbar').classList.toggle('hide', t === 'login');
@@ -19319,13 +19415,8 @@ var BAN_WEB = '2026-08-17.sup15';
     });
     var baiMoi = cdCuoi ? C.baiKeTiep(cdCuoi.id) : null;
     var duMT = C.duMucTieu();
-    if (cdCuoi) {
-      h += '<div class="row" style="margin-top:18px;align-items:center">' +
-        '<button class="btn tolam" data-tieptuc="' + cdCuoi.id + '">▶ ' +
-        (duMT && baiMoi ? 'Luyện thêm' : 'Học tiếp') + ' — ' + esc(cdCuoi.tenNgan) + '</button>';
-      if (daHocDu >= 6) h += '<button class="btn nhonho" data-lttron="1">🔁 Ôn lại bài cũ</button>';
-      h += '</div>';
-    }
+    /* Nút to trong khối chào đã bỏ: thẻ "Con đang học" ngay bên dưới đã có hai
+       lựa chọn rõ ràng hơn hẳn, để hai chỗ cùng làm một việc chỉ tổ rối mắt. */
     var saiHN = Math.max(0, hn.cau - hn.dung);
     h += '</div><div class="goalring">' +
       ringDoiSai(hn.dung, saiHN, mt, 118, 12) +
@@ -19339,33 +19430,53 @@ var BAN_WEB = '2026-08-17.sup15';
         (hn.sua ? '<span style="opacity:.85">🩹 + ' + hn.sua + ' câu sửa lỗi</span>' : '') +
       '</div></div></div></div></div>';
 
-    /* ---- 📘 HỌC BÀI MỚI — chỉ mở ra khi con đã làm đủ mục tiêu câu hôm nay ----
-       Đúng thứ tự bố muốn: sửa lỗi → làm cho đủ mục tiêu trên bài đã học →
-       mở một bài mới, đọc lý thuyết, bấm "Con đã hiểu" → luyện đúng bài đó. */
-    if (cdCuoi && baiMoi) {
-      var bMoi = cdCuoi.LT[baiMoi];
-      var bNgay = C.baiMoiHomNay();
-      var daMo = bNgay && bNgay.cd === cdCuoi.id && bNgay.bai === baiMoi;
-      h += '<div class="card baimoi">';
-      if (duMT || daMo) {
-        h += '<span class="nhan">📘 Bài mới hôm nay</span>';
-        h += '<h2 class="sec" style="margin-top:6px">' + bMoi.icon + ' ' + esc(bMoi.ten) + '</h2>';
-        h += '<p class="muted" style="margin:0">' + esc(bMoi.mo || '') + '</p>';
-        h += '<div class="row" style="margin-top:14px">' +
-          '<button class="btn tolam" data-baimoi="' + cdCuoi.id + '|' + baiMoi + '">' +
-          '📖 Đọc lý thuyết bài này</button></div>';
-        h += '<p class="muted" style="margin:10px 0 0">Đọc hết rồi bấm <b>✅ Con đã hiểu</b> ở cuối trang ' +
-          'là mở khoá bài tập của bài này.</p>';
+    /* ================= THẺ CHUYÊN ĐỀ ĐANG HỌC =================
+       Con mở web ra là thấy ngay: đang học chuyên đề nào, khó cỡ nào, đi được
+       bao xa, bài kế tiếp là bài gì — và HAI LỰA CHỌN to rõ: học bài mới, hay
+       sửa bài cũ. Không phải đoán, không phải tìm. */
+    if (cdCuoi) {
+      var pctCD = C.tienDoCD(cdCuoi);
+      var soBaiHoc = C.soBaiDaHoc(cdCuoi.id);
+      var tongBai = cdCuoi.THU_TU.length;
+      var tnCD = C.soTotNghiepCD(cdCuoi);
+      var nLoi0 = C.demLoi();
+      h += '<div class="card cdnow">';
+      h += '<div class="dau" style="background:linear-gradient(135deg,' + cdCuoi.mau[0] + ',' + cdCuoi.mau[1] + ')">';
+      h += '<div class="ic">' + cdCuoi.icon + '</div>';
+      h += '<div style="flex:1;min-width:200px"><div class="nho">Con đang học · Chuyên đề ' + cdCuoi.so + '</div>' +
+        '<h2>' + esc(cdCuoi.tenNgan) + '</h2>' +
+        '<div style="margin-top:6px">' + khoHtml(cdCuoi.id, true) + '</div></div>';
+      h += ring(pctCD, 78, 9, '#fff', '<span style="font-size:18px">' + pctCD + '%</span>', 'rgba(255,255,255,.28)');
+      h += '</div>';
+
+      h += '<div class="than">';
+      h += '<div class="row" style="gap:8px">' +
+        '<span class="pill">📖 ' + soBaiHoc + '/' + tongBai + ' bài đã học</span>' +
+        '<span class="pill">🎓 ' + tnCD + '/' + cdCuoi.DANG.length + ' dạng tốt nghiệp</span>' +
+        (hn.cau ? '<span class="pill g">Hôm nay ' + hn.cau + ' câu</span>' : '') + '</div>';
+
+      h += '<div class="chon">';
+      if (baiMoi) {
+        var bM = cdCuoi.LT[baiMoi];
+        h += '<button class="moi" data-baimoi="' + cdCuoi.id + '|' + baiMoi + '">📘 Học bài mới' +
+          '<small>' + esc(bM.ten) + '</small></button>';
       } else {
-        var conMT = (s.mucTieu || 20) - hn.cau;
-        h += '<span class="nhan">🔒 Bài mới đang khoá</span>';
-        h += '<h2 class="sec" style="margin-top:6px">' + bMoi.icon + ' ' + esc(bMoi.ten) + '</h2>';
-        h += '<p class="muted" style="margin:0">Con làm nốt <b>' + conMT + ' câu</b> nữa cho đủ mục tiêu ' +
-          'hôm nay là bài mới này mở ra.</p>';
-        h += '<div class="mini" style="margin-top:10px"><div style="width:' + pctNgay +
-          '%;background:var(--pri)"></div></div>';
+        h += '<button class="moi" data-lttron="1">🔁 Ôn tập tổng hợp<small>Con đã học hết bài của chuyên đề này</small></button>';
+      }
+      if (nLoi0) {
+        h += '<button class="cu" data-sualai="1">🩹 Sửa bài cũ<small>' + nLoi0 +
+          ' câu con từng làm sai</small></button>';
+      } else {
+        h += '<button class="cu sach" data-tieptuc="' + cdCuoi.id + '">✏️ Luyện thêm' +
+          '<small>Sổ lỗi sạch — làm thêm cho nhớ lâu</small></button>';
       }
       h += '</div>';
+
+      h += '<div class="row" style="margin-top:12px">' +
+        '<button class="btn sm ghost" data-cd="' + cdCuoi.id + '">📚 Xem tất cả bài học của chuyên đề</button>';
+      if (nLoi0) h += '<button class="btn sm ghost" data-tieptuc="' + cdCuoi.id + '">✏️ Luyện tập tiếp</button>';
+      h += '</div>';
+      h += '</div></div>';
     }
 
     var nLoiH = C.demLoi();
@@ -19431,45 +19542,59 @@ var BAN_WEB = '2026-08-17.sup15';
       h += '</div>';
     }
 
+    /* ================= DANH SÁCH CHUYÊN ĐỀ, DỄ TRƯỚC KHÓ SAU =================
+       Hiện đủ cả 14 chuyên đề chứ không giấu cái chưa mở — con nhìn thấy cả con
+       đường phía trước, biết cái nào dễ cái nào khó, và biết muốn mở cái sau thì
+       phải xong cái nào. */
     var cdHoc = C.cdDangHoc();
-    h += '<h2 class="sec">📚 Chuyên đề của con <span class="pill">' + dsMo.length + '/' + C.DS_CD.length + ' đã mở</span></h2>';
+    var thuTu = C.thuTuHoc();
+    h += '<h2 class="sec">📚 Các chuyên đề — xếp từ <b>dễ</b> đến <b>khó</b> ' +
+      '<span class="pill">' + dsMo.length + '/' + C.DS_CD.length + ' đã mở</span></h2>';
+    h += '<p class="muted" style="margin:-4px 0 12px">Số <span class="dokho"><i class="on">★</i></span> ' +
+      'màu vàng là <b>độ khó</b> của chuyên đề — càng nhiều sao càng phải nghĩ nhiều. ' +
+      'Còn ★ màu tím ở cuối mỗi thẻ là <b>mức con đã nắm được</b> chuyên đề đó.</p>';
     h += '<div class="cdgrid">';
-    dsMo.forEach(function (cd) {
+    thuTu.forEach(function (cd) {
+      var mo = C.moKhoa(cd);
       var pct = C.tienDoCD(cd), lam = C.tongCauCD(cd);
       var yeu = cd.DANG.filter(function (d) { return C.mucDo(cd.id, d.id) === 1; }).length;
       var chua = cd.DANG.filter(function (d) { return C.mucDo(cd.id, d.id) === 0; }).length;
       h += '<div class="cdcard' + (C.daXong(cd) ? ' xong' : cd === cdHoc ? ' danghoc' : '') +
-        '" data-cd="' + cd.id + '">';
-      h += '<div class="top" style="background:linear-gradient(135deg,' + cd.mau[0] + ',' + cd.mau[1] + ')">';
+        (mo ? '' : ' khoa') + '"' + (mo ? ' data-cd="' + cd.id + '"' : '') + '>';
+      h += '<div class="top" style="background:' + (mo
+        ? 'linear-gradient(135deg,' + cd.mau[0] + ',' + cd.mau[1] + ')'
+        : 'linear-gradient(135deg,#adb5bd,#ced4da)') + '">';
       h += '<div style="display:flex;align-items:flex-start;gap:12px;position:relative;z-index:2">';
-      h += '<div style="flex:1"><div class="ic">' + cd.icon + '</div><div class="no">Chuyên đề ' + cd.so + '</div>' +
-        '<div class="nm">' + cd.tenNgan + '</div></div>';
-      h += ring(pct, 74, 8, '#fff', '<span style="font-size:17px">' + pct + '%</span>');
+      h += '<div style="flex:1"><div class="ic">' + (mo ? cd.icon : '🔒') + '</div>' +
+        '<div class="no">Chuyên đề ' + cd.so + '</div>' +
+        '<div class="nm">' + cd.tenNgan + '</div>' +
+        '<div style="margin-top:6px">' + khoHtml(cd.id, false) + '</div></div>';
+      h += ring(pct, 74, 8, '#fff', '<span style="font-size:17px">' + pct + '%</span>', 'rgba(255,255,255,.3)');
       h += '</div></div><div class="bd"><div class="mo">' + cd.mo + '</div>';
       var tnCd = C.thiCua(cd.id).dat, xongCd = C.daXong(cd);
       h += '<div class="cdmeta">' +
         (xongCd ? '<span class="pill tn">✅ Đã hoàn thành</span>'
-          : cd === cdHoc ? '<span class="pill hoc">▶ Đang học</span>' : '') +
+          : cd === cdHoc ? '<span class="pill hoc">▶ Đang học</span>'
+            : mo ? '<span class="pill">🔓 Đã mở</span>' : '<span class="pill">🔒 Chưa mở</span>') +
+        '<span class="pill">' + C.LOI_KHO[C.saoKho(cd.id)] + '</span>' +
         (tnCd ? '<span class="pill tn">🎓 Thi ' + tnCd.pct + '%</span>' : '') +
         '<span class="pill">' + cd.DANG.length + ' dạng bài</span>' +
         '<span class="pill">' + (cd.THU_TU.length - 1) + ' bài học</span>' +
         (lam ? '<span class="pill g">' + lam + ' câu đã làm</span>' : '') +
         (yeu ? '<span class="pill r">' + yeu + ' dạng cần luyện</span>' : '') +
         (lam && chua ? '<span class="pill">' + chua + ' dạng chưa học</span>' : '') + '</div>';
-      h += '<div class="foot">' + saoHtml(C.saoCD(cd)) +
-        '<button class="btn sm" style="margin-left:auto" data-cd="' + cd.id + '">' +
-        (lam ? 'Học tiếp →' : 'Bắt đầu →') + '</button></div></div></div>';
+      h += '<div class="foot">' + saoHtml(C.saoCD(cd));
+      if (mo) {
+        h += '<button class="btn sm" style="margin-left:auto" data-cd="' + cd.id + '">' +
+          (lam ? 'Học tiếp →' : 'Bắt đầu →') + '</button>';
+      } else {
+        var iTt = thuTu.indexOf(cd), tr = iTt > 0 ? thuTu[iTt - 1] : null;
+        h += '<span class="muted" style="margin-left:auto;font-size:12.5px;text-align:right">' +
+          (tr ? 'Mở ra khi xong<br><b>' + esc(tr.tenNgan) + '</b>' : '') + '</span>';
+      }
+      h += '</div></div></div>';
     });
-    var conLai = C.DS_CD.length - dsMo.length;
-    var thieu = C.conThieu(cdHoc);
-    h += '<div class="cdcard soon"><div class="top"><div class="ic">🔒</div><div class="no">Phía trước</div>' +
-      '<div class="nm">' + (conLai ? 'Còn ' + conLai + ' chuyên đề' : 'Hết rồi!') + '</div></div>' +
-      '<div class="soonbody">' +
-      (conLai
-        ? 'Học xong <b>' + cdHoc.tenNgan + '</b> là chuyên đề tiếp theo tự mở ra.' +
-          (thieu.length ? '<div class="soonneed">Còn cần: ' + thieu.join(' · ') + '</div>' : '')
-        : 'Con đã mở hết tất cả chuyên đề. Quá giỏi! 🎉') +
-      '</div></div></div>';
+    h += '</div>';
 
     var ds = C.dsHuyHieu();
     var daCo = ds.filter(function (x) { return s.huyHieu.indexOf(x.id) >= 0; });
@@ -19537,6 +19662,66 @@ var BAN_WEB = '2026-08-17.sup15';
     h += '<p class="muted" style="margin:12px 0 0">Web tự chọn dạng bài cho con — ưu tiên dạng chưa làm ' +
       'và dạng hay sai. Con cứ bấm nút to là học được ngay.</p></div>';
 
+    h += '<h2 class="sec">📖 Các bài học của chuyên đề này</h2>';
+    h += '<p class="muted" style="margin:-4px 0 12px">Học theo đúng thứ tự từ trên xuống. ' +
+      'Mỗi bài <b>đọc lý thuyết trước</b>, hiểu rồi mới sang <b>thực hành</b> — ' +
+      'lý thuyết ở đây là phần giảng riêng của chính bài đó, có ví dụ mẫu giải từng bước.</p>';
+    h += '<div class="grid">';
+    cd.THU_TU.forEach(function (bid, iB) {
+      var b = cd.LT[bid], ds = cd.DANG_CUA_BAI[bid] || [];
+      var nv = C.videoCua(cd.id, bid).length;
+      var daDoc = C.daHoc(cd.id, bid);
+      var truoc = iB > 0 ? cd.THU_TU[iB - 1] : null;
+      /* bài kế tiếp mở khi bài trước đã đọc — không nhảy cóc */
+      var moBai = vaiTro !== 'con' || iB === 0 || daDoc || (truoc && C.daHoc(cd.id, truoc));
+      h += '<div class="lesson' + (daDoc ? ' daxong' : '') + (moBai ? '' : ' khoa') + '">';
+      h += '<div class="ic">' + (moBai ? b.icon : '🔒') +
+        (nv ? ' <span class="vbadge">🎬 ' + nv + '</span>' : '') + '</div>';
+      /* tên bài trong sách đã có sẵn chữ "Bài n ·" rồi thì đừng thêm lần nữa */
+      var tenB = b.ten;
+      if (iB > 0 && !/^Bài\s*\d/.test(tenB)) tenB = 'Bài ' + iB + ' · ' + tenB;
+      h += '<div class="nm">' + tenB + '</div><div class="ds">' + b.mo + '</div>';
+
+      if (ds.length) {
+        var sm = 0, tn = 0;
+        ds.forEach(function (id) {
+          sm += C.mucDo(cd.id, id);
+          if (C.daTotNghiep(cd.id, id)) tn++;
+        });
+        var pct = Math.round(sm / (ds.length * 3) * 100);
+        var mn = Math.min.apply(null, ds.map(function (id) { return C.mucDo(cd.id, id); }));
+        h += '<div class="pct"><span>Mức nắm bài</span><span>' + pct + '%</span></div>';
+        h += '<div class="bar-wrap"><div class="bar-fill" style="width:' + pct + '%"></div></div>';
+        h += '<div class="lsmeta">' + C.tag(mn) +
+          '<span class="pill">' + ds.length + ' dạng</span>' +
+          (tn ? '<span class="pill tn">🎓 ' + tn + '/' + ds.length + ' tốt nghiệp</span>' : '') +
+          '</div>';
+      } else {
+        h += '<div class="lsmeta"><span class="pill">Bài nền, không có bài tập riêng</span></div>';
+      }
+
+      h += '<div class="lshai">';
+      if (!moBai) {
+        h += '<span class="muted" style="font-size:12.5px">Đọc xong bài trước là bài này mở ra.</span>';
+      } else {
+        h += '<button class="btn sm ' + (daDoc ? 'ghost' : '') + '" data-baily="' + bid + '">📖 ' +
+          (daDoc ? 'Đọc lại lý thuyết' : 'Đọc lý thuyết') + '</button>';
+        if (ds.length) {
+          if (daDoc || vaiTro !== 'con') {
+            h += '<button class="btn sm" data-ltbai="' + bid + '">✏️ Thực hành</button>';
+          } else {
+            h += '<button class="btn sm ghost" disabled title="Đọc lý thuyết trước đã">🔒 Thực hành</button>';
+          }
+        }
+      }
+      h += '</div>';
+      if (moBai && ds.length && !daDoc && vaiTro === 'con') {
+        h += '<p class="lsnhac">Đọc hết lý thuyết rồi bấm <b>✅ Con đã hiểu</b> ở cuối trang là mở khoá thực hành.</p>';
+      }
+      h += '</div>';
+    });
+    h += '</div>';
+
     /* ---- 🎓 Đường tới tốt nghiệp của riêng chuyên đề này ---- */
     var pcTN = C.tienDoTN(cd), soTN = C.soTotNghiepCD(cd);
     h += '<div class="card tncard"><div class="row" style="align-items:center;gap:18px">';
@@ -19602,29 +19787,11 @@ var BAN_WEB = '2026-08-17.sup15';
       h += '<div class="card tip"><b>Tuyệt vời! 🎉</b> Con đã nắm tốt tất cả các dạng của chuyên đề này.</div>';
     }
 
-    h += '<h2 class="sec">📖 Các bài học</h2><div class="grid">';
-    cd.THU_TU.forEach(function (bid) {
-      var b = cd.LT[bid], ds = cd.DANG_CUA_BAI[bid];
-      var nv = C.videoCua(cd.id, bid).length;
-      h += '<div class="lesson" data-baily="' + bid + '"><div class="ic">' + b.icon +
-        (nv ? ' <span class="vbadge">🎬 ' + nv + '</span>' : '') + '</div>';
-      h += '<div class="nm">' + b.ten + '</div><div class="ds">' + b.mo + '</div>';
-      if (ds && ds.length) {
-        var sm = 0;
-        ds.forEach(function (id) { sm += C.mucDo(cd.id, id); });
-        var pct = Math.round(sm / (ds.length * 3) * 100);
-        var mn = Math.min.apply(null, ds.map(function (id) { return C.mucDo(cd.id, id); }));
-        h += '<div class="pct"><span>Mức độ nắm bài</span><span>' + pct + '%</span></div>';
-        h += '<div class="bar-wrap"><div class="bar-fill" style="width:' + pct + '%"></div></div>';
-        h += '<div style="margin-top:6px">' + C.tag(mn) + '</div>';
-        h += '<div class="row" style="margin-top:8px"><button class="btn sm ghost" data-baily="' + bid + '">Lý thuyết</button>' +
-          '<button class="btn sm" data-ltbai="' + bid + '">Luyện tập</button></div>';
-      } else {
-        h += '<div class="row" style="margin-top:8px"><button class="btn sm" data-baily="' + bid + '">Đọc ngay</button></div>';
-      }
-      h += '</div>';
-    });
-    h += '</div>';
+    /* ================= CÁC BÀI HỌC =================
+       Mỗi bài một thẻ, và trong thẻ có ĐỦ HAI THỨ nằm cạnh nhau:
+         📖 Lý thuyết  — phần giảng RIÊNG của đúng bài đó, có ví dụ mẫu từng bước
+         ✏️ Thực hành  — các dạng bài của đúng bài đó
+       Con nhìn là biết bài nào đã đọc, bài nào đã luyện tới đâu, bài nào chưa mở. */
     el('pg-cd').innerHTML = h;
     var inp = el('so-cau');
     if (inp) inp.addEventListener('change', function () { luuSoCau(inp.value); });
@@ -21669,6 +21836,13 @@ var BAN_WEB = '2026-08-17.sup15';
   var BC_YEN_TOI_DA = 30 * 60000;
 
   function bcTatNhip() { if (bcHen) { clearInterval(bcHen); bcHen = null; } bcNhip = 0; }
+  /* mở trang báo cáo: kéo ngay một lần rồi bật đồng hồ chạy nền */
+  function bcMoTrang() {
+    if (C.saveMode() !== 'sup') return;
+    bcYen = Date.now(); bcTheoDoi = true;
+    bcNhipTim();
+    bcLamMoi();
+  }
 
   function bcNhipNen() {
     var ds = C.nhatKy(C.thangNay()) || [];
