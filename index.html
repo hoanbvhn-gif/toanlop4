@@ -243,6 +243,23 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 .lsmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .lshai{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .lshai .btn{flex:1;min-width:130px;justify-content:center}
+.lesson.cosao{box-shadow:inset 0 0 0 2px #ffd43b,0 4px 16px rgba(255,196,0,.16)}
+.saobadge{font-size:20px;filter:drop-shadow(0 2px 4px rgba(255,190,0,.5))}
+.saobai{margin-top:9px;background:#fffbe9;border:1px solid #ffe89a;border-radius:12px;padding:9px 11px;font-size:13px}
+.saobai .sb-hd{font-weight:800;margin-bottom:5px;color:#9a6b00}
+.saobai .sb-b{color:#7a6a3a;padding:1px 0}
+.saobai .sb-b.ok{color:#0f8a5f;font-weight:700}
+.saobai.xong{background:#fff5d1;border-color:#ffd43b;color:#8a5d00;font-weight:700}
+.dgsao{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:3px}
+.cdtick{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:9px;margin-top:12px}
+.cdtick label{display:flex;align-items:flex-start;gap:9px;border:2px solid var(--line);border-radius:13px;
+  padding:10px 12px;cursor:pointer;background:#fbfaff;font-size:14px;line-height:1.4}
+.cdtick label.on{border-color:var(--pri);background:#f4f0ff}
+.cdtick input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:var(--pri);pointer-events:none}
+.cdtick .t{font-weight:800;display:block}
+.cdtick .s{font-size:12px;color:var(--ink2);display:block;margin-top:3px}
+.cdtick .s .dokho{vertical-align:-1px}
+.cdtick .s .dokho-chu{margin-left:5px}
 .lsnhac{margin:8px 0 0;font-size:12.5px;color:var(--ink2);background:#fbfaff;border-radius:10px;padding:8px 10px}
 .cdcard.khoa{opacity:.72;cursor:default}
 .cdcard.khoa:hover{transform:none;box-shadow:none}
@@ -849,7 +866,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-19.sup17';
+var BAN_WEB = '2026-08-19.sup18';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -941,6 +958,15 @@ var BAN_WEB = '2026-08-19.sup17';
   CTS.dangKy = function (cd) {
     cd.BY_ID = {};
     cd.BAI_CUA_DANG = {};
+    /* XẾP LẠI THỨ TỰ BÀI TRONG CHUYÊN ĐỀ: DỄ TRƯỚC, KHÓ SAU.
+       Giữ nguyên thứ tự sách trong cd.THU_TU_SACH để còn gọi đúng tên
+       "Bài 3" như trong sách, nhưng con đi học theo cd.THU_TU đã xếp lại. */
+    cd.THU_TU_SACH = (cd.THU_TU || []).slice();
+    cd.THU_TU = cd.THU_TU_SACH.slice().sort(function (a, b) {
+      var ia = cd.THU_TU_SACH.indexOf(a), ib = cd.THU_TU_SACH.indexOf(b);
+      if (ia === 0 || ib === 0) return ia - ib;        /* Kiến thức nền luôn đứng đầu */
+      return CTS.saoBai(cd.id, a) - CTS.saoBai(cd.id, b) || ia - ib;
+    });
     (cd.DANG || []).forEach(function (d) {
       cd.BY_ID[d.id] = d; d.cd = cd.id;
       var k = 'B' + d.bai;
@@ -1017,7 +1043,8 @@ var BAN_WEB = '2026-08-19.sup17';
       khoiDong: null, kdLichSu: [], soDangKD: 3, soNgayOn: 14, phao: 'moi',
       sao: 0, ran: 0, suTu: 0, chuoiDung: 0, chuoiKyLuc: 0, v3thuong: 1, huyHieu: [],
       chuoi: { ngay: '', so: 0, dai: 0 },
-      ngay: {}, boHoanHao: 0, daHocBai: {}, baiNgay: null, v4bai: 0, tao: Date.now()
+      ngay: {}, boHoanHao: 0, daHocBai: {}, baiNgay: null, v4bai: 0,
+      cdChon: {}, saoBai: {}, v6sao: 0, tao: Date.now()
     };
   }
   /* chuyển dữ liệu bản cũ (chỉ có chuyên đề 5) sang bản mới */
@@ -1033,6 +1060,8 @@ var BAN_WEB = '2026-08-19.sup17';
       if (!r.soLoi) r.soLoi = [];
       if (!r.chuoiSua) r.chuoiSua = {};
       if (!r.kdLichSu) r.kdLichSu = [];
+      if (!r.cdChon) r.cdChon = {};
+      if (!r.saoBai) r.saoBai = {};
       if (!r.soDangKD) r.soDangKD = 3;
       if (r.soDangKD === 5 && !r.v5sang) { r.soDangKD = 3; r.v5sang = 1; }
       if (r.soNgayOn === undefined) r.soNgayOn = 14;
@@ -2173,6 +2202,10 @@ var BAN_WEB = '2026-08-19.sup17';
   };
   CTS.moKhoa = function (cd) {
     if (!state.moTay) state.moTay = {};
+    /* Bố đã tự tay chọn danh sách chuyên đề cho con: cái không được chọn thì
+       khoá hẳn (và cũng không hiện ra), cái được chọn thì mở luôn — bố chọn
+       tức là bố muốn con học ngay, không phải chờ xong cái trước. */
+    if (CTS.coChonTay()) return !!state.cdChon[cd.id];
     if (state.moTay[cd.id] !== undefined) return !!state.moTay[cd.id];
     /* đã học dở rồi thì luôn mở — không bao giờ khoá lại phần con đang làm */
     if (CTS.daDung(cd.id)) return true;
@@ -2205,6 +2238,86 @@ var BAN_WEB = '2026-08-19.sup17';
   CTS.datMoTay = function (cdId, v) {
     if (!state.moTay) state.moTay = {};
     if (v === null) delete state.moTay[cdId]; else state.moTay[cdId] = v ? 1 : 0;
+  };
+
+  /* =========================================================
+     ĐỘ KHÓ CỦA TỪNG BÀI HỌC  (⭐ 1 → 5)
+     Chấm riêng cho từng bài chứ không lấy chung độ khó của chuyên đề: trong
+     một chuyên đề "khó vừa" vẫn có bài đọc xong là làm được, và ngược lại
+     chuyên đề dễ vẫn có một bài cuối làm khó cả người lớn.
+       ⭐        đọc xong công thức là làm được ngay
+       ⭐⭐      phải nhớ một quy tắc, làm hai bước
+       ⭐⭐⭐    nhiều bước, dễ nhầm nếu đọc lướt đề
+       ⭐⭐⭐⭐   phải tự nghĩ ra cách, không có mẫu sẵn
+       ⭐⭐⭐⭐⭐ phải lập luận, chứng minh "chắc chắn"
+     Thứ tự học trong chuyên đề được XẾP LẠI theo đúng số sao này — dễ trước,
+     khó sau. Bài "Kiến thức nền" (B0) luôn đứng đầu vì mọi bài sau đều dựa
+     vào nó. Hai bài cùng số sao thì giữ nguyên thứ tự trong sách.
+     ========================================================= */
+  CTS.SAO_BAI = {
+    'cd1|B0': 1, 'cd1|B1': 2, 'cd1|B2': 2, 'cd1|B3': 2, 'cd1|B4': 3, 'cd1|B5': 3, 'cd1|B6': 4,
+    'cd2|B0': 1, 'cd2|B1': 2, 'cd2|B2': 3, 'cd2|B3': 3, 'cd2|B4': 3, 'cd2|B5': 4, 'cd2|B6': 4, 'cd2|B7': 5,
+    'cd3|B0': 1, 'cd3|B1': 1, 'cd3|B2': 2, 'cd3|B3': 3, 'cd3|B4': 4, 'cd3|B5': 4,
+    'cd4|B0': 1, 'cd4|B1': 2, 'cd4|B2': 2, 'cd4|B3': 4, 'cd4|B4': 5, 'cd4|B5': 3, 'cd4|B6': 4,
+    'cd5|B0': 1, 'cd5|B1': 2, 'cd5|B2': 2, 'cd5|B3': 3, 'cd5|B4': 3, 'cd5|B5': 4, 'cd5|B6': 5,
+    'cd6|B0': 1, 'cd6|B1': 1, 'cd6|B2': 1, 'cd6|B3': 2, 'cd6|B4': 3, 'cd6|B5': 4, 'cd6|B6': 4,
+    'cd7|B0': 1, 'cd7|B1': 1, 'cd7|B2': 3, 'cd7|B3': 4,
+    'cd8|B0': 1, 'cd8|B1': 2, 'cd8|B2': 2, 'cd8|B3': 4, 'cd8|B4': 4,
+    'cd9|B0': 1, 'cd9|B1': 2, 'cd9|B2': 3, 'cd9|B3': 5, 'cd9|B4': 4, 'cd9|B5': 5,
+    'cd10|B0': 1, 'cd10|B1': 1, 'cd10|B2': 2, 'cd10|B3': 4, 'cd10|B4': 4, 'cd10|B5': 5, 'cd10|B6': 3,
+    'cd11|B0': 1, 'cd11|B1': 2, 'cd11|B2': 3, 'cd11|B3': 4, 'cd11|B4': 5, 'cd11|B5': 5,
+    'cd12|B0': 1, 'cd12|B1': 2, 'cd12|B2': 3, 'cd12|B3': 4, 'cd12|B4': 5,
+    'cd13|B0': 1, 'cd13|B1': 3, 'cd13|B2': 4, 'cd13|B3': 4,
+    'cd14|B0': 2, 'cd14|B1': 3, 'cd14|B2': 4, 'cd14|B3': 5
+  };
+  /* Độ khó của TỪNG DẠNG. Chuyên đề 1 và 2 đã soạn tay từng dạng một; các
+     chuyên đề còn lại dạng mang đúng độ khó của bài chứa nó. */
+  CTS.SAO_DANG = {
+    S1: 2, S2: 2, S3: 2, S4: 2, S5: 3, S6: 3, S7: 2, S8: 2, S9: 3, S10: 3,
+    S11: 3, S12: 4, S13: 3, S14: 3, S15: 4, S16: 4, S17: 4, S18: 5, S19: 4, S20: 4,
+    P1: 1, P2: 2, P3: 3, P4: 2, P5: 3, P6: 4, P7: 3, P8: 3, P9: 4, P10: 3,
+    P11: 4, P12: 3, P13: 4, P14: 5, P15: 4, P16: 4, P17: 4, P18: 4, P19: 5, P20: 5, P21: 5
+  };
+  CTS.saoBai = function (cdId, bid) {
+    var v = CTS.SAO_BAI[cdId + '|' + bid];
+    return v || CTS.saoKho(cdId);
+  };
+  CTS.saoDang = function (cdId, dangId) {
+    /* mã dạng của chuyên đề 14 trùng chữ cái P với chuyên đề 2 — chỉ tra bảng
+       tay cho đúng hai chuyên đề đã soạn, còn lại lấy theo bài. */
+    if ((cdId === 'cd1' || cdId === 'cd2') && CTS.SAO_DANG[dangId]) return CTS.SAO_DANG[dangId];
+    var cd = CTS.CD[cdId]; if (!cd) return 3;
+    return CTS.saoBai(cdId, cd.BAI_CUA_DANG[dangId] || cd.THU_TU[0]);
+  };
+
+  /* =========================================================
+     BỐ CHỌN CHUYÊN ĐỀ CHO CON HỌC
+     Khu của con chỉ hiện những chuyên đề bố tích chọn. Chưa tích cái nào thì
+     hiện tất cả (theo lộ trình cũ) — để bản cũ nâng cấp lên không bị trống trơn.
+     ========================================================= */
+  CTS.coChonTay = function () {
+    var c = state.cdChon;
+    if (!c) return false;
+    for (var k in c) if (c[k]) return true;
+    return false;
+  };
+  CTS.chonChoCon = function (cdId) {
+    if (!CTS.coChonTay()) return true;
+    return !!state.cdChon[cdId];
+  };
+  CTS.datChonChoCon = function (cdId, v) {
+    if (!state.cdChon) state.cdChon = {};
+    if (v) state.cdChon[cdId] = 1; else delete state.cdChon[cdId];
+    CTS.luu();
+  };
+  CTS.chonHet = function (v) {
+    state.cdChon = {};
+    if (v) CTS.DS_CD.forEach(function (cd) { state.cdChon[cd.id] = 1; });
+    CTS.luu();
+  };
+  /* danh sách chuyên đề con ĐƯỢC NHÌN THẤY, dễ trước khó sau */
+  CTS.dsChoCon = function () {
+    return CTS.thuTuHoc().filter(function (cd) { return CTS.chonChoCon(cd.id); });
   };
 
   /* =========================================================
@@ -2636,6 +2749,77 @@ var BAN_WEB = '2026-08-19.sup17';
     CTS.luu();
     return n;
   };
+  /* =========================================================
+     XONG MỘT BÀI = ĐỌC LÝ THUYẾT + ĐÚNG 10 CÂU CỦA CHÍNH BÀI ĐÓ
+     Đây là thước duy nhất để được ⭐ ngôi sao kể từ bản này. Bố chọn như vậy
+     vì sao cũ (cứ 5 câu liền đúng là một sao) chỉ đo được sự may mắn trong
+     một lúc, còn cái đáng thưởng là con HỌC XONG được một bài.
+     Bài "Kiến thức nền" không có bài tập riêng nên không tính sao — nó là
+     phần đọc để hiểu, không phải phần để luyện.
+     ========================================================= */
+  CTS.CAN_DUNG_BAI = 10;
+  CTS.dungCuaBai = function (cdId, bid) {
+    var cd = CTS.CD[cdId]; if (!cd) return 0;
+    var n = 0;
+    (cd.DANG_CUA_BAI[bid] || []).forEach(function (id) { n += CTS.dangOf(cdId, id).dung; });
+    return n;
+  };
+  CTS.coBaiTap = function (cdId, bid) {
+    var cd = CTS.CD[cdId];
+    return !!(cd && (cd.DANG_CUA_BAI[bid] || []).length);
+  };
+  CTS.xongBai = function (cdId, bid) {
+    if (!CTS.coBaiTap(cdId, bid)) return false;
+    if (!CTS.daHoc(cdId, bid)) return false;
+    return CTS.dungCuaBai(cdId, bid) >= CTS.CAN_DUNG_BAI;
+  };
+  /* còn thiếu gì để bài này được một sao */
+  CTS.conDeXongBai = function (cdId, bid) {
+    if (!CTS.coBaiTap(cdId, bid)) return null;
+    return {
+      doc: CTS.daHoc(cdId, bid),
+      dung: Math.min(CTS.CAN_DUNG_BAI, CTS.dungCuaBai(cdId, bid)),
+      can: CTS.CAN_DUNG_BAI
+    };
+  };
+  CTS.daNhanSao = function (cdId, bid) {
+    return !!(state.saoBai || {})[cdId + '|' + bid];
+  };
+  /* trao sao nếu bài vừa đủ điều kiện; trả về true nếu vừa trao */
+  CTS.chamSaoBai = function (cdId, bid) {
+    if (!state.saoBai) state.saoBai = {};
+    var k = cdId + '|' + bid;
+    if (state.saoBai[k]) return false;
+    if (!CTS.xongBai(cdId, bid)) return false;
+    state.saoBai[k] = Date.now();
+    state.sao = (state.sao || 0) + 1;
+    return true;
+  };
+  /* tổng số sao có thể kiếm được của cả web (mỗi bài có bài tập = 1 sao) */
+  CTS.tongSaoCoThe = function () {
+    var n = 0;
+    CTS.DS_CD.forEach(function (cd) {
+      cd.THU_TU.forEach(function (b) { if (CTS.coBaiTap(cd.id, b)) n++; });
+    });
+    return n;
+  };
+  /* ĐẶT LẠI TOÀN BỘ SAO — chạy đúng một lần khi lên bản mới, rồi tính lại
+     theo luật mới từ những bài con thật sự đã học xong. */
+  CTS.datLaiSao = function () {
+    if (state.v6sao) return 0;
+    state.sao = 0; state.saoBai = {};
+    var n = 0;
+    CTS.DS_CD.forEach(function (cd) {
+      cd.THU_TU.forEach(function (b) {
+        if (CTS.xongBai(cd.id, b)) { state.saoBai[cd.id + '|' + b] = 1; n++; }
+      });
+    });
+    state.sao = n;
+    state.v6sao = 1;
+    CTS.luu();
+    return n;
+  };
+
   /* hôm nay con đã mở bài mới nào chưa */
   CTS.baiMoiHomNay = function () {
     var b = state.baiNgay;
@@ -2663,11 +2847,12 @@ var BAN_WEB = '2026-08-19.sup17';
   CTS.TEN_THUONG = { sao: '⭐ ngôi sao', ran: '🐍 con rắn', suTu: '🦁 con sư tử' };
   CTS.thuong = null;      /* phần thưởng vừa nhận ở câu gần nhất */
 
-  /* còn bao nhiêu câu nữa tới mốc kế tiếp */
+  /* còn bao nhiêu câu nữa tới mốc kế tiếp.
+     ⭐ KHÔNG còn nằm ở đây nữa: từ bản này sao chỉ đến khi HỌC XONG MỘT BÀI
+     (đọc lý thuyết + đúng 10 câu của bài), không đến theo chuỗi. */
   CTS.mocKeTiep = function () {
     var c = state.chuoiDung || 0;
     var ra = [];
-    ra.push({ ic: '⭐', con: CTS.MOC_SAO - (c % CTS.MOC_SAO) });
     if (c < CTS.MOC_RAN) ra.push({ ic: '🐍', con: CTS.MOC_RAN - c });
     if (c < CTS.MOC_SUTU) ra.push({ ic: '🦁', con: CTS.MOC_SUTU - c });
     return ra;
@@ -2696,22 +2881,33 @@ var BAN_WEB = '2026-08-19.sup17';
     var h = CTS.ngayHomNay();
     if (laSua) { state.ngay[h].sua++; if (dung) state.ngay[h].suaDung++; }
     else { state.ngay[h].cau++; if (dung) state.ngay[h].dung++; }
-    /* ---- phần thưởng theo CHUỖI CÂU ĐÚNG LIÊN TIẾP ---- */
-    CTS.thuong = null;
+    /* ---- phần thưởng ----
+       🐍 và 🦁 vẫn theo CHUỖI CÂU ĐÚNG LIÊN TIẾP như cũ (20 và 35 câu).
+       ⭐ đổi luật: chỉ đến khi con HỌC XONG hẳn một bài — đọc lý thuyết rồi
+       làm đúng 10 câu của chính bài đó. Mỗi bài chỉ được một sao, không lặp. */
+    CTS.thuong = null; CTS.baiVuaXong = null;
+    var got = [];
     if (dung) {
       state.chuoiDung = (state.chuoiDung || 0) + 1;
       if (state.chuoiDung > (state.chuoiKyLuc || 0)) state.chuoiKyLuc = state.chuoiDung;
-      var got = [];
-      if (state.chuoiDung % CTS.MOC_SAO === 0) { state.sao = (state.sao || 0) + 1; got.push('sao'); }
       if (state.chuoiDung === CTS.MOC_RAN) { state.ran = (state.ran || 0) + 1; got.push('ran'); }
       if (state.chuoiDung === CTS.MOC_SUTU) {
         state.suTu = (state.suTu || 0) + 1; got.push('suTu');
         state.chuoiDung = 0;              /* xong một vòng, săn tiếp từ đầu */
       }
-      if (got.length) CTS.thuong = got;
+      /* câu đúng này có làm cho bài chứa nó vừa đủ 10 câu đúng không? */
+      var cdX = CTS.CD[cdId];
+      if (cdX) {
+        var bidX = cdX.BAI_CUA_DANG[dangId];
+        if (bidX && CTS.chamSaoBai(cdId, bidX)) {
+          got.push('sao');
+          CTS.baiVuaXong = { cd: cdId, bai: bidX };
+        }
+      }
     } else {
       state.chuoiDung = 0;
     }
+    if (got.length) CTS.thuong = got;
     /* dọn bớt lịch sử ngày quá cũ */
     var ks = Object.keys(state.ngay);
     if (ks.length > 400) { ks.sort(); delete state.ngay[ks[0]]; }
@@ -19774,7 +19970,8 @@ var BAN_WEB = '2026-08-19.sup17';
       o += '<i class="' + (xong || i < c.chuoi ? 'on' : '') + '"></i>';
     }
     return '<div class="tnrow' + (xong ? ' xong' : '') + '" data-ltcd="' + cdId + '" data-ltid="' + x.id + '">' +
-      '<span class="nm">' + (xong ? '🎓 ' : '') + esc(x.ten) + '</span>' +
+      '<span class="nm">' + (xong ? '🎓 ' : '') + esc(x.ten) +
+      '<span class="dgsao">' + khoDangHtml(cdId, x.id, false) + '</span></span>' +
       '<span class="tnoo">' + o + '</span>' +
       '<span class="tnnum">' + (xong ? '✔' : c.chuoi + '/' + C.SO_CAU_TN) + '</span>' +
       '<span class="tnngay">' + (xong ? '' : (c.ngay + '/' + C.SO_NGAY_TN + ' ngày')) + '</span>' +
@@ -19831,6 +20028,16 @@ var BAN_WEB = '2026-08-19.sup17';
     if (coChu) h += '<span class="dokho-chu">' + C.LOI_KHO[n] + '</span>';
     return h;
   }
+  /* độ khó của một BÀI HỌC — cùng ký hiệu ⭐ vàng với độ khó chuyên đề */
+  function saoKhoHtml(n, chu) {
+    var h = '<span class="dokho" title="Độ khó">';
+    for (var i = 0; i < 5; i++) h += '<i class="' + (i < n ? 'on' : '') + '">★</i>';
+    h += '</span>';
+    if (chu !== false) h += '<span class="dokho-chu">' + C.LOI_KHO[n] + '</span>';
+    return h;
+  }
+  function khoBaiHtml(cdId, bid) { return saoKhoHtml(C.saoBai(cdId, bid), true); }
+  function khoDangHtml(cdId, dangId, chu) { return saoKhoHtml(C.saoDang(cdId, dangId), chu); }
   function saoHtml(n) {
     var s = '';
     for (var i = 0; i < 3; i++) s += '<span class="' + (i < n ? '' : 'off') + '">★</span>';
@@ -20236,17 +20443,17 @@ var BAN_WEB = '2026-08-19.sup17';
     var cD = s.chuoiDung || 0;
     var oChuoi = '';
     for (var iC = 0; iC < C.MOC_SUTU; iC++) {
-      var moc = (iC + 1) === C.MOC_RAN ? ' ran' : ((iC + 1) === C.MOC_SUTU ? ' sutu'
-        : ((iC + 1) % C.MOC_SAO === 0 ? ' sao' : ''));
+      var moc = (iC + 1) === C.MOC_RAN ? ' ran' : ((iC + 1) === C.MOC_SUTU ? ' sutu' : '');
       oChuoi += '<i class="' + (iC < cD ? 'on' : '') + moc + '"></i>';
     }
     h += '<div class="card chuoicard"><div class="row" style="align-items:center;gap:14px">';
     h += '<div style="flex:1;min-width:240px"><h2 class="sec" style="margin:0 0 4px">🔥 Chuỗi câu đúng: <b>' +
       cD + '</b></h2>';
-    h += '<p class="muted" style="margin:0">Cứ <b>' + C.MOC_SAO + ' câu liền đúng</b> con được <b>⭐ 1 ngôi sao</b>. ' +
-      '<b>' + C.MOC_RAN + ' câu</b> liền đúng được <b>🐍 một con rắn</b>. ' +
+    h += '<p class="muted" style="margin:0"><b>' + C.MOC_RAN + ' câu</b> liền đúng được <b>🐍 một con rắn</b>. ' +
       '<b>' + C.MOC_SUTU + ' câu</b> liền đúng được <b>🦁 một con sư tử</b>! ' +
-      '<span style="color:var(--no)">Sai một câu là chuỗi về 0</span> — nên phải cẩn thận từng câu.</p>';
+      '<span style="color:var(--no)">Sai một câu là chuỗi về 0</span> — nên phải cẩn thận từng câu.<br>' +
+      '⭐ <b>Ngôi sao thì không đến từ chuỗi</b>: mỗi khi con <b>học xong hẳn một bài</b> ' +
+      '(đọc lý thuyết rồi làm đúng <b>' + C.CAN_DUNG_BAI + ' câu</b> của chính bài đó) con được <b>1 ⭐</b>.</p>';
     h += '<div class="chuoio">' + oChuoi + '</div>';
     var mk = C.mocKeTiep();
     h += '<p class="muted" style="margin:8px 0 0">' + mk.map(function (x) {
@@ -20287,12 +20494,19 @@ var BAN_WEB = '2026-08-19.sup17';
        đường phía trước, biết cái nào dễ cái nào khó, và biết muốn mở cái sau thì
        phải xong cái nào. */
     var cdHoc = C.cdDangHoc();
-    var thuTu = C.thuTuHoc();
-    h += '<h2 class="sec">📚 Các chuyên đề — xếp từ <b>dễ</b> đến <b>khó</b> ' +
-      '<span class="pill">' + dsMo.length + '/' + C.DS_CD.length + ' đã mở</span></h2>';
+    /* Bố có thể tự tay chọn danh sách chuyên đề cho con — lúc đó khu của con
+       CHỈ hiện đúng những chuyên đề đó, không hiện phần còn lại. */
+    var thuTu = C.dsChoCon();
+    var boChon = C.coChonTay();
+    h += '<h2 class="sec">📚 ' + (boChon ? 'Chuyên đề bố chọn cho con học' : 'Các chuyên đề') +
+      ' — xếp từ <b>dễ</b> đến <b>khó</b> ' +
+      '<span class="pill">' + (boChon ? thuTu.length + ' chuyên đề' : dsMo.length + '/' + C.DS_CD.length + ' đã mở') +
+      '</span></h2>';
     h += '<p class="muted" style="margin:-4px 0 12px">Số <span class="dokho"><i class="on">★</i></span> ' +
       'màu vàng là <b>độ khó</b> của chuyên đề — càng nhiều sao càng phải nghĩ nhiều. ' +
-      'Còn ★ màu tím ở cuối mỗi thẻ là <b>mức con đã nắm được</b> chuyên đề đó.</p>';
+      'Còn ★ màu tím ở cuối mỗi thẻ là <b>mức con đã nắm được</b> chuyên đề đó.' +
+      (boChon ? '<br>Bố đang chọn sẵn phần con cần học trước, nên ở đây chỉ hiện ' +
+        thuTu.length + ' chuyên đề thôi nhé.' : '') + '</p>';
     h += '<div class="cdgrid">';
     thuTu.forEach(function (cd) {
       var mo = C.moKhoa(cd);
@@ -20402,10 +20616,16 @@ var BAN_WEB = '2026-08-19.sup17';
     h += '<p class="muted" style="margin:12px 0 0">Web tự chọn dạng bài cho con — ưu tiên dạng chưa làm ' +
       'và dạng hay sai. Con cứ bấm nút to là học được ngay.</p></div>';
 
-    h += '<h2 class="sec">📖 Các bài học của chuyên đề này</h2>';
-    h += '<p class="muted" style="margin:-4px 0 12px">Học theo đúng thứ tự từ trên xuống. ' +
+    var soSaoCd = cd.THU_TU.filter(function (b) { return C.daNhanSao(cd.id, b); }).length;
+    var soBaiCoBt = cd.THU_TU.filter(function (b) { return C.coBaiTap(cd.id, b); }).length;
+    h += '<h2 class="sec">📖 Các bài học của chuyên đề này — xếp từ <b>dễ</b> đến <b>khó</b> ' +
+      '<span class="pill">⭐ ' + soSaoCd + '/' + soBaiCoBt + '</span></h2>';
+    h += '<p class="muted" style="margin:-4px 0 12px">Học theo đúng thứ tự từ trên xuống — ' +
+      'bài dễ nhất nằm trên cùng, càng xuống dưới càng khó. ' +
       'Mỗi bài <b>đọc lý thuyết trước</b>, hiểu rồi mới sang <b>thực hành</b> — ' +
-      'lý thuyết ở đây là phần giảng riêng của chính bài đó, có ví dụ mẫu giải từng bước.</p>';
+      'lý thuyết ở đây là phần giảng riêng của chính bài đó, có ví dụ mẫu giải từng bước.<br>' +
+      '🌟 <b>Học xong một bài</b> (đọc lý thuyết + làm đúng <b>' + C.CAN_DUNG_BAI +
+      ' câu</b> của bài đó) là con được <b>1 ⭐ ngôi sao</b>.</p>';
     h += '<div class="grid">';
     cd.THU_TU.forEach(function (bid, iB) {
       var b = cd.LT[bid], ds = cd.DANG_CUA_BAI[bid] || [];
@@ -20414,13 +20634,20 @@ var BAN_WEB = '2026-08-19.sup17';
       var truoc = iB > 0 ? cd.THU_TU[iB - 1] : null;
       /* bài kế tiếp mở khi bài trước đã đọc — không nhảy cóc */
       var moBai = vaiTro !== 'con' || iB === 0 || daDoc || (truoc && C.daHoc(cd.id, truoc));
-      h += '<div class="lesson' + (daDoc ? ' daxong' : '') + (moBai ? '' : ' khoa') + '">';
+      var coSao = C.daNhanSao(cd.id, bid);
+      h += '<div class="lesson' + (daDoc ? ' daxong' : '') + (moBai ? '' : ' khoa') +
+        (coSao ? ' cosao' : '') + '">';
       h += '<div class="ic">' + (moBai ? b.icon : '🔒') +
-        (nv ? ' <span class="vbadge">🎬 ' + nv + '</span>' : '') + '</div>';
-      /* tên bài trong sách đã có sẵn chữ "Bài n ·" rồi thì đừng thêm lần nữa */
+        (nv ? ' <span class="vbadge">🎬 ' + nv + '</span>' : '') +
+        (coSao ? ' <span class="saobadge">⭐</span>' : '') + '</div>';
+      /* Số hiệu bài lấy theo THỨ TỰ SÁCH, không theo vị trí sau khi xếp lại —
+         nếu không thì con gọi "Bài 5" mà mẹ mở sách ra lại là bài khác. */
+      var iSach = cd.THU_TU_SACH ? cd.THU_TU_SACH.indexOf(bid) : iB;
       var tenB = b.ten;
-      if (iB > 0 && !/^Bài\s*\d/.test(tenB)) tenB = 'Bài ' + iB + ' · ' + tenB;
-      h += '<div class="nm">' + tenB + '</div><div class="ds">' + b.mo + '</div>';
+      if (iSach > 0 && !/^Bài\s*\d/.test(tenB)) tenB = 'Bài ' + iSach + ' · ' + tenB;
+      h += '<div class="nm">' + tenB + '</div>' +
+        '<div style="margin:6px 0 2px">' + khoBaiHtml(cd.id, bid) + '</div>' +
+        '<div class="ds">' + b.mo + '</div>';
 
       if (ds.length) {
         var sm = 0, tn = 0;
@@ -20436,6 +20663,17 @@ var BAN_WEB = '2026-08-19.sup17';
           '<span class="pill">' + ds.length + ' dạng</span>' +
           (tn ? '<span class="pill tn">🎓 ' + tn + '/' + ds.length + ' tốt nghiệp</span>' : '') +
           '</div>';
+        /* ---- chặng đường tới ⭐ của riêng bài này ---- */
+        var cx = C.conDeXongBai(cd.id, bid);
+        if (coSao) {
+          h += '<div class="saobai xong">⭐ <b>Con đã học xong bài này</b> — được 1 ngôi sao rồi!</div>';
+        } else {
+          h += '<div class="saobai"><div class="sb-hd">🌟 Để được ⭐ bài này:</div>' +
+            '<div class="sb-b' + (cx.doc ? ' ok' : '') + '">' + (cx.doc ? '✅' : '⬜') + ' Đọc lý thuyết</div>' +
+            '<div class="sb-b' + (cx.dung >= cx.can ? ' ok' : '') + '">' +
+            (cx.dung >= cx.can ? '✅' : '⬜') + ' Làm đúng <b>' + cx.dung + '/' + cx.can + '</b> câu của bài</div>' +
+            '</div>';
+        }
       } else {
         h += '<div class="lsmeta"><span class="pill">Bài nền, không có bài tập riêng</span></div>';
       }
@@ -20475,9 +20713,12 @@ var BAN_WEB = '2026-08-19.sup17';
       ' câu</b> mà 20 câu gần nhất đúng ≥' + Math.round(C.NGUONG_DUNG * 100) + '% thì cũng cho tốt nghiệp.</span></p>';
     h += '<div class="tnso"><span><b>' + soTN + '</b>/' + cd.DANG.length + ' dạng đã tốt nghiệp</span>' +
       '<span><b>' + C.tongCauCD(cd) + '</b> câu đã làm</span></div></div></div>';
+    h += '<p class="muted" style="margin:10px 0 0">Danh sách dưới đây xếp <b>dễ trước, khó sau</b> ' +
+      'theo số ⭐ độ khó của từng dạng; hai dạng khó ngang nhau thì dạng con còn yếu hơn đứng trước.</p>';
     h += '<div class="tnbang">';
     cd.DANG.slice().sort(function (a, b) {
-      return C.diemTN(cd.id, a.id) - C.diemTN(cd.id, b.id);
+      return C.saoDang(cd.id, a.id) - C.saoDang(cd.id, b.id) ||
+        C.diemTN(cd.id, a.id) - C.diemTN(cd.id, b.id);
     }).forEach(function (d) {
       h += tnDong(cd.id, { id: d.id, ten: d.ten });
     });
@@ -20638,10 +20879,15 @@ var BAN_WEB = '2026-08-19.sup17';
         (x === 'B0' ? 'Kiến thức nền' : 'Bài ' + x.slice(1)) + '</button>';
     });
     h += '</div><div class="card"><h2 class="sec" style="margin-top:0">' + cd.LT[baiHT].icon + ' ' +
-      cd.LT[baiHT].ten + '</h2>' + khoiVideo(cd.id, baiHT, false) + cd.LT[baiHT].html;
+      cd.LT[baiHT].ten + '</h2>';
     var ds = cd.DANG_CUA_BAI[baiHT];
     var coBT = !!(ds && ds.length);
     var daH = C.daHoc(cd.id, baiHT);
+    h += '<div class="dgsao" style="margin:-4px 0 12px">' + khoBaiHtml(cd.id, baiHT) +
+      (C.daNhanSao(cd.id, baiHT) ? '<span class="pill tn">⭐ đã học xong bài này</span>'
+        : coBT ? '<span class="pill">⭐ đọc lý thuyết + đúng ' + C.CAN_DUNG_BAI + ' câu là được 1 sao</span>'
+          : '<span class="pill">Bài nền — không tính sao</span>') + '</div>';
+    h += khoiVideo(cd.id, baiHT, false) + cd.LT[baiHT].html;
     h += '<div class="spacer"></div>';
     if (!daH && vaiTro === 'con') {
       /* chưa xác nhận đã hiểu → phải bấm nút này mới mở được bài tập. Cố ý để nút
@@ -20881,8 +21127,7 @@ var BAN_WEB = '2026-08-19.sup17';
     var s = st(), c = s.chuoiDung || 0, ky = s.chuoiKyLuc || 0;
     var o = '';
     for (var i = 0; i < C.MOC_SUTU; i++) {
-      var m = (i + 1) === C.MOC_RAN ? ' ran' : ((i + 1) === C.MOC_SUTU ? ' sutu'
-        : ((i + 1) % C.MOC_SAO === 0 ? ' sao' : ''));
+      var m = (i + 1) === C.MOC_RAN ? ' ran' : ((i + 1) === C.MOC_SUTU ? ' sutu' : '');
       o += '<i class="' + (i < c ? 'on' : '') + m + '"></i>';
     }
     /* gộp các mốc rơi vào cùng một số câu — chuỗi 17 thì cả ⭐ lẫn 🐍 đều "còn 3 câu",
@@ -21131,12 +21376,23 @@ var BAN_WEB = '2026-08-19.sup17';
        phần thưởng nhưng chẳng hiện ra đâu cả, con không biết mình vừa được gì */
     var oThuong = '';
     if (C.thuong && C.thuong.length) {
-      var ten = C.thuong.map(function (k) { return C.TEN_THUONG[k]; }).join(' và ');
-      oThuong = '<div class="cb-thuong">🎁 ' + (chuoiTruoc + 1) + ' câu liền đúng — con vừa được <b>' +
-        ten + '</b>!' +
-        (C.thuong.indexOf('suTu') >= 0
-          ? '<br><span style="font-weight:600;font-size:14px">Trọn một vòng ' + C.MOC_SUTU +
-            ' câu! Chuỗi bắt đầu lại từ 0 để con săn vòng mới.</span>' : '') + '</div>';
+      /* ⭐ và 🐍/🦁 giờ đến từ hai việc khác hẳn nhau nên phải nói tách ra,
+         không gộp một câu "N câu liền đúng — con được ⭐ và 🐍" nữa. */
+      var tChuoi = C.thuong.filter(function (k) { return k !== 'sao'; });
+      if (tChuoi.length) {
+        oThuong += '<div class="cb-thuong">🎁 ' + (chuoiTruoc + 1) + ' câu liền đúng — con vừa được <b>' +
+          tChuoi.map(function (k) { return C.TEN_THUONG[k]; }).join(' và ') + '</b>!' +
+          (C.thuong.indexOf('suTu') >= 0
+            ? '<br><span style="font-weight:600;font-size:14px">Trọn một vòng ' + C.MOC_SUTU +
+              ' câu! Chuỗi bắt đầu lại từ 0 để con săn vòng mới.</span>' : '') + '</div>';
+      }
+      if (C.thuong.indexOf('sao') >= 0) {
+        var bvx = C.baiVuaXong || {}, cdVX = C.CD[bvx.cd], bVX = cdVX && cdVX.LT[bvx.bai];
+        oThuong += '<div class="cb-thuong">🌟 <b>Con vừa HỌC XONG một bài!</b> ' +
+          (bVX ? esc(bVX.ten) + ' — ' : '') + 'đã đọc lý thuyết và làm đúng ' + C.CAN_DUNG_BAI +
+          ' câu của bài này.<br><span style="font-weight:600;font-size:14px">Con được <b>⭐ 1 ngôi sao</b>. ' +
+          'Tổng cộng con đang có ' + (st().sao || 0) + ' ⭐.</span></div>';
+      }
     }
 
     el('fb').innerHTML = (ok
@@ -21223,7 +21479,9 @@ var BAN_WEB = '2026-08-19.sup17';
     var dung = p.ketQua.filter(function (x) { return x === 1; }).length;
     var tong = p.cau.length;
     var hoanHao = dung === tong && tong >= 5;
-    if (hoanHao) { s.boHoanHao = (s.boHoanHao || 0) + 1; s.sao = (s.sao || 0) + 1; }
+    /* bộ hoàn hảo vẫn được ghi công, nhưng không còn cộng sao:
+       ⭐ chỉ đến khi học xong hẳn một bài */
+    if (hoanHao) { s.boHoanHao = (s.boHoanHao || 0) + 1; }
     s.phien.push({
       t: Date.now(), cd: p.cd, ten: p.ten, kieu: typeof p.kieu === 'string' ? p.kieu : 'tuchon',
       dung: dung, tong: tong, them: p.them,
@@ -22723,10 +22981,13 @@ var BAN_WEB = '2026-08-19.sup17';
         (hn.sua ? '. Ngoài ra con còn làm <b>' + hn.sua + ' câu sửa lỗi</b> — ' +
           'phần này <b>không tính</b> vào mục tiêu, vì mục tiêu là để đo phần học mới.' : '') + '</p>';
     }
-    h += '<div class="hnthuong">Phần thưởng: <b>⭐ ' + (s.sao || 0) + '</b> sao · ' +
+    h += '<div class="hnthuong">Phần thưởng: <b>⭐ ' + (s.sao || 0) + '/' + C.tongSaoCoThe() + '</b> sao · ' +
       '<b>🐍 ' + (s.ran || 0) + '</b> rắn · <b>🦁 ' + (s.suTu || 0) + '</b> sư tử &nbsp;·&nbsp; ' +
       'chuỗi đang chạy <b>' + (s.chuoiDung || 0) + ' câu</b>' +
-      ((s.chuoiKyLuc || 0) ? ' · kỷ lục <b>' + s.chuoiKyLuc + ' câu</b>' : '') + '</div>';
+      ((s.chuoiKyLuc || 0) ? ' · kỷ lục <b>' + s.chuoiKyLuc + ' câu</b>' : '') +
+      '<br><span style="font-size:12.5px">⭐ mỗi <b>bài học xong hẳn</b> (đọc lý thuyết + đúng ' +
+      C.CAN_DUNG_BAI + ' câu của bài) được 1 sao — cả web có ' + C.tongSaoCoThe() + ' bài nên tối đa ' +
+      C.tongSaoCoThe() + ' sao. 🐍 20 câu liền đúng · 🦁 35 câu liền đúng.</span></div>';
     h += '</div>';
 
     /* ===== 2. CÂU LÀM ĐI LÀM LẠI VẪN SAI ===== */
@@ -23114,8 +23375,37 @@ var BAN_WEB = '2026-08-19.sup17';
     }
     h += '</div>';
 
+    /* --- BỐ CHỌN CHUYÊN ĐỀ CHO CON HỌC --- */
+    var chonTay = C.coChonTay();
+    h += '<div class="card"><h2 class="sec" style="margin-top:0">📚 Chọn chuyên đề cho con học</h2>';
+    h += '<p class="muted">Tích vào chuyên đề nào thì <b>khu của con chỉ hiện đúng những cái đó</b>, ' +
+      'còn lại ẩn hẳn đi — con không bị rối vì nhìn thấy 14 chuyên đề cùng lúc, và bố chủ động ' +
+      'cho con học đúng phần trường đang dạy.<br>' +
+      'Chuyên đề bố đã tích thì <b>mở luôn</b>, không phải chờ học xong cái trước. ' +
+      '<b>Không tích cái nào</b> thì web quay về lộ trình tự động ở bảng bên dưới (hiện đủ 14 chuyên đề). ' +
+      'Tiến độ của chuyên đề bị ẩn <b>vẫn được giữ nguyên</b>, tích lại là hiện ra y như cũ.</p>';
+    h += '<div class="row" style="margin-top:10px">' +
+      '<button class="btn sm ghost" data-chonhet="1">✅ Chọn tất cả</button>' +
+      '<button class="btn sm ghost" data-chonhet="0">⬜ Bỏ chọn hết (về lộ trình tự động)</button>' +
+      '<span class="pill">' + (chonTay ? 'Đang chọn tay · ' + C.dsChoCon().length + ' chuyên đề'
+        : 'Đang theo lộ trình tự động') + '</span></div>';
+    h += '<div class="cdtick">';
+    C.thuTuHoc().forEach(function (cd) {
+      var tick = !!(s.cdChon || {})[cd.id];
+      h += '<label class="' + (tick ? 'on' : '') + '" data-chontd="' + cd.id + '">' +
+        '<input type="checkbox" tabindex="-1"' + (tick ? ' checked' : '') + '>' +
+        '<span><span class="t">' + cd.icon + ' CĐ' + cd.so + ' · ' + esc(cd.tenNgan) + '</span>' +
+        '<span class="s">' + khoHtml(cd.id, true) + ' · ' + cd.DANG.length + ' dạng · ' +
+        (cd.THU_TU.length - 1) + ' bài</span></span></label>';
+    });
+    h += '</div></div>';
+
     /* --- lộ trình học --- */
     h += '<div class="card"><h2 class="sec" style="margin-top:0">🗺️ Lộ trình học</h2>';
+    if (chonTay) {
+      h += '<div class="tip" style="margin-bottom:10px">Bố đang <b>chọn tay</b> ở thẻ trên nên bảng ' +
+        'này tạm thời không có tác dụng. Bỏ chọn hết là lộ trình tự động chạy lại.</div>';
+    }
     h += '<p class="muted">Bé học <b>lần lượt</b>: hoàn thành chuyên đề đang học thì chuyên đề kế tiếp ' +
       'tự mở. <b>Hoàn thành</b> nghĩa là <b>tiến độ luyện 100%</b> (mọi dạng thành thạo) ' +
       '<b>và thi cuối chuyên đề đạt từ ' + C.NGUONG_THI + '%</b>. ' +
@@ -23123,14 +23413,17 @@ var BAN_WEB = '2026-08-19.sup17';
       'Bố có thể <b>mở tay</b> một chuyên đề bất kỳ (ví dụ trường đang dạy chương khác), ' +
       'hoặc <b>khoá tay</b> để tạm giấu đi. Bấm <b>Tự động</b> để trả về theo lộ trình.</p>';
     h += '<div style="overflow-x:auto"><table class="st-tbl"><tr><th>Chuyên đề</th><th>Tiến độ</th>' +
-      '<th>Thi</th><th>Trạng thái</th><th>Bố chỉnh</th></tr>';
+      '<th>⭐ bài đã xong</th><th>Thi</th><th>Trạng thái</th><th>Bố chỉnh</th></tr>';
     C.DS_CD.forEach(function (cd) {
       var mo = C.moKhoa(cd), xong = C.daXong(cd), r = C.thiCua(cd.id);
       var tay = (s.moTay || {})[cd.id];
+      var saoCd = cd.THU_TU.filter(function (b) { return C.daNhanSao(cd.id, b); }).length;
+      var btCd = cd.THU_TU.filter(function (b) { return C.coBaiTap(cd.id, b); }).length;
       var tt = xong ? '<span class="tag t3">✅ Hoàn thành</span>'
         : mo ? '<span class="tag t2">▶ Đang mở</span>' : '<span class="tag t0">🔒 Chưa mở</span>';
       h += '<tr><td><b>' + cd.icon + ' ' + cd.ten + '</b></td>' +
         '<td>' + C.tienDoCD(cd) + '%</td>' +
+        '<td>' + (saoCd ? '⭐ ' : '') + saoCd + '/' + btCd + '</td>' +
         '<td>' + (r.dat ? '<span style="color:var(--ok)">đạt ' + r.dat.pct + '%</span>'
           : r.lan.length ? '<span style="color:var(--no)">chưa đạt</span>' : '—') + '</td>' +
         '<td>' + tt + (tay !== undefined ? ' <span class="pill">bố chỉnh tay</span>' : '') + '</td>' +
@@ -23413,7 +23706,7 @@ var BAN_WEB = '2026-08-19.sup17';
       '[data-pick],[data-tick],[data-vadd],[data-vdel],[data-vup],[data-vdown],[data-xemvid],[data-solthi],' +
       '[data-motay],[data-sualai],[data-sua1],[data-loitab],[data-loicd],[data-loisol],' +
       '[data-loixoa],[data-loidon],[data-kdbatdau],[data-sodangkd],[data-lttron],[data-songayon],' +
-      '[data-sua1cau],' +
+      '[data-sua1cau],[data-chontd],[data-chonhet],' +
       '[data-phieu],[data-ptick],[data-ppick],[data-psocau],[data-psel]');
     if (!t) return;
     var d = t.dataset, cd;
@@ -23527,6 +23820,18 @@ var BAN_WEB = '2026-08-19.sup17';
       if (!confirm(chiChua ? 'Xoá tất cả các câu CHƯA sửa khỏi sổ lỗi?'
         : 'Xoá TOÀN BỘ sổ lỗi (cả câu đã sửa)?')) return;
       C.xoaHetLoi(chiChua); C.luu(); veSoLoi(); veHeader(); veHome();
+      return;
+    }
+    else if (d.chontd) {
+      /* Ô tích nằm trong <label>: bấm vào chữ thì e.target là chữ chứ không phải
+         ô, nên không đọc .checked được. Lật theo trạng thái đang lưu cho chắc. */
+      C.datChonChoCon(d.chontd, !(C.getState().cdChon || {})[d.chontd]);
+      veCaiDat(); veBaoCao(); veHome(); veHeader();
+      return;
+    }
+    else if (d.chonhet !== undefined) {
+      C.chonHet(d.chonhet === '1');
+      veCaiDat(); veBaoCao(); veHome(); veHeader();
       return;
     }
     else if (d.sodangkd) { st().soDangKD = +d.sodangkd; C.luu(); veCaiDat(); return; }
@@ -23737,6 +24042,8 @@ var BAN_WEB = '2026-08-19.sup17';
     C.bao(C.saveMode());
     /* dựng lại sổ "đã học bài nào" từ tiến độ cũ — chạy đúng một lần */
     try { C.dungLaiDaHoc(); } catch (e) { }
+    /* đặt lại toàn bộ số sao và tính lại theo luật mới — cũng chỉ một lần */
+    try { C.datLaiSao(); } catch (e) { }
     if (!C.token()) { veKetNoi(); return; }   /* thiết bị chưa có mã → hỏi trước khi vào */
     vaoUngDung();
   });
