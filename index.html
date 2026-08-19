@@ -214,6 +214,30 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 @keyframes nhay{0%,100%{opacity:1}50%{opacity:.25}}
 .bclive button{margin-left:auto}
 .bclive button + button{margin-left:0}
+/* ---- lý thuyết của từng dạng ---- */
+.kdchon{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px;
+  background:rgba(255,255,255,.18);border-radius:14px;padding:10px 14px}
+.kdchon span{font-size:14px;font-weight:700;opacity:.95}
+.kdchon button{font:inherit;font-size:14px;font-weight:800;border:0;cursor:pointer;border-radius:99px;
+  padding:7px 15px;background:rgba(255,255,255,.28);color:#fff}
+.kdchon button.on{background:#fff;color:#c2255c}
+.ltdau{padding:16px 18px;margin:-4px -4px 16px;border-radius:16px;
+  background:linear-gradient(135deg,#efeaff,#ffeef6)}
+.ltdau .nhan{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.5px;
+  text-transform:uppercase;color:#5b3fd6;background:#fff;border-radius:99px;padding:3px 12px}
+.ltd h4{margin:20px 0 8px;font-size:16.5px;color:var(--pri-d,#5b3fd6)}
+.ltd h4:first-child{margin-top:4px}
+.ltd p{margin:0 0 6px}
+.ltd .steps{margin:6px 0 0;padding-left:22px}
+.ltd .steps li{margin-bottom:9px;line-height:1.55}
+.ltd .quote{margin:6px 0 10px}
+.ltdmo{margin:10px 0 0}
+.ltdmo summary{cursor:pointer;font-weight:800;color:#5b3fd6;font-size:14.5px;
+  background:#f4f2fd;border-radius:12px;padding:9px 14px;list-style:none}
+.ltdmo summary::-webkit-details-marker{display:none}
+.ltdmo summary:before{content:"▸ ";}
+.ltdmo[open] summary:before{content:"▾ ";}
+.ltdmo > div{padding:4px 4px 0}
 .lesson.daxong{box-shadow:inset 0 0 0 2px #b2e5c6}
 .lesson.khoa{opacity:.6}
 .lsmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
@@ -801,6 +825,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
   <div id="pg-cd" class="hide"></div>
   <div id="pg-chon" class="hide"></div>
   <div id="pg-theory" class="hide"></div>
+  <div id="pg-ltdang" class="hide"></div>
   <div id="pg-practice" class="hide"></div>
   <div id="pg-tiendo" class="hide"></div>
   <div id="pg-soloi" class="hide"></div>
@@ -824,7 +849,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-17.sup16';
+var BAN_WEB = '2026-08-19.sup17';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -989,7 +1014,7 @@ var BAN_WEB = '2026-08-17.sup16';
       v: 2, ten: '', soCau: 10, mucTieu: 20, amThanh: true,
       pin: { bo: '', con: '' },
       cd: {}, video: {}, phien: [], thi: {}, moTay: {}, soLoi: [], chuoiSua: {},
-      khoiDong: null, kdLichSu: [], soDangKD: 5, soNgayOn: 14, phao: 'moi',
+      khoiDong: null, kdLichSu: [], soDangKD: 3, soNgayOn: 14, phao: 'moi',
       sao: 0, ran: 0, suTu: 0, chuoiDung: 0, chuoiKyLuc: 0, v3thuong: 1, huyHieu: [],
       chuoi: { ngay: '', so: 0, dai: 0 },
       ngay: {}, boHoanHao: 0, daHocBai: {}, baiNgay: null, v4bai: 0, tao: Date.now()
@@ -1008,7 +1033,8 @@ var BAN_WEB = '2026-08-17.sup16';
       if (!r.soLoi) r.soLoi = [];
       if (!r.chuoiSua) r.chuoiSua = {};
       if (!r.kdLichSu) r.kdLichSu = [];
-      if (!r.soDangKD) r.soDangKD = 5;
+      if (!r.soDangKD) r.soDangKD = 3;
+      if (r.soDangKD === 5 && !r.v5sang) { r.soDangKD = 3; r.v5sang = 1; }
       if (r.soNgayOn === undefined) r.soNgayOn = 14;
       if (!r.phao) r.phao = 'moi';        /* 'moi' mỗi câu đúng · 'lon' chỉ dịp lớn · 'tat' */
       /* Đổi luật thưởng: ngày xưa mỗi câu đúng 1 sao nên số sao phình lên mà
@@ -2359,9 +2385,32 @@ var BAN_WEB = '2026-08-17.sup16';
     return state.khoiDong;
   };
   /* bốc một ĐỢT: các câu sai CŨ NHẤT còn chưa sửa. Trả về số câu bốc được. */
+  /* ---------- BỐC ĐỢT SỬA LỖI BUỔI SÁNG ----------
+     Bố muốn mỗi sáng con chỉ làm 1–3 câu thôi, và phải là những câu ĐÁNG SỬA
+     NHẤT: câu con sai đi sai lại nhiều lần, và câu con ngồi lâu nhất mà vẫn
+     không ra. Sửa xong là sang bài mới luôn, không lôi cả sổ lỗi ra.
+     Điểm đáng sửa của một câu:
+       · mỗi lần sai lại        +10 điểm   (nặng nhất — con thật sự chưa hiểu)
+       · mỗi phút ngồi làm câu đó +2 điểm  (làm lâu = còn phải mò)
+       · để càng lâu chưa sửa   +1 điểm/ngày
+     Điểm bằng nhau thì lấy câu sai cũ hơn trước. */
+  CTS.diemDangSua = function (x) {
+    var d = 0;
+    d += (x.saiLai || 0) * 10;
+    var gy = x.gy || 0;
+    if (gy > 0 && gy < 900) d += (gy / 60) * 2;
+    var ngay = (Date.now() - (x.t || Date.now())) / 86400000;
+    d += Math.min(30, Math.max(0, ngay));
+    return d;
+  };
   function bocDot(k) {
-    var chua = CTS.dsLoi(true).slice().sort(function (a, b) { return a.t - b.t; });
-    var n = state.soDangKD || 5;
+    var chua = CTS.dsLoi(true).slice();
+    chua.sort(function (a, b) {
+      var da = CTS.diemDangSua(a), db = CTS.diemDangSua(b);
+      if (db !== da) return db - da;             /* đáng sửa nhất lên trước */
+      return a.t - b.t;                          /* hoà thì câu cũ hơn trước */
+    });
+    var n = state.soDangKD || 3;
     if (n > 900 || n <= 0) n = chua.length;
     k.ds = chua.slice(0, n).map(function (x) {
       return { id: x.id, cd: x.cd, dang: x.dang, tenDang: x.tenDang };
@@ -2388,11 +2437,15 @@ var BAN_WEB = '2026-08-17.sup16';
     }
     var con = conPhai();
 
-    /* chưa có đợt nào, hoặc đợt vừa rồi đã xong mà sổ lỗi vẫn còn → bốc đợt mới */
-    if (!k.ds || (!con.length && CTS.demLoi() > 0)) {
-      if (k.ds && !con.length) k.dot = (k.dot || 1) + 1;
+    /* Chưa có đợt nào thì bốc đợt sáng nay.
+       Còn nếu đợt sáng nay ĐÃ SỬA XONG thì THÔI — dù sổ lỗi vẫn còn câu.
+       Bố muốn mỗi sáng con chỉ làm 1–3 câu rồi sang bài mới ngay, chứ không
+       lôi cả sổ lỗi ra làm cho bằng hết. Số câu còn lại để dành sáng mai. */
+    if (!k.ds) {
       bocDot(k);
       con = conPhai();
+    } else if (!con.length && !conOn.length) {
+      k.xongSang = 1;                       /* đã làm xong phần của sáng nay */
     }
 
     if (!con.length && !conOn.length) { k.xong = 1; return null; }
@@ -6813,6 +6866,318 @@ var BAN_WEB = '2026-08-17.sup16';
     B7: ['P16', 'P20', 'P21']
   };
 
+
+  /* =========================================================
+     LÝ THUYẾT RIÊNG CỦA TỪNG DẠNG — CHUYÊN ĐỀ 2
+     ========================================================= */
+  function ltD(hoi, buoc, vdDe, vdGiai, bay) {
+    return '<div class="ltd">' +
+      '<h4>❓ Dạng này hỏi gì?</h4><p>' + hoi + '</p>' +
+      '<h4>🪜 Cách làm</h4><ol class="steps">' +
+      buoc.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>' +
+      '<h4>✏️ Ví dụ mẫu</h4><div class="quote">' + vdDe + '</div><div class="sol">' + vdGiai + '</div>' +
+      (bay ? '<h4>⚠️ Bẫy hay gặp</h4><div class="warn">' + bay + '</div>' : '') +
+      '</div>';
+  }
+
+  var LT_DANG = {
+
+    P1: ltD(
+      'Đề cho sẵn <b>một kho chữ số</b>. Con lập số lớn nhất (hoặc nhỏ nhất) từ đúng kho chữ số đó.',
+      ['Chỉ được dùng <b>đúng những chữ số đề cho</b>, không được lấy chữ số ở đâu khác.',
+       'Muốn số <b>LỚN nhất</b>: xếp các chữ số <b>giảm dần</b> từ trái sang phải.',
+       'Muốn số <b>NHỎ nhất</b>: xếp <b>tăng dần</b>. Nhưng nếu chữ số bé nhất là 0 thì phải <b>đổi chỗ</b> nó với chữ số khác 0 nhỏ tiếp theo, vì hàng cao nhất không được là 0.',
+       'Nếu đề nói “các chữ số khác nhau” thì mỗi chữ số chỉ được dùng một lần.'],
+      'Cho các chữ số 0, 3, 5, 7. Viết số lớn nhất và số nhỏ nhất có 4 chữ số khác nhau lập được từ các chữ số trên.',
+      '<b>Số lớn nhất</b> — xếp giảm dần:' +
+      '<div class="eq">7 &gt; 5 &gt; 3 &gt; 0 → <b class="hl">7530</b></div>' +
+      '<b>Số nhỏ nhất</b> — xếp tăng dần được 0357, nhưng số không bắt đầu bằng 0 được.<br>' +
+      'Đổi chỗ chữ số 0 với chữ số khác 0 nhỏ nhất là 3:' +
+      '<div class="eq">Đáp số: <b class="hl">3057</b></div>',
+      'Để chữ số 0 đứng ở hàng cao nhất.<br>' +
+      'Dùng thêm chữ số không có trong kho đề cho.'),
+
+    P2: ltD(
+      'Vẫn lập số từ kho chữ số cho trước, nhưng số đó phải <b>chẵn</b> hoặc <b>lẻ</b>.',
+      ['<b>Chốt hàng đơn vị trước tiên</b> — đây là hàng duy nhất quyết định chẵn hay lẻ.',
+       'Muốn số <b>lớn nhất</b>: hàng đơn vị chọn chữ số chẵn (lẻ) <b>nhỏ nhất</b> trong kho, để dành các chữ số lớn cho hàng cao.',
+       'Muốn số <b>nhỏ nhất</b>: hàng đơn vị chọn chữ số chẵn (lẻ) <b>lớn nhất</b>.',
+       'Các hàng còn lại xếp giảm dần (nếu tìm số lớn) hoặc tăng dần (nếu tìm số nhỏ).'],
+      'Cho các chữ số 2, 4, 5, 9. Viết số CHẴN lớn nhất có 4 chữ số khác nhau.',
+      'Các chữ số chẵn trong kho: 2 và 4. Muốn số lớn nhất thì hàng đơn vị lấy chữ số chẵn <b>nhỏ nhất</b> là <b>2</b>.<br>' +
+      'Ba chữ số còn lại {9, 5, 4} xếp giảm dần ở phía trước:' +
+      '<div class="eq">Đáp số: <b class="hl">9542</b></div>' +
+      'Thử lại: dùng đúng 4 chữ số đề cho ✔, tận cùng bằng 2 nên là số chẵn ✔',
+      'Xếp giảm dần trước rồi mới nhớ ra điều kiện chẵn.<br>' +
+      'Lấy chữ số chẵn lớn nhất xuống hàng đơn vị, làm mất chữ số lớn ở hàng cao.'),
+
+    P3: ltD(
+      'Liệt kê tất cả các số lập được theo <b>thứ tự từ bé đến lớn</b>, rồi tìm xem <b>số thứ mấy</b> là số nào.',
+      ['Liệt kê <b>có tổ chức</b>: chia theo chữ số đứng đầu, trong mỗi nhóm lại chia theo chữ số thứ hai.',
+       'Đếm xem mỗi nhóm có bao nhiêu số.',
+       'Cộng dồn số lượng các nhóm cho tới khi vượt qua vị trí cần tìm — vị trí đó nằm ở nhóm nào thì đi vào nhóm đó tìm tiếp.',
+       'Không bao giờ liệt kê lung tung rồi đếm, rất dễ sót.'],
+      'Từ các chữ số 1, 2, 3 lập các số có 3 chữ số khác nhau, xếp theo thứ tự tăng dần. Số thứ 4 là số nào?',
+      'Nhóm bắt đầu bằng <b>1</b>: 123, 132 → <b>2 số</b> (thứ 1 và thứ 2)<br>' +
+      'Nhóm bắt đầu bằng <b>2</b>: 213, 231 → 2 số (thứ 3 và thứ 4)<br>' +
+      'Vậy số thứ 3 là 213, số thứ 4 là:' +
+      '<div class="eq">Đáp số: <b class="hl">231</b></div>',
+      'Liệt kê không theo thứ tự nên đếm nhầm vị trí.<br>' +
+      'Quên mất một số trong nhóm.'),
+
+    P4: ltD(
+      'Đếm xem <b>lập được bao nhiêu số</b> từ kho chữ số cho trước, <b>chữ số được phép lặp lại</b>.',
+      ['Vì được lặp nên mỗi hàng chọn <b>độc lập</b>: chọn xong hàng này, hàng sau vẫn còn đủ lựa chọn như cũ.',
+       'Đếm số cách chọn cho <b>từng hàng</b> rồi <b>nhân</b> lại với nhau (quy tắc nhân).',
+       'Nếu kho có chữ số 0 thì hàng cao nhất <b>bớt đi 1 cách</b> (không được chọn 0).'],
+      'Từ các chữ số 1, 2, 3, 4 lập được bao nhiêu số có 3 chữ số? Các chữ số được phép lặp lại.',
+      'Kho có 4 chữ số, không có chữ số 0 nên hàng nào cũng có đủ 4 cách chọn.' +
+      '<div class="eq">Hàng trăm: 4 cách<br>Hàng chục: 4 cách<br>Hàng đơn vị: 4 cách</div>' +
+      '<div class="eq">4 × 4 × 4 = <b class="hl">64</b> số</div>',
+      'Nhân lùi dần 4 × 3 × 2 — đó là cách của bài “các chữ số khác nhau”.<br>' +
+      'Cộng thay vì nhân.'),
+
+    P5: ltD(
+      'Đếm số các số lập được, nhưng các <b>chữ số phải khác nhau</b>.',
+      ['Chọn xong một chữ số thì kho <b>vơi đi một cái</b> — hàng sau ít hơn một lựa chọn.',
+       'Nhân lùi dần: hàng đầu n cách, hàng sau n − 1 cách, hàng sau nữa n − 2 cách…',
+       'Nếu kho có chữ số 0 thì phải xử lý hàng cao nhất riêng (xem dạng kế tiếp).'],
+      'Từ các chữ số 1, 2, 3, 4, 5 lập được bao nhiêu số có 3 chữ số khác nhau?',
+      'Kho có 5 chữ số, không có chữ số 0.' +
+      '<div class="eq">Hàng trăm: 5 cách<br>Hàng chục: còn 4 cách<br>Hàng đơn vị: còn 3 cách</div>' +
+      '<div class="eq">5 × 4 × 3 = <b class="hl">60</b> số</div>',
+      'Quên vơi đi, tính 5 × 5 × 5.<br>' +
+      'Vơi quá tay, tính 5 × 3 × 1.'),
+
+    P6: ltD(
+      'Đếm số các số lập được khi <b>kho chữ số CÓ chứa số 0</b> — đây là chỗ dễ sai nhất.',
+      ['Chữ số 0 <b>không được đứng ở hàng cao nhất</b>.',
+       'Vì thế phải <b>chọn hàng cao nhất TRƯỚC</b>, và hàng đó có ít hơn 1 cách so với số chữ số trong kho.',
+       'Các hàng còn lại chọn bình thường trong phần còn lại — lúc này chữ số 0 <b>được phép</b> dùng.',
+       'Nhân các số cách lại.'],
+      'Từ các chữ số 0, 1, 2, 3 lập được bao nhiêu số có 3 chữ số khác nhau?',
+      'Kho có 4 chữ số, trong đó có chữ số 0.' +
+      '<div class="eq">Hàng trăm: chỉ được chọn 1, 2, 3 → <b>3 cách</b><br>' +
+      'Hàng chục: còn lại 3 chữ số (kể cả 0) → <b>3 cách</b><br>' +
+      'Hàng đơn vị: còn lại 2 chữ số → <b>2 cách</b></div>' +
+      '<div class="eq">3 × 3 × 2 = <b class="hl">18</b> số</div>',
+      'Tính 4 × 3 × 2 = 24 — thừa 6 số bắt đầu bằng chữ số 0 (như 012, 013…).<br>' +
+      'Chọn hàng đơn vị trước rồi mới xử lý hàng cao nhất, dễ rối.'),
+
+    P7: ltD(
+      'Đếm số các số mà <b>tất cả các chữ số đều thoả một tính chất</b> nào đó: đều chẵn, đều lẻ, đều lớn hơn 5…',
+      ['<b>Lọc kho trước</b>: viết ra đúng những chữ số thoả tính chất đề nói.',
+       'Đếm xem kho đã lọc có bao nhiêu chữ số.',
+       'Rồi đếm như bình thường trên kho đã thu hẹp đó.',
+       'Nhớ kiểm tra kho đã lọc có chứa chữ số 0 hay không để xử lý hàng cao nhất.'],
+      'Có bao nhiêu số có 3 chữ số mà tất cả các chữ số đều là số chẵn? Các chữ số được lặp.',
+      'Lọc kho: các chữ số chẵn là <b>0, 2, 4, 6, 8</b> → 5 chữ số, có chứa chữ số 0.' +
+      '<div class="eq">Hàng trăm: không được 0 → <b>4 cách</b><br>' +
+      'Hàng chục: <b>5 cách</b><br>Hàng đơn vị: <b>5 cách</b></div>' +
+      '<div class="eq">4 × 5 × 5 = <b class="hl">100</b> số</div>',
+      'Quên lọc kho, vẫn đếm trên cả 10 chữ số.<br>' +
+      'Lọc xong quên kiểm tra chữ số 0 ở hàng cao nhất.'),
+
+    P8: ltD(
+      'Đếm số các số <b>không chứa một chữ số nào đó</b> (ví dụ không chứa chữ số 7).',
+      ['<b>Bỏ chữ số bị cấm ra khỏi kho</b> rồi đếm như bình thường.',
+       'Hàng cao nhất: từ 9 chữ số (1 đến 9) bỏ đi chữ số cấm nếu nó khác 0.',
+       'Các hàng còn lại: từ 10 chữ số (0 đến 9) bỏ đi chữ số cấm.',
+       'Nhân lại.'],
+      'Có bao nhiêu số có 3 chữ số không chứa chữ số 7?',
+      'Chữ số cấm là 7.' +
+      '<div class="eq">Hàng trăm: 1…9 bỏ chữ số 7 → <b>8 cách</b><br>' +
+      'Hàng chục: 0…9 bỏ chữ số 7 → <b>9 cách</b><br>' +
+      'Hàng đơn vị: <b>9 cách</b></div>' +
+      '<div class="eq">8 × 9 × 9 = <b class="hl">648</b> số</div>',
+      'Ở hàng cao nhất bớt cả chữ số 0 lẫn chữ số cấm thành 8 cách trong khi chữ số cấm chính là 0 — lúc đó hàng cao vẫn đủ 9 cách.<br>' +
+      'Nhầm sang đếm số CÓ chứa chữ số 7.'),
+
+    P9: ltD(
+      'Đếm số các số <b>chẵn / lẻ / chia hết cho 5</b> mà các chữ số <b>khác nhau</b>. Dạng này phải <b>chia trường hợp</b>.',
+      ['<b>Chốt hàng đơn vị trước</b> vì nó quyết định điều kiện.',
+       'Nếu hàng đơn vị <b>được phép là 0</b> thì phải chia hai trường hợp, vì khi đơn vị khác 0 thì hàng cao nhất lại mất thêm một lựa chọn.',
+       '<b>Trường hợp 1:</b> hàng đơn vị = 0 → hàng cao nhất còn đủ lựa chọn.',
+       '<b>Trường hợp 2:</b> hàng đơn vị khác 0 → hàng cao nhất phải bỏ cả chữ số 0 lẫn chữ số vừa dùng.',
+       'Cộng hai trường hợp lại.'],
+      'Có bao nhiêu số CHẴN có 3 chữ số khác nhau?',
+      '<b>Trường hợp 1 — hàng đơn vị = 0:</b>' +
+      '<div class="eq">Hàng trăm: 9 cách (1…9) · Hàng chục: 8 cách<br>→ 1 × 9 × 8 = <b>72</b> số</div>' +
+      '<b>Trường hợp 2 — hàng đơn vị là 2, 4, 6 hoặc 8 (4 cách):</b>' +
+      '<div class="eq">Hàng trăm: bỏ chữ số 0 và chữ số vừa dùng → 8 cách<br>' +
+      'Hàng chục: còn lại 8 cách<br>→ 4 × 8 × 8 = <b>256</b> số</div>' +
+      '<div class="eq">Tổng: 72 + 256 = <b class="hl">328</b> số</div>',
+      'Không chia trường hợp, tính gộp 5 × 8 × 8 = 320 — thiếu mất 8 số.<br>' +
+      'Quên rằng hàng trăm phải bỏ cả chữ số 0 lẫn chữ số đã dùng ở hàng đơn vị.'),
+
+    P10: ltD(
+      'Đếm số cách <b>xếp n vật khác nhau thành một hàng</b> (xếp n bạn thành hàng dọc, xếp n quyển sách lên giá…).',
+      ['Chỗ đầu tiên có <b>n cách</b> chọn.',
+       'Chọn xong thì còn n − 1 vật → chỗ thứ hai có <b>n − 1 cách</b>.',
+       'Cứ thế lùi dần cho tới chỗ cuối cùng chỉ còn <b>1 cách</b>.',
+       '<b>Nhân</b> tất cả lại: n × (n−1) × … × 2 × 1.'],
+      'Có 4 bạn xếp thành một hàng dọc. Có bao nhiêu cách xếp?',
+      '<div class="eq">Chỗ thứ nhất: 4 cách<br>Chỗ thứ hai: 3 cách<br>Chỗ thứ ba: 2 cách<br>Chỗ thứ tư: 1 cách</div>' +
+      '<div class="eq">4 × 3 × 2 × 1 = <b class="hl">24</b> cách</div>',
+      'Cộng thay vì nhân (4 + 3 + 2 + 1 = 10).<br>' +
+      'Nhân 4 × 4 × 4 × 4 — đó là bài mỗi chỗ chọn độc lập.'),
+
+    P11: ltD(
+      'Đếm số cách <b>sắp xếp các chữ cái của một từ</b>, trong từ đó <b>có chữ lặp lại</b>.',
+      ['Nếu mọi chữ đều khác nhau thì làm y như bài xếp hàng: nhân lùi dần.',
+       'Nhưng khi có chữ lặp, <b>đổi chỗ hai chữ giống nhau không tạo ra cách mới</b> — nhìn vào vẫn là một từ.',
+       'Vì thế phải <b>chia bớt</b>: chia cho số cách đổi chỗ của <b>từng nhóm chữ lặp</b>.',
+       'Nhóm có 2 chữ giống nhau thì chia 2 (vì 2 × 1 = 2); nhóm 3 chữ giống nhau thì chia 6 (vì 3 × 2 × 1 = 6).'],
+      'Có bao nhiêu cách sắp xếp các chữ cái của từ MAMA?',
+      'Từ MAMA có 4 chữ cái, trong đó chữ M lặp 2 lần và chữ A lặp 2 lần.<br>' +
+      'Nếu coi cả 4 chữ đều khác nhau:' +
+      '<div class="eq">4 × 3 × 2 × 1 = 24 cách</div>' +
+      'Nhưng hai chữ M đổi chỗ nhau không ra cách mới → chia 2.<br>' +
+      'Hai chữ A cũng vậy → chia tiếp 2.' +
+      '<div class="eq">24 : 2 : 2 = <b class="hl">6</b> cách</div>',
+      'Quên chia, ra số lớn gấp mấy lần.<br>' +
+      'Chia nhầm một lần cho cả hai nhóm chữ lặp.'),
+
+    P12: ltD(
+      'Mỗi người <b>chọn một thứ</b>, và <b>được phép trùng nhau</b> (hai người cùng chọn một món cũng được).',
+      ['Đây <b>không phải</b> bài xếp hàng! Người này chọn xong, người kia vẫn còn nguyên từng ấy lựa chọn.',
+       'Mỗi người có <b>cùng một số lựa chọn</b>.',
+       'Nhân số lựa chọn với chính nó, <b>bao nhiêu người thì nhân bấy nhiêu lần</b>.'],
+      'Có 3 bạn, mỗi bạn chọn 1 trong 4 món quà. Hai bạn có thể chọn trùng món. Có bao nhiêu cách?',
+      '<div class="eq">Bạn thứ nhất: 4 cách<br>Bạn thứ hai: vẫn 4 cách<br>Bạn thứ ba: vẫn 4 cách</div>' +
+      '<div class="eq">4 × 4 × 4 = <b class="hl">64</b> cách</div>',
+      'Nhân lùi 4 × 3 × 2 = 24 — đó là bài không được trùng.<br>' +
+      'Nhân nhầm chiều: lấy 3 nhân với chính nó 4 lần.'),
+
+    P13: ltD(
+      'Xếp hàng sao cho <b>một nhóm luôn đứng cạnh nhau</b> (hai bạn thân phải đứng liền nhau).',
+      ['<b>Buộc nhóm đó lại thành MỘT KHỐI</b>, coi như một vật duy nhất.',
+       'Đếm số cách xếp khối đó cùng với những vật còn lại — như bài xếp hàng bình thường.',
+       'Rồi <b>nhân thêm</b> số cách đổi chỗ <b>bên trong khối</b>.',
+       'Nhóm 2 vật thì bên trong có 2 cách; nhóm 3 vật thì có 6 cách.'],
+      'Có 5 bạn xếp thành hàng dọc, trong đó bạn An và bạn Bình phải đứng cạnh nhau. Có bao nhiêu cách?',
+      'Buộc An và Bình thành một khối → còn lại <b>4 thứ</b> để xếp (khối + 3 bạn).' +
+      '<div class="eq">4 × 3 × 2 × 1 = 24 cách xếp</div>' +
+      'Trong khối, An và Bình đổi chỗ được cho nhau → <b>2 cách</b>.' +
+      '<div class="eq">24 × 2 = <b class="hl">48</b> cách</div>',
+      'Quên nhân số cách đổi chỗ trong khối, chỉ ra 24.<br>' +
+      'Vẫn tính 5 thứ trong khi đã buộc lại còn 4.'),
+
+    P14: ltD(
+      'Xếp hàng sao cho <b>hai vật KHÔNG đứng cạnh nhau</b>.',
+      ['Đếm trực tiếp phần “không cạnh nhau” rất dễ sót — nên làm <b>ngược lại</b>.',
+       'Bước 1: đếm <b>tất cả</b> các cách xếp, không cần điều kiện gì.',
+       'Bước 2: đếm các cách hai vật đó <b>đứng cạnh nhau</b> (làm như dạng trước: buộc thành khối rồi nhân 2).',
+       'Bước 3: lấy tất cả <b>trừ đi</b> phần đứng cạnh nhau.'],
+      'Có 5 bạn xếp thành hàng dọc. Hỏi có bao nhiêu cách xếp mà An và Bình KHÔNG đứng cạnh nhau?',
+      '<b>Tất cả các cách xếp:</b>' +
+      '<div class="eq">5 × 4 × 3 × 2 × 1 = 120 cách</div>' +
+      '<b>Các cách An và Bình đứng cạnh nhau:</b> buộc thành khối →' +
+      '<div class="eq">4 × 3 × 2 × 1 × 2 = 48 cách</div>' +
+      '<b>Các cách KHÔNG cạnh nhau:</b>' +
+      '<div class="eq">120 − 48 = <b class="hl">72</b> cách</div>',
+      'Đi đếm thẳng phần “không cạnh nhau”, sót rất nhiều.<br>' +
+      'Quên nhân 2 khi đếm phần đứng cạnh nhau, làm phép trừ sai.'),
+
+    P15: ltD(
+      'Xếp hàng có <b>điều kiện về vị trí</b>: một bạn phải đứng đầu, phải đứng cuối, hay phải đứng ở một chỗ nhất định.',
+      ['<b>Chọn chỗ cho vật bị ràng buộc TRƯỚC TIÊN</b> — đừng xếp tự do rồi mới nhớ ra điều kiện.',
+       'Đếm xem vật bị ràng buộc có bao nhiêu cách đặt.',
+       'Rồi xếp những vật còn lại vào các chỗ trống còn lại, như bài xếp hàng bình thường.',
+       'Nhân hai phần lại.'],
+      'Có 4 bạn xếp thành hàng dọc, bạn An phải đứng đầu hàng. Có bao nhiêu cách xếp?',
+      'An bị chốt ở chỗ đầu → chỉ có <b>1 cách</b> đặt An.<br>' +
+      'Ba bạn còn lại xếp vào 3 chỗ trống:' +
+      '<div class="eq">3 × 2 × 1 = 6 cách</div>' +
+      '<div class="eq">1 × 6 = <b class="hl">6</b> cách</div>',
+      'Xếp tự do 4 × 3 × 2 × 1 rồi mới nhớ ra điều kiện.<br>' +
+      'Đếm nhầm số chỗ trống còn lại.'),
+
+    P16: ltD(
+      'Đếm xem trong một dãy số (ví dụ từ 1 đến 100), <b>một chữ số nào đó xuất hiện bao nhiêu LẦN</b>.',
+      ['Đếm <b>riêng từng hàng</b>: hàng đơn vị, hàng chục, hàng trăm… rồi <b>cộng lại</b>.',
+       'Ở mỗi hàng, đếm xem chữ số đó xuất hiện bao nhiêu lần trong khoảng đề cho.',
+       'Chú ý: đề hỏi số LẦN xuất hiện, không phải số lượng SỐ có chứa chữ số đó — số 33 đóng góp <b>2 lần</b>.'],
+      'Từ 1 đến 100, chữ số 3 xuất hiện bao nhiêu lần?',
+      '<b>Ở hàng đơn vị:</b> 3, 13, 23, 33, 43, 53, 63, 73, 83, 93' +
+      '<div class="eq">→ 10 lần</div>' +
+      '<b>Ở hàng chục:</b> 30, 31, 32, 33, …, 39' +
+      '<div class="eq">→ 10 lần</div>' +
+      '<div class="eq">Tổng: 10 + 10 = <b class="hl">20</b> lần</div>' +
+      'Chú ý số 33 được đếm hai lần — một lần ở hàng chục, một lần ở hàng đơn vị. Đúng như thế.',
+      'Đếm số lượng SỐ có chứa chữ số 3 (được 19 số) rồi tưởng là đáp án.<br>' +
+      'Quên một hàng nào đó.'),
+
+    P17: ltD(
+      'Đếm số cách <b>xếp người quanh một bàn tròn</b>.',
+      ['Bàn tròn <b>không có chỗ đầu, chỗ cuối</b>. Xoay cả bàn đi một chỗ thì vẫn là cách xếp cũ, không tính là cách mới.',
+       '<b>Cố định một người</b> làm mốc, coi như người đó đã ngồi sẵn.',
+       'Chỉ xếp <b>những người còn lại</b> vào các ghế còn lại, như xếp hàng bình thường.',
+       'Vậy n người quanh bàn tròn thì có (n−1) × (n−2) × … × 1 cách.'],
+      'Có 5 bạn ngồi quanh một bàn tròn. Có bao nhiêu cách xếp chỗ?',
+      'Cố định một bạn làm mốc → còn <b>4 bạn</b> xếp vào 4 ghế còn lại.' +
+      '<div class="eq">4 × 3 × 2 × 1 = <b class="hl">24</b> cách</div>',
+      'Tính 5 × 4 × 3 × 2 × 1 = 120 — gấp 5 lần đáp số đúng, vì đã đếm cả 5 kiểu xoay của cùng một cách xếp.'),
+
+    P18: ltD(
+      'Xếp hàng sao cho <b>một vật đứng NGAY TRƯỚC vật kia</b> (liền nhau và đúng thứ tự).',
+      ['Cũng buộc hai vật thành <b>một khối</b> như bài “đứng cạnh nhau”.',
+       'Nhưng lần này <b>thứ tự trong khối đã bị chốt</b> — A phải ở trước B, không được đổi.',
+       'Vì vậy <b>KHÔNG nhân thêm 2</b>.',
+       'Chỉ cần đếm số cách xếp khối cùng những vật còn lại.'],
+      'Có 5 bạn xếp thành hàng dọc, bạn An phải đứng NGAY TRƯỚC bạn Bình. Có bao nhiêu cách?',
+      'Buộc An–Bình thành một khối (thứ tự đã cố định) → còn <b>4 thứ</b>.' +
+      '<div class="eq">4 × 3 × 2 × 1 = <b class="hl">24</b> cách</div>' +
+      'Không nhân thêm 2, vì Bình đứng trước An là sai đề.',
+      'Nhân thêm 2 theo thói quen của bài “đứng cạnh nhau” — ra 48, gấp đôi đáp số đúng.'),
+
+    P19: ltD(
+      'Xếp hàng sao cho <b>một vật đứng TRƯỚC vật kia</b>, nhưng <b>không cần liền nhau</b>.',
+      ['Với mỗi cách xếp bất kỳ, chỉ có đúng hai khả năng: <b>A trước B</b>, hoặc <b>B trước A</b>.',
+       'Hai khả năng đó <b>nhiều bằng nhau</b> — cứ hai cách thì đúng một cách hợp lệ.',
+       'Vậy chỉ cần đếm <b>tất cả</b> các cách xếp rồi <b>chia đôi</b>.'],
+      'Có 5 bạn xếp thành hàng dọc. Có bao nhiêu cách mà An đứng trước Bình (không cần đứng cạnh)?',
+      '<b>Tất cả các cách xếp:</b>' +
+      '<div class="eq">5 × 4 × 3 × 2 × 1 = 120 cách</div>' +
+      'Trong 120 cách đó, đúng một nửa có An trước Bình, một nửa có Bình trước An.' +
+      '<div class="eq">120 : 2 = <b class="hl">60</b> cách</div>',
+      'Đi đếm từng vị trí của An rồi cộng lại — làm được nhưng rất dài và dễ sót.<br>' +
+      'Nhầm sang bài “đứng ngay trước” (phải liền nhau).'),
+
+    P20: ltD(
+      'Đếm số lần xuất hiện của <b>chữ số 0</b> trong một dãy số. Chữ số 0 có luật riêng nên tách thành dạng riêng.',
+      ['Nhớ điều đặc biệt: <b>chữ số 0 không bao giờ đứng ở hàng cao nhất</b> của một số.',
+       'Vì thế khi đếm, <b>bỏ qua hàng cao nhất</b>, chỉ đếm 0 ở các hàng còn lại.',
+       'Đếm riêng từng hàng rồi cộng lại.'],
+      'Từ 1 đến 100, chữ số 0 xuất hiện bao nhiêu lần?',
+      '<b>Ở hàng đơn vị:</b> 10, 20, 30, 40, 50, 60, 70, 80, 90, 100' +
+      '<div class="eq">→ 10 lần</div>' +
+      '<b>Ở hàng chục:</b> chỉ có số 100 (chữ số 0 ở hàng chục)' +
+      '<div class="eq">→ 1 lần</div>' +
+      '<b>Ở hàng cao nhất:</b> không bao giờ có chữ số 0' +
+      '<div class="eq">Tổng: 10 + 1 = <b class="hl">11</b> lần</div>',
+      'Đếm cả chữ số 0 ở hàng cao nhất, kiểu coi số 5 là 05.<br>' +
+      'Quên số 100 có tới hai chữ số 0.'),
+
+    P21: ltD(
+      'Hỏi <b>cần bao nhiêu chữ số để viết hết một dãy số</b> (ví dụ viết các số từ 1 đến 100 thì phải viết bao nhiêu chữ số).',
+      ['<b>Chia dãy thành từng nhóm</b> theo số chữ số: nhóm số có 1 chữ số, nhóm 2 chữ số, nhóm 3 chữ số…',
+       'Với mỗi nhóm, đếm <b>có bao nhiêu số</b> trong nhóm đó.',
+       'Nhân: (số lượng số) × (số chữ số của mỗi số trong nhóm).',
+       '<b>Cộng</b> kết quả của tất cả các nhóm lại.'],
+      'Cần bao nhiêu chữ số để viết các số từ 1 đến 100?',
+      '<b>Nhóm 1 chữ số:</b> từ 1 đến 9 → 9 số' +
+      '<div class="eq">9 × 1 = 9 chữ số</div>' +
+      '<b>Nhóm 2 chữ số:</b> từ 10 đến 99 → 99 − 10 + 1 = 90 số' +
+      '<div class="eq">90 × 2 = 180 chữ số</div>' +
+      '<b>Nhóm 3 chữ số:</b> chỉ có số 100 → 1 số' +
+      '<div class="eq">1 × 3 = 3 chữ số</div>' +
+      '<div class="eq">Tổng: 9 + 180 + 3 = <b class="hl">192</b> chữ số</div>',
+      'Đếm sai số lượng số trong nhóm — từ 10 đến 99 là <b>90</b> số chứ không phải 89. Cách đếm đúng: số cuối − số đầu + 1.<br>' +
+      'Quên nhân với số chữ số của nhóm.')
+  };
+  DANG.forEach(function (d) { if (LT_DANG[d.id]) d.lt = LT_DANG[d.id]; });
+
   C.dangKy({
     id: 'cd2', so: 2,
     ten: 'Chuyên đề 2 · Sắp xếp chữ số, hoán vị',
@@ -8689,6 +9054,335 @@ var BAN_WEB = '2026-08-17.sup16';
     B5: ['S13', 'S14', 'S15'],
     B6: ['S16', 'S17', 'S18', 'S19', 'S20']
   };
+
+
+  /* =========================================================
+     LÝ THUYẾT RIÊNG CỦA TỪNG DẠNG — CHUYÊN ĐỀ 1
+     Bố muốn con hiểu CÁCH LÀM của đúng dạng đang gặp, chứ không phải đọc
+     lý thuyết chung của cả bài rồi tự suy ra. Mỗi dạng có đủ bốn phần:
+     hỏi gì · cách làm từng bước · một ví dụ mẫu giải hết · bẫy hay gặp.
+     ========================================================= */
+  function ltD(hoi, buoc, vdDe, vdGiai, bay) {
+    return '<div class="ltd">' +
+      '<h4>❓ Dạng này hỏi gì?</h4><p>' + hoi + '</p>' +
+      '<h4>🪜 Cách làm</h4><ol class="steps">' +
+      buoc.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>' +
+      '<h4>✏️ Ví dụ mẫu</h4><div class="quote">' + vdDe + '</div><div class="sol">' + vdGiai + '</div>' +
+      (bay ? '<h4>⚠️ Bẫy hay gặp</h4><div class="warn">' + bay + '</div>' : '') +
+      '</div>';
+  }
+
+  var LT_DANG = {
+
+    S1: ltD(
+      'Cho trước <b>tổng các chữ số</b>. Con phải viết ra số tự nhiên <b>nhỏ nhất</b> có tổng đúng như thế. Các chữ số được phép lặp lại.',
+      ['Muốn số BÉ thì trước hết phải <b>ít chữ số nhất</b> — vì số nào ít chữ số hơn thì bé hơn (999 bé hơn 1000).',
+       'Mỗi chữ số gánh được nhiều nhất là 9. Vậy lấy <b>tổng chia cho 9</b>: thương là số chữ số 9, số dư là chữ số còn lại.',
+       'Chữ số dư đó đặt ở <b>hàng cao nhất</b>, các chữ số 9 xếp hết về sau — hàng cao càng bé thì số càng bé.'],
+      'Viết số tự nhiên nhỏ nhất có tổng các chữ số bằng 23.',
+      '<div class="eq">23 : 9 = 2 (dư 5)</div>' +
+      'Được <b>hai chữ số 9</b> và <b>một chữ số 5</b>, tức là số có 3 chữ số.<br>' +
+      'Chữ số 5 lên hàng cao nhất, hai chữ số 9 xếp sau:' +
+      '<div class="eq">Đáp số: <b class="hl">599</b></div>' +
+      'Thử lại: 5 + 9 + 9 = 23 ✔ &nbsp;·&nbsp; 959 và 995 cũng có tổng 23 nhưng đều lớn hơn 599.',
+      'Xếp chữ số dư ra sau (thành 995) — như thế là số lớn hơn.<br>' +
+      'Nếu tổng chia hết cho 9 thì không có chữ số dư, số gồm toàn chữ số 9 (tổng 18 thì đáp số là 99).'),
+
+    S2: ltD(
+      'Vẫn là <b>số nhỏ nhất có tổng cho trước</b>, nhưng thêm điều kiện <b>các chữ số phải khác nhau</b> — không được dùng lặp.',
+      ['Vẫn ưu tiên <b>ít chữ số nhất</b>.',
+       'Vì không được lặp nên mỗi chữ số không gánh được 9 hết. Tổng lớn nhất của 1 chữ số là 9, của 2 chữ số là 9 + 8 = 17, của 3 chữ số là 9 + 8 + 7 = 24… Tìm số chữ số ít nhất mà tổng lớn nhất đó vẫn <b>≥ tổng đề cho</b>.',
+       'Điền từ <b>hàng đơn vị ngược lên</b> bằng các chữ số lớn nhất chưa dùng: 9, rồi 8, rồi 7…',
+       'Phần còn lại chính là <b>chữ số hàng cao nhất</b>. Nó phải khác các chữ số kia và không được là 0.'],
+      'Viết số tự nhiên nhỏ nhất có các chữ số khác nhau và tổng các chữ số bằng 20.',
+      '2 chữ số gánh tối đa 9 + 8 = 17, chưa tới 20.<br>' +
+      '3 chữ số gánh tối đa 9 + 8 + 7 = 24 ≥ 20 ✔ → số cần tìm có <b>3 chữ số</b>.<br>' +
+      'Điền từ phải sang: hàng đơn vị 9, hàng chục 8 (đã dùng hết 17).' +
+      '<div class="eq">Hàng trăm = 20 − 17 = 3</div>' +
+      '<div class="eq">Đáp số: <b class="hl">389</b></div>' +
+      'Thử lại: 3 + 8 + 9 = 20 ✔, ba chữ số khác nhau ✔',
+      'Quên mất điều kiện “khác nhau” rồi viết 299.<br>' +
+      'Nếu tính ra hàng cao nhất bằng 0 thì phải hạ chữ số bên cạnh xuống một bậc để dồn thêm cho hàng cao.'),
+
+    S3: ltD(
+      'Số <b>nhỏ nhất</b> có tổng các chữ số cho trước, nhưng phải là <b>số chẵn</b> (hoặc <b>số lẻ</b>).',
+      ['Nhớ điều quan trọng nhất: chẵn hay lẻ <b>chỉ phụ thuộc chữ số hàng đơn vị</b>, các hàng khác không liên quan.',
+       'Vẫn tìm <b>ít chữ số nhất</b> như dạng đầu tiên.',
+       'Hàng đơn vị lấy chữ số chẵn (hoặc lẻ) <b>lớn nhất có thể</b> — số chẵn thì lấy 8, số lẻ thì lấy 9 — để phần còn lại dành cho hàng cao càng nhỏ càng tốt.',
+       'Các hàng ở giữa lấy 9, hàng cao nhất lấy phần còn thừa.'],
+      'Viết số CHẴN nhỏ nhất có tổng các chữ số bằng 17.',
+      'Một chữ số gánh tối đa 9, chưa tới 17 → phải có ít nhất <b>2 chữ số</b>.<br>' +
+      'Hàng đơn vị phải chẵn, lấy lớn nhất là <b>8</b>.' +
+      '<div class="eq">Hàng chục = 17 − 8 = 9</div>' +
+      '<div class="eq">Đáp số: <b class="hl">98</b></div>' +
+      'Thử lại: 9 + 8 = 17 ✔ và 98 là số chẵn ✔',
+      'Đặt hàng đơn vị bằng 9 theo thói quen rồi mới nhớ ra đề hỏi số chẵn.<br>' +
+      'Lấy hàng đơn vị quá nhỏ (như 0 hay 2) làm hàng cao phồng lên, số thành lớn hơn.'),
+
+    S4: ltD(
+      'Đề cho <b>số chữ số</b> (ví dụ đúng 4 chữ số) và <b>tổng các chữ số</b>. Tìm số <b>nhỏ nhất</b>. Chữ số được lặp.',
+      ['Số chữ số đã bị chốt rồi, không được thêm hay bớt.',
+       'Dựng <b>khung nhỏ nhất</b> trước: hàng cao nhất là 1, các hàng còn lại là 0 — ví dụ 4 chữ số thì khung là 1000, tổng của khung bằng 1.',
+       'Tính phần còn thiếu = tổng đề cho − tổng của khung.',
+       'Rải phần thiếu <b>từ hàng đơn vị ngược lên</b>, mỗi hàng nâng tối đa tới 9. Nâng hàng thấp trước thì hàng cao mới giữ được số bé.',
+       'Nếu rải hết các hàng sau mà vẫn còn thừa thì nâng nốt hàng cao nhất.'],
+      'Viết số nhỏ nhất có 4 chữ số mà tổng các chữ số bằng 12.',
+      'Khung nhỏ nhất có 4 chữ số: <b>1000</b>, tổng bằng 1.' +
+      '<div class="eq">Còn thiếu: 12 − 1 = 11</div>' +
+      'Rải từ phải sang: hàng đơn vị nâng lên 9 (dùng hết 9, còn thiếu 2), hàng chục nâng lên 2 (vừa hết).' +
+      '<div class="eq">1 &nbsp; 0 &nbsp; 2 &nbsp; 9 → <b class="hl">1029</b></div>' +
+      'Thử lại: 1 + 0 + 2 + 9 = 12 ✔',
+      'Cho hàng cao nhất bằng 0 — số 4 chữ số không được bắt đầu bằng 0.<br>' +
+      'Rải từ trái sang (thành 9210) — như thế là số lớn nhất chứ không phải nhỏ nhất.'),
+
+    S5: ltD(
+      'Cho <b>số chữ số</b> và <b>tổng</b>, các chữ số phải <b>khác nhau</b>. Tìm số <b>nhỏ nhất</b>.',
+      ['Khung nhỏ nhất có k chữ số khác nhau là <b>1, 0, 2, 3, 4…</b> — hàng cao nhất là 1 (không được 0), rồi tới 0, rồi 2, 3, 4 tăng dần.',
+       'Tính tổng của khung, rồi tính phần còn thiếu.',
+       'Nâng <b>từ hàng đơn vị ngược lên</b>, mỗi hàng nâng lên chữ số lớn nhất còn <b>chưa dùng</b>.',
+       'Nâng xong kiểm lại: không có hai chữ số nào trùng nhau.'],
+      'Viết số nhỏ nhất có 3 chữ số khác nhau và tổng các chữ số bằng 15.',
+      'Khung nhỏ nhất có 3 chữ số khác nhau: <b>102</b>, tổng = 1 + 0 + 2 = 3.' +
+      '<div class="eq">Còn thiếu: 15 − 3 = 12</div>' +
+      'Nâng hàng đơn vị từ 2 lên <b>9</b> (thêm được 7, còn thiếu 5).<br>' +
+      'Nâng hàng chục từ 0 lên <b>5</b> (thêm đúng 5, vừa hết).' +
+      '<div class="eq">1 &nbsp; 5 &nbsp; 9 → <b class="hl">159</b></div>' +
+      'Thử lại: 1 + 5 + 9 = 15 ✔, ba chữ số khác nhau ✔',
+      'Nâng xong bị trùng chữ số mà không kiểm lại.<br>' +
+      'Nâng hàng cao trước, làm số to lên vô ích.'),
+
+    S6: ltD(
+      'Cho <b>số chữ số</b> và <b>tổng</b>, lại thêm điều kiện <b>chẵn</b> hoặc <b>lẻ</b>. Tìm số <b>nhỏ nhất</b>.',
+      ['Chốt <b>hàng đơn vị trước tiên</b>: lấy chữ số chẵn (hoặc lẻ) <b>lớn nhất có thể</b>, tức 8 hoặc 9.',
+       'Bỏ hàng đơn vị ra, phần còn lại là bài toán quen thuộc: k − 1 chữ số với tổng còn lại.',
+       'Dựng khung 1, 0, 0… cho phần còn lại rồi rải từ phải sang như thường.'],
+      'Viết số LẺ nhỏ nhất có 3 chữ số mà tổng các chữ số bằng 20.',
+      'Hàng đơn vị phải lẻ, lấy lớn nhất là <b>9</b>.' +
+      '<div class="eq">Còn lại cho 2 hàng đầu: 20 − 9 = 11</div>' +
+      'Khung 2 chữ số nhỏ nhất là 10, tổng 1, còn thiếu 10.<br>' +
+      'Nâng hàng chục từ 0 lên 9 (thêm 9, còn thiếu 1) → nâng hàng trăm từ 1 lên 2.' +
+      '<div class="eq">2 &nbsp; 9 &nbsp; 9 → <b class="hl">299</b></div>' +
+      'Thử lại: 2 + 9 + 9 = 20 ✔ và 299 là số lẻ ✔',
+      'Chốt hàng đơn vị sau cùng, tới lúc đó không còn chỗ xoay.<br>' +
+      'Lấy hàng đơn vị nhỏ quá làm hai hàng đầu phải phồng lên.'),
+
+    S7: ltD(
+      'Cho <b>số chữ số</b> và <b>tổng</b>. Lần này tìm số <b>LỚN nhất</b>. Chữ số được lặp.',
+      ['Muốn số LỚN thì <b>hàng cao phải lớn</b> — ngược hẳn với bài tìm số nhỏ nhất.',
+       'Dựng <b>khung lớn nhất</b>: tất cả các hàng đều là 9. Tổng của khung = 9 × số chữ số.',
+       'Tính phần thừa = tổng khung − tổng đề cho.',
+       'Bớt phần thừa <b>từ hàng đơn vị ngược lên</b>, mỗi hàng bớt tối đa 9 (tức xuống 0). Bớt ở hàng thấp thì hàng cao mới giữ được chữ số lớn.'],
+      'Viết số lớn nhất có 3 chữ số mà tổng các chữ số bằng 20.',
+      'Khung lớn nhất có 3 chữ số: <b>999</b>, tổng = 27.' +
+      '<div class="eq">Thừa: 27 − 20 = 7</div>' +
+      'Bớt 7 ở hàng đơn vị: 9 − 7 = 2.' +
+      '<div class="eq">9 &nbsp; 9 &nbsp; 2 → <b class="hl">992</b></div>' +
+      'Thử lại: 9 + 9 + 2 = 20 ✔',
+      'Bớt từ hàng cao xuống (thành 299) — đó là số nhỏ nhất chứ không phải lớn nhất.<br>' +
+      'Bớt quá 9 ở một hàng làm chữ số thành số âm — hết 9 thì phải chuyển sang bớt hàng bên trái.'),
+
+    S8: ltD(
+      'Số <b>LỚN nhất</b> có k chữ số <b>khác nhau</b> và tổng cho trước.',
+      ['Khung lớn nhất có k chữ số khác nhau là <b>9, 8, 7, 6…</b> giảm dần.',
+       'Tính tổng khung rồi tính phần thừa.',
+       'Bớt <b>từ hàng đơn vị ngược lên</b>, nhưng bớt xong chữ số đó vẫn phải <b>khác</b> mọi chữ số còn lại.',
+       'Nếu bớt tới mức bị trùng thì dừng lại, chuyển sang bớt tiếp ở hàng bên trái.'],
+      'Viết số lớn nhất có 3 chữ số khác nhau và tổng các chữ số bằng 20.',
+      'Khung lớn nhất có 3 chữ số khác nhau: <b>987</b>, tổng = 24.' +
+      '<div class="eq">Thừa: 24 − 20 = 4</div>' +
+      'Bớt 4 ở hàng đơn vị: 7 − 4 = 3. Chữ số 3 khác 9 và 8 ✔' +
+      '<div class="eq">9 &nbsp; 8 &nbsp; 3 → <b class="hl">983</b></div>' +
+      'Thử lại: 9 + 8 + 3 = 20 ✔, ba chữ số khác nhau ✔',
+      'Bớt xong ra chữ số trùng với chữ số bên cạnh mà không để ý.<br>' +
+      'Quên mất khung phải là các chữ số khác nhau, lại dựng 999.'),
+
+    S9: ltD(
+      'Số <b>LỚN nhất</b> có k chữ số <b>khác nhau</b>, tổng cho trước, lại phải <b>chẵn</b> hoặc <b>lẻ</b>.',
+      ['Chốt hàng đơn vị trước, nhưng lần này lấy chữ số chẵn (hoặc lẻ) <b>NHỎ nhất có thể</b> — để dành những chữ số lớn cho hàng cao.',
+       'Thử lần lượt: đơn vị bằng 1, rồi 3, rồi 5… (nếu là số lẻ). Với mỗi lần thử, xem phần tổng còn lại có chia được cho các hàng trên bằng các chữ số khác nhau không.',
+       'Chọn được rồi thì các hàng còn lại xếp <b>giảm dần</b>.'],
+      'Viết số LẺ lớn nhất có 3 chữ số khác nhau và tổng các chữ số bằng 20.',
+      'Thử hàng đơn vị = 1 → hai hàng trên phải có tổng 19, mà hai chữ số khác nhau lớn nhất chỉ được 9 + 8 = 17 &lt; 19 ✘<br>' +
+      'Thử hàng đơn vị = 3 → hai hàng trên có tổng 20 − 3 = 17 = 9 + 8 ✔' +
+      '<div class="eq">9 &nbsp; 8 &nbsp; 3 → <b class="hl">983</b></div>' +
+      'Thử lại: 9 + 8 + 3 = 20 ✔, số lẻ ✔, ba chữ số khác nhau ✔',
+      'Lấy ngay chữ số lẻ lớn nhất (9) cho hàng đơn vị — làm hàng cao mất mất chữ số 9.<br>' +
+      'Quên kiểm xem phần còn lại có chia nổi cho các hàng trên không.'),
+
+    S10: ltD(
+      'Số <b>LỚN nhất</b> có các chữ số <b>khác nhau</b> và tổng cho trước — nhưng đề <b>không nói số đó có mấy chữ số</b>.',
+      ['Số nào nhiều chữ số hơn thì lớn hơn → việc đầu tiên là tìm <b>số chữ số NHIỀU nhất có thể</b>.',
+       'n chữ số khác nhau có tổng <b>nhỏ nhất</b> khi lấy toàn chữ số bé: 0 + 1 + 2 + … Tăng n lên cho tới khi cái tổng nhỏ nhất đó <b>vượt quá</b> tổng đề cho thì dừng, lùi lại một bậc.',
+       'Có n rồi thì bắt đầu từ bộ 0, 1, 2, …, n−1 và <b>nâng dần các chữ số lớn nhất</b> lên cho tới khi đúng tổng.',
+       'Cuối cùng xếp bộ chữ số đó <b>giảm dần</b> từ trái sang phải.'],
+      'Viết số tự nhiên lớn nhất có các chữ số khác nhau và tổng các chữ số bằng 20.',
+      'Thử 6 chữ số: tổng nhỏ nhất 0+1+2+3+4+5 = 15 ≤ 20 ✔<br>' +
+      'Thử 7 chữ số: tổng nhỏ nhất 0+1+2+3+4+5+6 = 21 &gt; 20 ✘<br>' +
+      '→ nhiều nhất là <b>6 chữ số</b>.<br>' +
+      'Bắt đầu từ {0,1,2,3,4,5} tổng 15, còn thiếu 5.<br>' +
+      'Nâng chữ số lớn nhất 5 → 9 (thêm 4, tổng 19, còn thiếu 1) rồi nâng 4 → 5 (thêm 1, vừa đủ).<br>' +
+      'Được bộ {0, 1, 2, 3, 5, 9}. Xếp giảm dần:' +
+      '<div class="eq">Đáp số: <b class="hl">953210</b></div>' +
+      'Thử lại: 9+5+3+2+1+0 = 20 ✔',
+      'Chỉ có đúng 10 chữ số 0…9 nên không bao giờ quá 10 chữ số.<br>' +
+      'Để chữ số 0 ở hàng cao nhất — 0 phải xuống hàng cuối cùng.'),
+
+    S11: ltD(
+      'Vẫn là số <b>lớn nhất có các chữ số khác nhau</b>, thêm điều kiện <b>chẵn</b> hoặc <b>lẻ</b>.',
+      ['Làm y hệt dạng trên để tìm ra <b>bộ chữ số</b>.',
+       'Trong bộ đó, chọn chữ số chẵn (hoặc lẻ) <b>NHỎ nhất</b> đem xuống hàng đơn vị.',
+       'Những chữ số còn lại xếp <b>giảm dần</b> ở phía trước.',
+       'Nếu bộ chữ số không có chữ số nào chẵn (lẻ) thì phải chọn lại bộ khác.'],
+      'Viết số LẺ lớn nhất có các chữ số khác nhau và tổng các chữ số bằng 20.',
+      'Theo dạng trên, bộ chữ số nhiều nhất là {0, 1, 2, 3, 5, 9}.<br>' +
+      'Các chữ số lẻ trong bộ: 1, 3, 5, 9 → lấy nhỏ nhất là <b>1</b> xuống hàng đơn vị.<br>' +
+      'Còn lại {0, 2, 3, 5, 9} xếp giảm dần: 9, 5, 3, 2, 0.' +
+      '<div class="eq">Đáp số: <b class="hl">953201</b></div>' +
+      'Thử lại: 9+5+3+2+0+1 = 20 ✔, tận cùng bằng 1 nên là số lẻ ✔',
+      'Đem chữ số lẻ LỚN nhất xuống hàng đơn vị, làm mất chữ số lớn ở hàng cao.'),
+
+    S12: ltD(
+      'Đề <b>không cho tổng thẳng bằng con số</b> mà nói vòng vo: “tổng bằng số lớn nhất có một chữ số cộng thêm 8”, “tổng gấp đôi 9”… Con phải dịch ra trước.',
+      ['Đọc thật kỹ câu nói về tổng, <b>dịch nó thành một con số</b>. Viết con số đó ra giấy.',
+       'Xong bước đó thì bài trở về đúng một trong các dạng con đã học ở trên.',
+       'Làm tiếp như bình thường và nhớ thử lại đáp số theo <b>đề gốc</b>, không phải theo con số con vừa dịch.'],
+      'Viết số tự nhiên nhỏ nhất có tổng các chữ số bằng số lớn nhất có một chữ số cộng thêm 8.',
+      'Dịch đề: số lớn nhất có một chữ số là <b>9</b>.' +
+      '<div class="eq">Tổng cần tìm = 9 + 8 = 17</div>' +
+      'Giờ là dạng quen thuộc: số nhỏ nhất có tổng các chữ số bằng 17.' +
+      '<div class="eq">17 : 9 = 1 (dư 8) → một chữ số 9 và một chữ số 8</div>' +
+      '<div class="eq">Đáp số: <b class="hl">89</b></div>' +
+      'Thử lại: 8 + 9 = 17 = 9 + 8 ✔',
+      'Đọc lướt rồi lấy luôn con số nhìn thấy trong đề (số 8) làm tổng.'),
+
+    S13: ltD(
+      'Cho <b>tích các chữ số</b> (nhân tất cả chữ số lại). Tìm số <b>nhỏ nhất</b> có tích đúng như thế.',
+      ['Ba điều phải nhớ với bài tích: <b>không bao giờ có chữ số 0</b> (0 nhân gì cũng ra 0), và <b>không dùng chữ số 1</b> khi tìm số nhỏ nhất (thêm 1 chỉ làm số dài ra, tức lớn hơn).',
+       'Muốn số bé thì <b>ít chữ số nhất</b> → tách tích thành <b>ít thừa số nhất</b>.',
+       'Tách bằng cách chia dần cho 9, rồi 8, 7, 6… xuống 2.',
+       'Xếp các chữ số <b>tăng dần</b> từ trái sang phải.'],
+      'Viết số tự nhiên nhỏ nhất có tích các chữ số bằng 36.',
+      'Thử tách thành 2 chữ số: 36 = 4 × 9 ✔ (cũng có 6 × 6)<br>' +
+      'Không tách được thành 1 chữ số vì 36 &gt; 9.<br>' +
+      'Vậy số cần tìm có <b>2 chữ số</b>. Bộ {4, 9} cho số bé hơn bộ {6, 6}.<br>' +
+      'Xếp tăng dần:' +
+      '<div class="eq">Đáp số: <b class="hl">49</b></div>' +
+      'Thử lại: 4 × 9 = 36 ✔ &nbsp;·&nbsp; 66 cũng có tích 36 nhưng lớn hơn 49.',
+      'Thêm chữ số 1 vào (thành 149) — số dài hơn là số lớn hơn.<br>' +
+      'Dùng chữ số 0, làm tích thành 0.<br>' +
+      'Xếp giảm dần (thành 94).'),
+
+    S14: ltD(
+      'Cho <b>số chữ số</b> và <b>tích các chữ số</b>. Tìm số <b>nhỏ nhất</b>.',
+      ['Lần này số chữ số đã bị chốt nên <b>chữ số 1 lại được phép dùng</b> — dùng để lấp cho đủ số chữ số.',
+       'Tách tích thành các chữ số từ 2 đến 9.',
+       'Nếu tách ra <b>ít hơn</b> k chữ số thì thêm chữ số <b>1</b> cho đủ k. Nếu <b>nhiều hơn</b> k thì phải gộp hai chữ số nhỏ lại thành một chữ số lớn.',
+       'Xếp <b>tăng dần</b>.'],
+      'Viết số nhỏ nhất có 3 chữ số mà tích các chữ số bằng 36.',
+      'Các cách tách 36 thành đúng 3 chữ số:' +
+      '<div class="eq">36 = 1 × 4 × 9 &nbsp;·&nbsp; 36 = 2 × 2 × 9 &nbsp;·&nbsp; 36 = 1 × 6 × 6 &nbsp;·&nbsp; 36 = 2 × 3 × 6 &nbsp;·&nbsp; 36 = 3 × 3 × 4</div>' +
+      'Xếp tăng dần từng bộ rồi so: 149 · 229 · 166 · 236 · 334.<br>' +
+      'Bé nhất là:' +
+      '<div class="eq">Đáp số: <b class="hl">149</b></div>' +
+      'Thử lại: 1 × 4 × 9 = 36 ✔ và số có đúng 3 chữ số ✔',
+      'Quên mất rằng ở dạng này chữ số 1 được dùng, nên bỏ sót bộ {1,4,9}.<br>' +
+      'Tìm được một bộ rồi dừng luôn, không so với các bộ khác.'),
+
+    S15: ltD(
+      'Số <b>ĐỐI XỨNG</b> nhỏ nhất có tổng các chữ số cho trước. Số đối xứng là số đọc xuôi hay đọc ngược đều như nhau: 44, 121, 3773…',
+      ['Trong số đối xứng, các chữ số đi <b>thành từng cặp bằng nhau</b> (chữ số đầu bằng chữ số cuối, chữ số thứ hai bằng chữ số kề cuối…).',
+       'Nếu số có <b>chẵn</b> chữ số thì tổng luôn là số chẵn. Nếu số có <b>lẻ</b> chữ số thì có một chữ số ở giữa đứng một mình.',
+       'Thử số chữ số từ ít lên: 2 chữ số, rồi 3, rồi 4… Với mỗi lần thử xem có chia được tổng theo đúng luật cặp không.',
+       'Chia được rồi thì cho hàng cao nhất bé nhất có thể.'],
+      'Viết số đối xứng nhỏ nhất có tổng các chữ số bằng 8.',
+      'Thử <b>2 chữ số</b>: hai chữ số phải bằng nhau, mỗi chữ số = 8 : 2 = <b>4</b>.' +
+      '<div class="eq">Đáp số: <b class="hl">44</b></div>' +
+      'Thử lại: 4 + 4 = 8 ✔ và 44 đọc ngược vẫn là 44 ✔',
+      'Tổng lẻ mà vẫn cố tìm số có chẵn chữ số — không bao giờ được, phải chuyển sang số lẻ chữ số.<br>' +
+      'Quên rằng chữ số hàng cao nhất không được là 0.'),
+
+    S16: ltD(
+      'Số <b>LỚN nhất</b> có các chữ số <b>khác nhau</b> và <b>tích</b> cho trước.',
+      ['Nhiều chữ số hơn thì lớn hơn → tách tích thành <b>thật nhiều chữ số khác nhau</b>.',
+       '<b>Bẻ chữ số lớn thành tích của các chữ số nhỏ hơn</b>: 8 = 2 × 4, 6 = 2 × 3. Riêng 9 = 3 × 3 thì không dùng được vì hai chữ số 3 trùng nhau.',
+       'Được phép <b>thêm chữ số 1</b> — nhân 1 không đổi tích mà lại có thêm một chữ số.',
+       'Cuối cùng xếp <b>giảm dần</b>.'],
+      'Viết số tự nhiên lớn nhất có các chữ số khác nhau và tích các chữ số bằng 72.',
+      'Liệt kê các cách tách 72 thành các chữ số khác nhau:' +
+      '<div class="eq">72 = 8 × 9 → 2 chữ số<br>' +
+      '72 = 2 × 4 × 9 → 3 chữ số<br>' +
+      '72 = 1 × 2 × 4 × 9 → <b>4 chữ số</b> ← nhiều nhất</div>' +
+      'Bộ {1, 2, 4, 9} xếp giảm dần:' +
+      '<div class="eq">Đáp số: <b class="hl">9421</b></div>' +
+      'Thử lại: 9 × 4 × 2 × 1 = 72 ✔, bốn chữ số khác nhau ✔',
+      'Quên thêm chữ số 1, dừng ở 942.<br>' +
+      'Bẻ 9 thành 3 × 3 rồi bị trùng chữ số.'),
+
+    S17: ltD(
+      'Cho <b>tích</b>, và tích đó tách được <b>thành 4 chữ số khác nhau</b>. Tìm số lớn nhất.',
+      ['Vẫn là cách làm của dạng trên, chỉ là bài này tách ra vừa đúng 4 chữ số.',
+       'Bẻ dần các chữ số lớn thành tích của các chữ số nhỏ khác nhau.',
+       'Nếu tách hết cỡ mới được 3 chữ số thì <b>thêm chữ số 1</b> là đủ 4.',
+       'Xếp giảm dần.'],
+      'Tìm số tự nhiên lớn nhất có các chữ số khác nhau mà tích các chữ số bằng 160.',
+      '<div class="eq">160 = 4 × 5 × 8 → 3 chữ số khác nhau</div>' +
+      'Thêm chữ số 1 để có 4 chữ số:' +
+      '<div class="eq">160 = 1 × 4 × 5 × 8</div>' +
+      'Bộ {1, 4, 5, 8} xếp giảm dần:' +
+      '<div class="eq">Đáp số: <b class="hl">8541</b></div>' +
+      'Thử lại: 8 × 5 × 4 × 1 = 160 ✔',
+      'Tách được 3 chữ số rồi dừng, quên mất chữ số 1.<br>' +
+      'Bẻ nhầm thành hai chữ số trùng nhau.'),
+
+    S18: ltD(
+      'Bài khó của dạng tích: tách ra tới <b>5 hoặc 6 chữ số khác nhau</b>.',
+      ['Đừng dừng ở cách tách đầu tiên tìm được — phải <b>liệt kê thật đủ</b> rồi mới so.',
+       'Cách làm ngăn nắp: bắt đầu từ cách tách ít chữ số nhất, rồi bẻ tiếp từng chữ số lớn, mỗi lần bẻ lại xem có bị trùng không.',
+       'Cách nào cho <b>nhiều chữ số nhất</b> thì thắng. Nếu hai cách bằng số chữ số thì so chữ số hàng cao nhất.',
+       'Nhớ dùng cả chữ số 1.'],
+      'Tìm số tự nhiên lớn nhất có các chữ số khác nhau mà tích các chữ số bằng 1440.',
+      'Tách dần:' +
+      '<div class="eq">1440 = 4 × 360 = 4 × 5 × 72 = 4 × 5 × 8 × 9 → 4 chữ số</div>' +
+      'Thêm chữ số 1:' +
+      '<div class="eq">1440 = 1 × 4 × 5 × 8 × 9 → <b>5 chữ số</b></div>' +
+      'Bộ {1, 4, 5, 8, 9} xếp giảm dần:' +
+      '<div class="eq">Đáp số: <b class="hl">98541</b></div>' +
+      'Thử lại: 9 × 8 × 5 × 4 × 1 = 1440 ✔',
+      'Bỏ sót một cách tách nên ra số ít chữ số hơn, tức nhỏ hơn.<br>' +
+      'Tách ra hai chữ số giống nhau mà không để ý.'),
+
+    S19: ltD(
+      'Số <b>NHỎ nhất</b> có các chữ số <b>khác nhau</b> và tích cho trước. Chú ý: <b>ngược hẳn</b> với dạng tìm số lớn nhất.',
+      ['Muốn số nhỏ thì <b>càng ÍT chữ số càng tốt</b> — ngược với bài tìm số lớn nhất.',
+       '<b>Cấm dùng chữ số 1</b>: thêm 1 chỉ làm số dài ra, tức lớn hơn.',
+       'Tách tích thành ít thừa số nhất, các thừa số phải khác nhau.',
+       'Xếp <b>tăng dần</b> từ trái sang phải.'],
+      'Viết số tự nhiên nhỏ nhất có các chữ số khác nhau và tích các chữ số bằng 72.',
+      'Tách 72 thành ít chữ số nhất, các chữ số khác nhau:' +
+      '<div class="eq">72 = 8 × 9 → chỉ 2 chữ số</div>' +
+      'Xếp tăng dần:' +
+      '<div class="eq">Đáp số: <b class="hl">89</b></div>' +
+      'Thử lại: 8 × 9 = 72 ✔ &nbsp;·&nbsp; 1289 cũng có tích 72 nhưng dài hơn nên lớn hơn nhiều.',
+      'Áp dụng nhầm cách của bài “lớn nhất”: thêm chữ số 1 và bẻ nhỏ ra.<br>' +
+      'Xếp giảm dần thành 98.'),
+
+    S20: ltD(
+      'Cho <b>tích</b> và <b>số chữ số</b>. Tìm số lớn nhất (hoặc nhỏ nhất).',
+      ['Chỉ xét những cách tách có <b>đúng bằng số chữ số đề cho</b>, không hơn không kém.',
+       'Tách ra thiếu chữ số thì bù bằng chữ số <b>1</b>; tách ra thừa thì <b>gộp</b> hai chữ số nhỏ lại thành một chữ số lớn.',
+       'Đề hỏi số <b>lớn nhất</b> thì xếp giảm dần; hỏi số <b>nhỏ nhất</b> thì xếp tăng dần.',
+       'Liệt kê hết các bộ đúng số chữ số rồi mới chọn.'],
+      'Viết số lớn nhất có 3 chữ số mà tích các chữ số bằng 36.',
+      'Liệt kê các bộ đúng 3 chữ số có tích 36:' +
+      '<div class="eq">{1, 4, 9} · {2, 2, 9} · {1, 6, 6} · {2, 3, 6} · {3, 3, 4}</div>' +
+      'Xếp giảm dần từng bộ: 941 · 922 · 661 · 632 · 433.<br>' +
+      'Lớn nhất là:' +
+      '<div class="eq">Đáp số: <b class="hl">941</b></div>' +
+      'Thử lại: 9 × 4 × 1 = 36 ✔ và số có đúng 3 chữ số ✔',
+      'Lấy ngay cách tách đầu tiên mà không đếm xem đủ số chữ số chưa.<br>' +
+      'Quên so sánh giữa các bộ với nhau.')
+  };
+  DANG.forEach(function (d) { if (LT_DANG[d.id]) d.lt = LT_DANG[d.id]; });
 
   C.dangKy({
     id: 'cd1', so: 1,
@@ -19028,6 +19722,50 @@ var BAN_WEB = '2026-08-17.sup16';
   C.phaoHoa = phaoHoa;      /* để khu cài đặt và bài kiểm thử gọi được */
 
   /* một dòng trong bảng Đường tới tốt nghiệp: 5 ô vuông = 5 câu của chuỗi */
+  /* ---------- LÝ THUYẾT CỦA TỪNG DẠNG ----------
+     Con đang làm dạng nào thì đọc đúng cách làm của dạng đó, không phải mò
+     trong bài giảng chung của cả bài rồi tự suy ra. */
+  function ltDangCua(cdId, dangId) {
+    var cd = C.CD[cdId]; if (!cd) return null;
+    var d = cd.BY_ID[dangId];
+    return (d && d.lt) ? d : null;
+  }
+  function coLtDang(cdId, dangId) { return !!ltDangCua(cdId, dangId); }
+
+  function veLtDang(cdId, dangId) {
+    var cd = C.CD[cdId], d = ltDangCua(cdId, dangId);
+    if (!d) return false;
+    var bid = cd.BAI_CUA_DANG[dangId];
+    var h = '<div class="crumb"><button data-go2="home">← Trang chủ</button>' +
+      '<button data-go2="cd">' + cd.icon + ' ' + esc(cd.tenNgan) + '</button>' +
+      '<span>Lý thuyết dạng</span></div>';
+    h += '<div class="card"><div class="ltdau">' +
+      '<span class="nhan">📖 Cách làm dạng này</span>' +
+      '<h2 class="sec" style="margin:6px 0 0">' + esc(d.ten) + '</h2>' +
+      (d.goi ? '<p class="muted" style="margin:6px 0 0">💡 ' + esc(d.goi) + '</p>' : '') +
+      (bid && cd.LT[bid] ? '<p class="muted" style="margin:6px 0 0">Thuộc ' +
+        cd.LT[bid].icon + ' <b>' + esc(cd.LT[bid].ten) + '</b></p>' : '') +
+      '</div>';
+    h += d.lt;
+    h += '<div class="row" style="margin-top:18px">' +
+      '<button class="btn tolam" data-ltcd="' + cdId + '" data-ltid="' + dangId + '">✏️ Luyện dạng này ngay</button>' +
+      (bid ? '<button class="btn ghost" data-baily="' + bid + '">📘 Xem lý thuyết cả bài</button>' : '') +
+      '</div></div>';
+    el('pg-ltdang').innerHTML = h;
+    cdHT = cdId;
+    moTrang('ltdang');
+    return true;
+  }
+
+  /* hộp gấp lại ngay dưới đề bài: con bí thì mở ra đọc cách làm của ĐÚNG dạng
+     đang gặp, khỏi phải thoát ra ngoài tìm */
+  function hopLtDang(cdId, dangId) {
+    var d = ltDangCua(cdId, dangId);
+    if (!d) return '';
+    return '<details class="ltdmo"><summary>📖 Chưa biết làm? Mở cách làm dạng này</summary>' +
+      '<div>' + d.lt + '</div></details>';
+  }
+
   function tnDong(cdId, x) {
     var c = x.c || C.chuoiTN(cdId, x.id);
     var xong = C.daTotNghiep(cdId, x.id);
@@ -19041,6 +19779,8 @@ var BAN_WEB = '2026-08-17.sup16';
       '<span class="tnnum">' + (xong ? '✔' : c.chuoi + '/' + C.SO_CAU_TN) + '</span>' +
       '<span class="tnngay">' + (xong ? '' : (c.ngay + '/' + C.SO_NGAY_TN + ' ngày')) + '</span>' +
       C.tagLuong(cdId, x.id) +
+      (coLtDang(cdId, x.id)
+        ? '<button class="btn sm ghost" data-ltdang="' + cdId + '|' + x.id + '">📖 Lý thuyết</button>' : '') +
       '<button class="btn sm">' + (xong ? 'Ôn lại' : 'Luyện') + '</button></div>';
   }
 
@@ -19115,7 +19855,7 @@ var BAN_WEB = '2026-08-17.sup16';
   /* =========================================================
      ĐIỀU HƯỚNG
      ========================================================= */
-  var TRANG = ['login', 'home', 'cd', 'chon', 'theory', 'practice', 'tiendo', 'soloi',
+  var TRANG = ['login', 'home', 'cd', 'chon', 'theory', 'ltdang', 'practice', 'tiendo', 'soloi',
     'khoidong', 'bao', 'video', 'phieu', 'nhatky', 'caidat'];
   function moTrang(t) {
     /* CỔNG KHỞI ĐỘNG: mỗi ngày bé phải sửa lỗi xong mới được học tiếp */
@@ -20194,6 +20934,7 @@ var BAN_WEB = '2026-08-17.sup16';
           'Còn <b>' + conPhaiOn().length + '</b> dạng cần ôn.</div>' +
           '<div class="dangname">Dạng: ' + q.tenDang + '</div>';
         h += '<div class="qbox"><b>Câu ' + (p.i + 1) + '.</b> ' + q.de + '</div>';
+        h += hopLtDang(q.cd || p.cd, q.dang);
         h += '<div class="ansrow"><input class="ans" id="inp" inputmode="numeric" autocomplete="off" placeholder="Đáp án…">' +
           '<button class="btn" id="btn-check">Kiểm tra</button>' +
           '<button class="btn ghost" id="btn-skip">Chịu, xem lời giải</button></div>';
@@ -20232,6 +20973,7 @@ var BAN_WEB = '2026-08-17.sup16';
       h += '<div class="dangname">Dạng: ' + q.tenDang + '</div>';
     }
     h += '<div class="qbox"><b>Câu ' + (p.i + 1) + '.</b> ' + q.de + '</div>';
+    h += hopLtDang(q.cd || p.cd, q.dang);
     h += '<div class="ansrow"><input class="ans" id="inp" inputmode="numeric" autocomplete="off" placeholder="Đáp án…">' +
       '<button class="btn" id="btn-check">' + (p.thi ? 'Trả lời' : 'Kiểm tra') + '</button>' +
       '<button class="btn ghost" id="btn-skip">' + (p.thi ? 'Bỏ qua câu này' : 'Chịu, xem lời giải') + '</button></div>';
@@ -20415,6 +21157,14 @@ var BAN_WEB = '2026-08-17.sup16';
       var bid = (q.ltBai && cd.LT[q.ltBai]) ? q.ltBai : cd.BAI_CUA_DANG[q.dang];
       var lt = cd.LT[bid];
       h += '<div class="fixbox">';
+      /* Con sai ở DẠNG nào thì đọc cách làm của đúng dạng đó trước — ngắn, đúng
+         trọng tâm. Lý thuyết cả bài để ở dưới cho ai muốn đọc rộng hơn. */
+      var dLt = ltDangCua(q.cd || p.cd, q.dang);
+      if (dLt) {
+        h += '<div class="fh">📖 Cách làm dạng này: ' + esc(dLt.ten) + '</div>';
+        h += '<div class="fbody">' + dLt.lt + '</div>';
+        h += '<div class="spacer"></div>';
+      }
       h += '<div class="fh">📘 Đọc lại lý thuyết: ' + lt.ten + '</div>';
       h += '<p class="muted" style="margin:6px 0 0">' + (p.sualoi
         ? 'Con đọc kỹ phần này rồi bấm nút bên dưới. Vì vừa sai nên con phải làm lại <b>' +
@@ -20856,12 +21606,22 @@ var BAN_WEB = '2026-08-17.sup16';
      ========================================================= */
   function veKhoiDong() {
     var s = st(), k = C.canKhoiDong();
-    if (!k) {                                   /* đã xong rồi */
+    if (!k) {                                   /* xong phần của sáng nay */
+      var conSo = C.demLoi();
+      var cdX = C.cdDangHoc();
+      var baiX = cdX ? C.baiKeTiep(cdX.id) : null;
       var h0 = '<div class="card done pass"><div class="big">🌞</div>' +
-        '<div class="score">Sạch sổ lỗi!</div>' +
-        '<p>Con đã sửa hết mọi câu làm sai. Giờ học bài mới được rồi!</p>' +
+        '<div class="score">' + (conSo ? 'Xong phần sáng nay!' : 'Sạch sổ lỗi!') + '</div>' +
+        '<p>' + (conSo
+          ? 'Con đã sửa xong phần của sáng nay. Trong sổ còn <b>' + conSo + ' câu</b> — ' +
+            'để dành sáng mai, hôm nay con học bài mới đã nhé!'
+          : 'Con đã sửa hết mọi câu làm sai. Giờ học bài mới được rồi!') + '</p>' +
         '<div class="row" style="justify-content:center;margin-top:14px">' +
-        '<button class="btn" data-go="home">🏠 Vào học bài</button></div></div>';
+        (baiX
+          ? '<button class="btn tolam" data-baimoi="' + cdX.id + '|' + baiX + '">📘 Học bài mới — ' +
+            esc(cdX.LT[baiX].ten.split('·').pop().trim()) + '</button>'
+          : '') +
+        '<button class="btn ghost" data-go="home">🏠 Về trang chủ</button></div></div>';
       el('pg-khoidong').innerHTML = h0;
       veHeader();
       return;
@@ -20896,6 +21656,13 @@ var BAN_WEB = '2026-08-17.sup16';
         '📘 Học bài mới trước</button>';
     }
     h += '</div>';
+    /* con tự chọn sáng nay sửa mấy câu — 1, 2 hay 3 */
+    h += '<div class="kdchon"><span>Sáng nay con sửa mấy câu?</span>';
+    [1, 2, 3].forEach(function (n) {
+      h += '<button class="' + ((s.soDangKD || 3) === n ? 'on' : '') + '" data-sosang="' + n + '">' +
+        n + ' câu</button>';
+    });
+    h += '</div>';
     if (baiKD) {
       h += '<p style="margin:10px 0 0;font-size:13.5px;opacity:.9">Sửa xong sổ lỗi là mở ra ' +
         '<b>📘 ' + esc(cdKD.LT[baiKD].ten) + '</b>. Hôm nay con mệt thì bấm ' +
@@ -20909,7 +21676,7 @@ var BAN_WEB = '2026-08-17.sup16';
     h += '<div class="card lotrinh"><b>🩹 Đợt ' + (k.dot || 1) + ' — ' + k.tong + ' việc</b>' +
       (conCaThay > k.con.length
         ? '<p style="margin:6px 0 0">Sổ lỗi đang còn <b>' + conCaThay + ' câu</b>. Máy chia thành từng đợt ' +
-          '<b>' + ((s.soDangKD || 5) > 900 ? 'toàn bộ' : (s.soDangKD || 5) + ' câu') + '</b> cho đỡ mệt — ' +
+          '<b>' + ((s.soDangKD || 3) > 900 ? 'toàn bộ' : (s.soDangKD || 3) + ' câu') + '</b> cho đỡ mệt — ' +
           'xong đợt này máy tự đưa đợt kế tiếp, <b>ưu tiên câu sai lâu nhất</b>. ' +
           'Còn khoảng <b>' + uocBai + ' bài</b> nữa là sạch sổ.</p>'
         : '<p style="margin:6px 0 0">Đây là <b>đợt cuối</b> — sửa xong là sạch sổ lỗi, con vào học bài mới được ngay. 🎉</p>') +
@@ -22313,8 +23080,8 @@ var BAN_WEB = '2026-08-17.sup16';
       'Sổ lỗi hiện có <b>' + C.demLoi() + ' câu</b> → còn khoảng <b>' +
       (C.demLoi() * (C.CAN_DUNG_SUA + 1)) + ' bài</b> nữa là sạch.</p>';
     h += '<div class="row"><span class="muted">Mỗi đợt bao nhiêu câu:</span>';
-    [3, 5, 10, 999].forEach(function (n) {
-      h += '<button class="btn sm ' + ((s.soDangKD || 5) === n ? '' : 'ghost') + '" data-sodangkd="' + n + '">' +
+    [1, 2, 3, 5, 999].forEach(function (n) {
+      h += '<button class="btn sm ' + ((s.soDangKD || 3) === n ? '' : 'ghost') + '" data-sodangkd="' + n + '">' +
         (n > 900 ? 'Không chia đợt' : n + ' câu') + '</button>';
     });
     h += '</div>';
@@ -22641,7 +23408,7 @@ var BAN_WEB = '2026-08-17.sup16';
      SỰ KIỆN
      ========================================================= */
   document.addEventListener('click', function (e) {
-    var t = e.target.closest('[data-ai],[data-go],[data-go2],[data-cd],[data-lt],[data-ltbai],[data-baily],[data-dahieu],[data-baimoi],[data-kdbaimoi],' +
+    var t = e.target.closest('[data-ai],[data-go],[data-go2],[data-cd],[data-lt],[data-ltbai],[data-baily],[data-dahieu],[data-baimoi],[data-kdbaimoi],[data-ltdang],[data-sosang],' +
       '[data-th],[data-socau],[data-mt],[data-am],[data-phao],[data-ltcd],[data-tieptuc],[data-thoat],[data-thoatphien],' +
       '[data-pick],[data-tick],[data-vadd],[data-vdel],[data-vup],[data-vdown],[data-xemvid],[data-solthi],' +
       '[data-motay],[data-sualai],[data-sua1],[data-loitab],[data-loicd],[data-loisol],' +
@@ -22794,6 +23561,20 @@ var BAN_WEB = '2026-08-17.sup16';
     }
     else if (d.lt) batDau(d.lt);
     else if (d.ltbai) batDau(d.ltbai);
+    else if (d.sosang) {
+      /* đổi số câu sửa buổi sáng rồi bốc lại đợt cho đúng số */
+      var s5 = st();
+      s5.soDangKD = +d.sosang;
+      var k5 = C.khoiDongHomNay();
+      k5.ds = null;
+      C.luu();
+      veKhoiDong();
+      return;
+    }
+    else if (d.ltdang) {
+      var aL = String(d.ltdang).split('|');
+      veLtDang(aL[0], aL[1]);
+    }
     else if (d.dahieu) {
       /* con xác nhận đã đọc lý thuyết → ghi sổ rồi vào luôn bài tập của bài đó.
          Bài không có bài tập (Kiến thức nền) thì quay về trang chủ, ở đó bài kế
