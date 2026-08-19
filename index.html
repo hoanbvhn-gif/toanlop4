@@ -244,6 +244,17 @@ h3{font-size:18px;color:var(--pri-d);margin:26px 0 8px;border-left:4px solid var
 .lshai{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .lshai .btn{flex:1;min-width:130px;justify-content:center}
 .lesson.cosao{box-shadow:inset 0 0 0 2px #ffd43b,0 4px 16px rgba(255,196,0,.16)}
+.lesson.baynay{box-shadow:inset 0 0 0 3px var(--pri),0 8px 26px rgba(124,92,255,.22)}
+.lsnow{display:inline-block;background:var(--pri);color:#fff;font-weight:800;font-size:12px;
+  padding:3px 11px;border-radius:99px;margin-bottom:9px;letter-spacing:.2px}
+.buocnay{border:2px solid var(--pri);box-shadow:0 10px 30px rgba(124,92,255,.14)}
+.bnhan{font-size:13px;font-weight:800;color:var(--pri-d);text-transform:uppercase;letter-spacing:.5px}
+.bnten{margin:6px 0 0;font-size:21px;line-height:1.3}
+.bnbar{height:12px;border-radius:99px;background:#efeaff;overflow:hidden;margin-top:4px}
+.bnbar-in{height:100%;border-radius:99px;background:linear-gradient(90deg,#7c5cff,#ffc107);transition:width .4s}
+.bnso{font-size:14px;color:var(--ink2);margin-top:7px}
+.bnso b{color:var(--ink);font-size:16px}
+.buocnay .btn.tolam{margin-top:4px}
 .saobadge{font-size:20px;filter:drop-shadow(0 2px 4px rgba(255,190,0,.5))}
 .saobai{margin-top:9px;background:#fffbe9;border:1px solid #ffe89a;border-radius:12px;padding:9px 11px;font-size:13px}
 .saobai .sb-hd{font-weight:800;margin-bottom:5px;color:#9a6b00}
@@ -866,7 +877,7 @@ footer{text-align:center;color:var(--ink2);font-size:13px;padding:26px 16px}
    Trước đây gặp lỗi là trang trắng, không biết vì sao.
    Giờ mọi lỗi đều hiện thành khung đỏ đọc được.
    ========================================================= */
-var BAN_WEB = '2026-08-19.sup18';
+var BAN_WEB = '2026-08-19.sup19';
 (function () {
   var daHien = false;
   function hienLoi(tieu, tin, them) {
@@ -2106,9 +2117,11 @@ var BAN_WEB = '2026-08-19.sup18';
     return { xong: xong, tong: tong, pct: tong ? Math.round(diem / tong * 100) : 0 };
   };
   /* những dạng còn xa đích nhất — chính là chỗ cần dồn sức */
-  CTS.dsThieu = function (cd, n) {
+  /* chiLuyen = true: chỉ lấy những dạng con ĐÃ được học (khu của con) */
+  CTS.dsThieu = function (cd, n, chiLuyen) {
     var ra = [];
     (cd.DANG || []).forEach(function (d) {
+      if (chiLuyen && !CTS.duocLuyenDang(cd.id, d.id)) return;
       if (CTS.daTotNghiep(cd.id, d.id)) return;
       var x = CTS.dangOf(cd.id, d.id);
       ra.push({ id: d.id, ten: d.ten, lam: x.lam, diem: CTS.diemTN(cd.id, d.id),
@@ -2784,6 +2797,66 @@ var BAN_WEB = '2026-08-19.sup18';
   };
   CTS.daNhanSao = function (cdId, bid) {
     return !!(state.saoBai || {})[cdId + '|' + bid];
+  };
+
+  /* =========================================================
+     ĐI TỪNG BÀI MỘT — XONG BÀI NÀY MỚI HIỆN BÀI SAU
+     Bố muốn màn hình của con gọn hết mức: mỗi lúc chỉ có ĐÚNG MỘT việc phải làm.
+       · Chưa đọc lý thuyết  → chỉ có nút đọc lý thuyết, bài tập chưa hiện
+       · Đọc rồi, chưa đủ 10 câu đúng → chỉ có nút làm bài tập của đúng bài đó
+       · Đủ 10 câu đúng → được ⭐, và BÀI SAU mới hiện ra
+     Bài chưa tới thì KHÔNG hiện, không phải hiện mờ mờ — nhìn thấy 7 bài xám xịt
+     cũng đủ làm con rối mắt rồi.
+     ========================================================= */
+  /* "xong" đủ để mở bài sau: bài nền chỉ cần đọc, bài có bài tập cần đọc + 10 câu đúng */
+  CTS.baiXongDeMo = function (cdId, bid) {
+    if (!CTS.coBaiTap(cdId, bid)) return CTS.daHoc(cdId, bid);
+    return CTS.xongBai(cdId, bid);
+  };
+  CTS.baiMoKhoa = function (cdId, bid) {
+    var cd = CTS.CD[cdId]; if (!cd) return false;
+    var i = cd.THU_TU.indexOf(bid);
+    if (i <= 0) return true;                       /* bài đầu luôn mở */
+    /* Bài con ĐÃ mở ra đọc rồi thì không bao giờ khoá lại. Nếu không, người
+       đang học dở bản cũ sẽ bị đẩy ngược về bài 1 chỉ vì bài 2 mới đúng 6 câu. */
+    if (CTS.daHoc(cdId, bid)) return true;
+    var truoc = cd.THU_TU[i - 1];
+    return CTS.baiMoKhoa(cdId, truoc) && CTS.baiXongDeMo(cdId, truoc);
+  };
+  /* BÀI CON ĐANG PHẢI HỌC = bài mở khoá đầu tiên mà chưa xong. Hết bài thì null. */
+  CTS.baiDangHoc = function (cdId) {
+    var cd = CTS.CD[cdId]; if (!cd) return null;
+    for (var i = 0; i < cd.THU_TU.length; i++) {
+      var b = cd.THU_TU[i];
+      if (!CTS.baiMoKhoa(cdId, b)) return null;    /* chưa mở tới thì thôi */
+      if (!CTS.baiXongDeMo(cdId, b)) return b;
+    }
+    return null;                                   /* xong hết chuyên đề */
+  };
+  /* con đang ở bước nào của bài đang học: 'doc' | 'lam' | 'xong' */
+  CTS.buocCuaBai = function (cdId, bid) {
+    if (!CTS.daHoc(cdId, bid)) return 'doc';
+    if (!CTS.coBaiTap(cdId, bid)) return 'xong';
+    return CTS.xongBai(cdId, bid) ? 'xong' : 'lam';
+  };
+  CTS.dsBaiMo = function (cdId) {
+    var cd = CTS.CD[cdId]; if (!cd) return [];
+    return cd.THU_TU.filter(function (b) { return CTS.baiMoKhoa(cdId, b); });
+  };
+  /* các dạng con ĐƯỢC PHÉP gặp lúc này = dạng của bài vừa mở khoá vừa đã đọc lý thuyết */
+  CTS.dangDuocLuyen = function (cdId) {
+    var cd = CTS.CD[cdId]; if (!cd) return [];
+    var ra = [];
+    cd.THU_TU.forEach(function (b) {
+      if (!CTS.baiMoKhoa(cdId, b) || !CTS.daHoc(cdId, b)) return;
+      (cd.DANG_CUA_BAI[b] || []).forEach(function (id) { if (ra.indexOf(id) < 0) ra.push(id); });
+    });
+    return ra;
+  };
+  CTS.duocLuyenDang = function (cdId, dangId) {
+    var cd = CTS.CD[cdId]; if (!cd) return false;
+    var b = cd.BAI_CUA_DANG[dangId];
+    return !!b && CTS.baiMoKhoa(cdId, b) && CTS.daHoc(cdId, b);
   };
   /* trao sao nếu bài vừa đủ điều kiện; trả về true nếu vừa trao */
   CTS.chamSaoBai = function (cdId, bid) {
@@ -20403,10 +20476,17 @@ var BAN_WEB = '2026-08-19.sup18';
         (hn.cau ? '<span class="pill g">Hôm nay ' + hn.cau + ' câu</span>' : '') + '</div>';
 
       h += '<div class="chon">';
-      if (baiMoi) {
-        var bM = cdCuoi.LT[baiMoi];
-        h += '<button class="moi" data-baimoi="' + cdCuoi.id + '|' + baiMoi + '">📘 Học bài mới' +
-          '<small>' + esc(bM.ten) + '</small></button>';
+      /* Nút to đi thẳng vào ĐÚNG bước con đang đứng: chưa đọc thì đọc lý thuyết,
+         đọc rồi thì làm cho đủ 10 câu của chính bài đó. */
+      var bHT = C.baiDangHoc(cdCuoi.id);
+      var buocHT = bHT ? C.buocCuaBai(cdCuoi.id, bHT) : 'het';
+      if (bHT && buocHT === 'doc') {
+        h += '<button class="moi" data-baimoi="' + cdCuoi.id + '|' + bHT + '">📖 Đọc lý thuyết bài mới' +
+          '<small>' + esc(cdCuoi.LT[bHT].ten) + '</small></button>';
+      } else if (bHT && buocHT === 'lam') {
+        var conN = Math.max(0, C.CAN_DUNG_BAI - C.dungCuaBai(cdCuoi.id, bHT));
+        h += '<button class="moi" data-ltcd="' + cdCuoi.id + '" data-ltid="' + bHT + '">✏️ Làm bài tập bài này' +
+          '<small>' + esc(cdCuoi.LT[bHT].ten) + ' — còn ' + conN + ' câu đúng là xong bài, được ⭐</small></button>';
       } else {
         h += '<button class="moi" data-lttron="1">🔁 Ôn tập tổng hợp<small>Con đã học hết bài của chuyên đề này</small></button>';
       }
@@ -20479,10 +20559,15 @@ var BAN_WEB = '2026-08-19.sup18';
       h += '</div></div>';
 
       if (cdTN) {
-        var thieu = C.dsThieu(cdTN, 5);
+        /* chỉ liệt kê dạng của những bài con ĐÃ HỌC — đây là màn hình chính,
+           bày ra dạng của bài chưa tới vừa rối vừa là một đường tắt vào bài tập */
+        var thieu = C.dsThieu(cdTN, 5, vaiTro === 'con');
+        var daHocGi = vaiTro !== 'con' || C.dangDuocLuyen(cdTN.id).length > 0;
         h += '<div class="tnbang"><b>' + cdTN.icon + ' ' + esc(cdTN.tenNgan) + '</b> — ' +
           C.soTotNghiepCD(cdTN) + '/' + cdTN.DANG.length + ' dạng tốt nghiệp' +
-          (thieu.length ? ' · những dạng còn xa đích nhất:' : ' · <b>xong hết rồi! 🎉</b>');
+          (!daHocGi ? ' · <b>con chưa học bài nào của chuyên đề này</b>'
+            : thieu.length ? ' · những dạng còn xa đích nhất <span class="muted">(trong phần con đã học)</span>:'
+              : ' · <b>phần con đã học xong hết rồi! 🎉</b>');
         thieu.forEach(function (x) { h += tnDong(cdTN.id, x); });
         h += '</div>';
       }
@@ -20608,13 +20693,54 @@ var BAN_WEB = '2026-08-19.sup18';
         '<span class="muted">Hoàn thành xong thì chuyên đề tiếp theo sẽ tự mở ra.</span></div>';
     }
 
-    h += '<div class="card"><div class="row">';
-    h += '<button class="btn tolam" data-lt="smart">▶ Luyện tập — ' + (s.soCau || 10) + ' câu</button>';
-    h += '<button class="btn nhonho" data-go2="theory">📘 Học lý thuyết</button>';
-    h += '<button class="btn nhonho" data-lt="all">🌀 Ôn tập tổng hợp</button>';
+    /* ============ MỘT VIỆC DUY NHẤT PHẢI LÀM BÂY GIỜ ============
+       Ba nút ngang hàng (Luyện tập · Học lý thuyết · Ôn tập tổng hợp) làm con
+       phải chọn, mà chọn sai là học lộn xộn. Giờ chỉ còn ĐÚNG MỘT nút to, nội
+       dung đổi theo đúng bước con đang đứng. */
+    var bNay = C.baiDangHoc(cd.id);
+    var buoc = bNay ? C.buocCuaBai(cd.id, bNay) : 'het';
+    h += '<div class="card buocnay">';
+    if (vaiTro !== 'con') {
+      h += '<div class="row">' +
+        '<button class="btn tolam" data-lt="smart">▶ Luyện tập — ' + (s.soCau || 10) + ' câu</button>' +
+        '<button class="btn nhonho" data-go2="theory">📘 Xem lý thuyết</button>' +
+        '<button class="btn nhonho" data-lt="all">🌀 Ôn tập tổng hợp</button></div>' +
+        '<p class="muted" style="margin:12px 0 0">Bố xem tự do, không bị khoá theo bài. ' +
+        'Khu của con thì đi lần lượt từng bài một.</p>';
+    } else if (buoc === 'doc') {
+      var bTen = cd.LT[bNay];
+      h += '<div class="bnhan">Bây giờ con làm việc này 👇</div>';
+      h += '<h2 class="bnten">' + bTen.icon + ' ' + esc(bTen.ten) + '</h2>';
+      h += '<div class="dgsao" style="margin:6px 0 12px">' + khoBaiHtml(cd.id, bNay) + '</div>';
+      h += '<button class="btn tolam" data-baily="' + bNay + '">📖 Đọc lý thuyết bài này</button>';
+      h += '<p class="muted" style="margin:12px 0 0">Đọc hết rồi bấm <b>✅ Con đã hiểu</b> ở cuối trang, ' +
+        '<b>lúc đó bài tập mới hiện ra</b>. Chưa đọc thì chưa có bài tập nào cả — ' +
+        'làm mà không hiểu thì càng làm càng rối.</p>';
+    } else if (buoc === 'lam') {
+      var bTen2 = cd.LT[bNay];
+      var daDung = C.dungCuaBai(cd.id, bNay), canDung = C.CAN_DUNG_BAI;
+      h += '<div class="bnhan">Bây giờ con làm việc này 👇</div>';
+      h += '<h2 class="bnten">' + bTen2.icon + ' ' + esc(bTen2.ten) + '</h2>';
+      h += '<div class="dgsao" style="margin:6px 0 10px">' + khoBaiHtml(cd.id, bNay) +
+        '<span class="pill tn">✅ Đã đọc lý thuyết</span></div>';
+      h += '<div class="bnbar"><div class="bnbar-in" style="width:' +
+        Math.min(100, Math.round(daDung / canDung * 100)) + '%"></div></div>';
+      h += '<div class="bnso">Đúng <b>' + Math.min(daDung, canDung) + '/' + canDung +
+        '</b> câu của bài này' + (daDung < canDung ? ' — còn <b>' + (canDung - daDung) + ' câu</b> nữa là xong bài, được ⭐' : '') + '</div>';
+      h += '<div class="row" style="margin-top:12px">' +
+        '<button class="btn tolam" data-ltbai="' + bNay + '">✏️ Làm bài tập bài này</button>' +
+        '<button class="btn nhonho" data-baily="' + bNay + '">📖 Đọc lại lý thuyết</button></div>';
+      h += '<p class="muted" style="margin:12px 0 0">Xong bài này con được <b>⭐ 1 ngôi sao</b> ' +
+        'và <b>bài tiếp theo mới hiện ra</b>.</p>';
+    } else {
+      h += '<div class="bnhan">🎉 Con đã học hết các bài của chuyên đề này!</div>';
+      h += '<p class="muted" style="margin:6px 0 12px">Giờ là lúc ôn cho nhớ lâu và cho các dạng tốt nghiệp.</p>';
+      h += '<div class="row">' +
+        '<button class="btn tolam" data-lt="smart">▶ Ôn tập — ' + (s.soCau || 10) + ' câu</button>' +
+        '<button class="btn nhonho" data-lt="all">🌀 Trộn mọi bài đã học</button>' +
+        '<button class="btn nhonho" data-go2="theory">📘 Đọc lại lý thuyết</button></div>';
+    }
     h += '</div>';
-    h += '<p class="muted" style="margin:12px 0 0">Web tự chọn dạng bài cho con — ưu tiên dạng chưa làm ' +
-      'và dạng hay sai. Con cứ bấm nút to là học được ngay.</p></div>';
 
     var soSaoCd = cd.THU_TU.filter(function (b) { return C.daNhanSao(cd.id, b); }).length;
     var soBaiCoBt = cd.THU_TU.filter(function (b) { return C.coBaiTap(cd.id, b); }).length;
@@ -20625,18 +20751,34 @@ var BAN_WEB = '2026-08-19.sup18';
       'Mỗi bài <b>đọc lý thuyết trước</b>, hiểu rồi mới sang <b>thực hành</b> — ' +
       'lý thuyết ở đây là phần giảng riêng của chính bài đó, có ví dụ mẫu giải từng bước.<br>' +
       '🌟 <b>Học xong một bài</b> (đọc lý thuyết + làm đúng <b>' + C.CAN_DUNG_BAI +
-      ' câu</b> của bài đó) là con được <b>1 ⭐ ngôi sao</b>.</p>';
+      ' câu</b> của bài đó) là con được <b>1 ⭐ ngôi sao</b>' +
+      (vaiTro === 'con' ? ' — và <b>bài tiếp theo mới hiện ra</b>.' : '.') + '</p>';
+
+    /* ==== CHỈ HIỆN BÀI ĐÃ TỚI ====
+       Khu của con: các bài đã mở khoá + ĐÚNG MỘT bài kế tiếp (để con biết phía
+       trước còn gì mà cố), phần còn lại giấu đi hẳn. Khu của bố hiện đủ. */
+    var dsHien = cd.THU_TU, soAn = 0;
+    if (vaiTro === 'con') {
+      var iCuoiMo = -1;
+      cd.THU_TU.forEach(function (b, i) { if (C.baiMoKhoa(cd.id, b)) iCuoiMo = i; });
+      var het = Math.min(cd.THU_TU.length, iCuoiMo + 2);   /* + 1 bài nhá trước */
+      dsHien = cd.THU_TU.slice(0, het);
+      soAn = cd.THU_TU.length - dsHien.length;
+    }
     h += '<div class="grid">';
-    cd.THU_TU.forEach(function (bid, iB) {
+    dsHien.forEach(function (bid, iB) {
       var b = cd.LT[bid], ds = cd.DANG_CUA_BAI[bid] || [];
       var nv = C.videoCua(cd.id, bid).length;
       var daDoc = C.daHoc(cd.id, bid);
       var truoc = iB > 0 ? cd.THU_TU[iB - 1] : null;
-      /* bài kế tiếp mở khi bài trước đã đọc — không nhảy cóc */
-      var moBai = vaiTro !== 'con' || iB === 0 || daDoc || (truoc && C.daHoc(cd.id, truoc));
+      /* Bài sau chỉ mở khi bài trước ĐÃ XONG HẲN (đọc lý thuyết + đúng 10 câu),
+         chứ không phải chỉ đọc lướt lý thuyết là nhảy được sang bài kế. */
+      var moBai = vaiTro !== 'con' || C.baiMoKhoa(cd.id, bid);
       var coSao = C.daNhanSao(cd.id, bid);
+      var laBaiNay = bid === bNay;
       h += '<div class="lesson' + (daDoc ? ' daxong' : '') + (moBai ? '' : ' khoa') +
-        (coSao ? ' cosao' : '') + '">';
+        (coSao ? ' cosao' : '') + (laBaiNay ? ' baynay' : '') + '">';
+      if (laBaiNay && vaiTro === 'con') h += '<div class="lsnow">▶ Bài con đang học</div>';
       h += '<div class="ic">' + (moBai ? b.icon : '🔒') +
         (nv ? ' <span class="vbadge">🎬 ' + nv + '</span>' : '') +
         (coSao ? ' <span class="saobadge">⭐</span>' : '') + '</div>';
@@ -20680,7 +20822,9 @@ var BAN_WEB = '2026-08-19.sup18';
 
       h += '<div class="lshai">';
       if (!moBai) {
-        h += '<span class="muted" style="font-size:12.5px">Đọc xong bài trước là bài này mở ra.</span>';
+        var bTr = truoc && cd.LT[truoc] ? cd.LT[truoc].ten : '';
+        h += '<span class="muted" style="font-size:12.5px">🔒 Học xong <b>' + esc(bTr) +
+          '</b> là bài này mở ra.</span>';
       } else {
         h += '<button class="btn sm ' + (daDoc ? 'ghost' : '') + '" data-baily="' + bid + '">📖 ' +
           (daDoc ? 'Đọc lại lý thuyết' : 'Đọc lý thuyết') + '</button>';
@@ -20699,6 +20843,11 @@ var BAN_WEB = '2026-08-19.sup18';
       h += '</div>';
     });
     h += '</div>';
+    if (soAn > 0) {
+      h += '<p class="muted" style="margin:10px 0 0;text-align:center">Chuyên đề này còn <b>' + soAn +
+        ' bài</b> nữa. Học xong bài đang mở là bài sau tự hiện ra — ' +
+        'giấu bớt đi để con nhìn màn hình cho gọn.</p>';
+    }
 
     /* ---- 🎓 Đường tới tốt nghiệp của riêng chuyên đề này ---- */
     var pcTN = C.tienDoTN(cd), soTN = C.soTotNghiepCD(cd);
@@ -20713,15 +20862,27 @@ var BAN_WEB = '2026-08-19.sup18';
       ' câu</b> mà 20 câu gần nhất đúng ≥' + Math.round(C.NGUONG_DUNG * 100) + '% thì cũng cho tốt nghiệp.</span></p>';
     h += '<div class="tnso"><span><b>' + soTN + '</b>/' + cd.DANG.length + ' dạng đã tốt nghiệp</span>' +
       '<span><b>' + C.tongCauCD(cd) + '</b> câu đã làm</span></div></div></div>';
+    /* Chỉ liệt kê dạng con ĐÃ ĐƯỢC HỌC. Bày ra cả 20 dạng trong khi con mới học
+       bài 1 thì vừa rối mắt vừa là một đường tắt vào bài tập chưa học. */
+    var dangHien = cd.DANG.filter(function (d) {
+      return vaiTro !== 'con' || C.duocLuyenDang(cd.id, d.id);
+    });
+    var dangAn = cd.DANG.length - dangHien.length;
     h += '<p class="muted" style="margin:10px 0 0">Danh sách dưới đây xếp <b>dễ trước, khó sau</b> ' +
-      'theo số ⭐ độ khó của từng dạng; hai dạng khó ngang nhau thì dạng con còn yếu hơn đứng trước.</p>';
+      'theo số ⭐ độ khó của từng dạng; hai dạng khó ngang nhau thì dạng con còn yếu hơn đứng trước.' +
+      (dangAn > 0 ? ' Còn <b>' + dangAn + ' dạng</b> nữa thuộc các bài con chưa học tới — ' +
+        'học tới bài nào thì dạng của bài đó hiện ra.' : '') + '</p>';
     h += '<div class="tnbang">';
-    cd.DANG.slice().sort(function (a, b) {
+    dangHien.slice().sort(function (a, b) {
       return C.saoDang(cd.id, a.id) - C.saoDang(cd.id, b.id) ||
         C.diemTN(cd.id, a.id) - C.diemTN(cd.id, b.id);
     }).forEach(function (d) {
       h += tnDong(cd.id, { id: d.id, ten: d.ten });
     });
+    if (!dangHien.length) {
+      h += '<p class="muted" style="margin:0">Con chưa học bài nào của chuyên đề này. ' +
+        'Đọc lý thuyết bài đầu tiên là các dạng hiện ra ngay.</p>';
+    }
     h += '</div>';
 
     /* ---- BÀI THI nằm luôn trong thẻ này: tốt nghiệp hết dạng mới mở ra ---- */
@@ -20755,8 +20916,11 @@ var BAN_WEB = '2026-08-19.sup18';
     }
     h += '</div></div>';
 
-    var yeu = cd.DANG.filter(function (d) { return C.mucDo(cd.id, d.id) <= 1; })
-      .sort(function (a, b) { return C.mucDo(cd.id, a.id) - C.mucDo(cd.id, b.id); });
+    /* chỉ nhắc luyện thêm những dạng con ĐÃ học — không lôi dạng chưa học ra doạ */
+    var yeu = cd.DANG.filter(function (d) {
+      if (vaiTro === 'con' && !C.duocLuyenDang(cd.id, d.id)) return false;
+      return C.mucDo(cd.id, d.id) <= 1;
+    }).sort(function (a, b) { return C.mucDo(cd.id, a.id) - C.mucDo(cd.id, b.id); });
     if (yeu.length) {
       h += '<div class="card weak"><h2 class="sec" style="margin-top:0">⚠️ Dạng cần luyện thêm (' + yeu.length + ')</h2><div class="weak-list">';
       yeu.slice(0, 8).forEach(function (d) {
@@ -20871,10 +21035,16 @@ var BAN_WEB = '2026-08-19.sup18';
     var cd = C.CD[cdHT];
     if (bid) baiHT = bid;
     if (!baiHT || !cd.LT[baiHT]) baiHT = cd.THU_TU[0];
+    /* chốt chặn cuối: mọi đường vào lý thuyết đều qua đây — bài chưa mở khoá thì
+       kéo về đúng bài con đang phải học */
+    if (vaiTro === 'con' && !C.baiMoKhoa(cd.id, baiHT)) baiHT = C.baiDangHoc(cd.id) || cd.THU_TU[0];
     var h = '<div class="crumb"><button data-go2="home">← Trang chủ</button>' +
       '<button data-go2="cd">' + cd.icon + ' ' + cd.tenNgan + '</button><span>Lý thuyết</span></div>';
     h += '<div class="th-nav">';
+    /* thanh nhảy bài cũng chỉ hiện bài con đã mở khoá — bấm sang bài chưa tới
+       thì chẳng khác gì bỏ qua thứ tự học */
     cd.THU_TU.forEach(function (x) {
+      if (vaiTro === 'con' && !C.baiMoKhoa(cd.id, x)) return;
       h += '<button data-th="' + x + '" class="' + (x === baiHT ? 'on' : '') + '">' + cd.LT[x].icon + ' ' +
         (x === 'B0' ? 'Kiến thức nền' : 'Bài ' + x.slice(1)) + '</button>';
     });
@@ -20923,9 +21093,13 @@ var BAN_WEB = '2026-08-19.sup18';
           làm thêm cũng không giúp gì, phải để sang mai. */
   function chonThongMinh(cd, n) {
     var kho = [], khoPhu = [];
-    /* chỉ luyện những dạng thuộc bài con ĐÃ đọc lý thuyết */
-    var chop = C.dangDaHoc(cd.id);
-    var loc = chop.length ? cd.DANG.filter(function (d) { return chop.indexOf(d.id) >= 0; }) : cd.DANG;
+    /* Chỉ luyện dạng thuộc bài vừa MỞ KHOÁ vừa ĐÃ ĐỌC lý thuyết.
+       Trước đây nếu con chưa đọc bài nào thì hàm này quay ra lấy CẢ chuyên đề —
+       đúng cái lỗ hổng làm con gặp dạng chưa học bao giờ. Giờ chưa đọc gì thì
+       trả về rỗng, bên gọi sẽ đưa con sang trang lý thuyết. */
+    var chop = vaiTro === 'con' ? C.dangDuocLuyen(cd.id) : C.dangDaHoc(cd.id);
+    var loc = cd.DANG.filter(function (d) { return chop.indexOf(d.id) >= 0; });
+    if (!loc.length) return [];
     loc.forEach(function (d) {
       var x = C.dangOf(cd.id, d.id);
       var w;
@@ -20944,8 +21118,10 @@ var BAN_WEB = '2026-08-19.sup18';
       khoPhu.push(d.id);
     });
     /* cả chuyên đề đã tốt nghiệp hết thì vẫn cho luyện, khỏi rỗng */
+    /* cả phần con đã học đều tốt nghiệp hết thì vẫn cho ôn lại chính phần đó —
+       KHÔNG mở rộng ra cả chuyên đề như bản cũ */
     if (!kho.length) kho = khoPhu;
-    if (!kho.length) kho = cd.DANG.map(function (d) { return d.id; });
+    if (!kho.length) return [];
     var ra = [], lan = 0;
     while (ra.length < n && lan < 3000) {
       lan++;
@@ -20976,9 +21152,26 @@ var BAN_WEB = '2026-08-19.sup18';
       if (!C.moThi(cd)) { alert('Con cần cho tất cả các dạng tốt nghiệp trước đã, rồi bài thi mới mở ra nhé!'); return; }
       ids = chonDeThi(cd); ten = '🎓 Bài thi cuối chuyên đề';
     }
-    else if (kieu === 'smart') { ids = chonThongMinh(cd, n); ten = '✨ Luyện tập thông minh'; }
+    /* ---- CHỐT CHẶN: chưa đọc lý thuyết thì không có đường nào ra bài tập ----
+       Mọi lối vào luyện tập đều đi qua đây, nên chặn một chỗ này là chặn được hết:
+       nút to trên trang chuyên đề, nút trong bảng tốt nghiệp, nút "Luyện ngay" ở
+       danh sách dạng yếu, link cũ trong lịch sử… Chặn xong thì đưa con sang đúng
+       trang lý thuyết đang cần, không phải báo lỗi rồi bỏ đó. */
+    if (vaiTro === 'con' && kieu !== 'thi') {
+      var bDang = C.baiDangHoc(cd.id);
+      var phep = C.dangDuocLuyen(cd.id);
+      if (!phep.length) {
+        /* chưa đọc bài nào của chuyên đề này → mở lý thuyết bài đầu tiên */
+        veTheory(bDang || cd.THU_TU[0]);
+        return;
+      }
+    }
+    if (kieu === 'smart') { ids = chonThongMinh(cd, n); ten = '✨ Luyện tập thông minh'; }
     else if (kieu === 'all') {
-      ids = []; var kho = C.shuffle(cd.DANG.map(function (d) { return d.id; }));
+      /* chỉ trộn những dạng con ĐÃ được học, không lôi cả chuyên đề ra */
+      var dsAll = vaiTro === 'con' ? C.dangDuocLuyen(cd.id) : cd.DANG.map(function (d) { return d.id; });
+      if (!dsAll.length) { veTheory(C.baiDangHoc(cd.id) || cd.THU_TU[0]); return; }
+      ids = []; var kho = C.shuffle(dsAll);
       for (var i = 0; i < n; i++) ids.push(kho[i % kho.length]);
       ids = C.shuffle(ids); ten = '🎲 Ôn tập tổng hợp';
     } else if (kieu === 'tuchon') {
@@ -20987,15 +21180,26 @@ var BAN_WEB = '2026-08-19.sup18';
       ids = C.shuffle(ids);
       ten = '🎯 Tự chọn (' + opt.ids.length + ' dạng)';
     } else if (kieu.charAt(0) === 'B' && cd.DANG_CUA_BAI[kieu]) {
+      /* bài chưa mở khoá → đẩy về đúng bài con đang phải học */
+      if (vaiTro === 'con' && !C.baiMoKhoa(cd.id, kieu)) { veTheory(C.baiDangHoc(cd.id) || cd.THU_TU[0]); return; }
       /* chưa đọc lý thuyết bài này thì mở lý thuyết trước, chưa cho làm */
       if (vaiTro === 'con' && !C.daHoc(cd.id, kieu)) { veTheory(kieu); return; }
       var ds = cd.DANG_CUA_BAI[kieu], k2 = C.shuffle(ds);
       ids = []; for (var j = 0; j < n; j++) ids.push(k2[j % k2.length]);
       ids = C.shuffle(ids); ten = cd.LT[kieu].icon + ' ' + cd.LT[kieu].ten;
     } else {
+      /* luyện đúng MỘT dạng: dạng nào thuộc bài chưa học thì mở lý thuyết bài đó */
+      if (vaiTro === 'con' && !C.duocLuyenDang(cd.id, kieu)) {
+        var bCua = cd.BAI_CUA_DANG[kieu];
+        veTheory((bCua && C.baiMoKhoa(cd.id, bCua)) ? bCua : (C.baiDangHoc(cd.id) || cd.THU_TU[0]));
+        return;
+      }
       ids = []; for (var m = 0; m < n; m++) ids.push(kieu);
       ten = cd.BY_ID[kieu].ten;
     }
+    /* không bốc được câu nào (chưa học gì) → đưa con sang lý thuyết, đừng mở
+       một buổi luyện rỗng rồi treo màn hình */
+    if (!ids || !ids.length) { veTheory(C.baiDangHoc(cd.id) || cd.THU_TU[0]); return; }
     phien = {
       cd: cd.id, ten: ten, kieu: kieu, thi: kieu === 'thi',
       i: 0, ketQua: [], batDau: Date.now(), them: 0,
@@ -21494,7 +21698,7 @@ var BAN_WEB = '2026-08-19.sup18';
 
     var pct = Math.round(dung / tong * 100);
     var mat = pct === 100 ? '🏆' : pct >= 80 ? '🎉' : pct >= 60 ? '🙂' : '💪';
-    var loi = pct === 100 ? 'Hoàn hảo! Con làm đúng hết! (+5 ⭐ thưởng)' :
+    var loi = pct === 100 ? 'Hoàn hảo! Con làm đúng hết!' :
       pct >= 80 ? 'Rất tốt! Chỉ sai một chút thôi.' :
         pct >= 60 ? 'Khá ổn. Ôn lại vài dạng nữa là ngon!' :
           'Chưa sao cả — con đã đọc lý thuyết rồi, lần sau sẽ tốt hơn!';
@@ -21522,9 +21726,29 @@ var BAN_WEB = '2026-08-19.sup18';
       });
       h += '</div></div>';
     }
-    h += '<div class="row" style="justify-content:center;margin-top:16px">' +
-      (p.tron ? '<button class="btn" data-lttron="1">Làm bộ mới</button>'
-        : '<button class="btn" data-lt="' + (typeof p.kieu === 'string' ? p.kieu : 'smart') + '">Làm bộ mới</button>') +
+    /* ---- BƯỚC KẾ TIẾP: con vừa xong bài này thì bài sau đã mở, nói luôn ---- */
+    var bTiep = C.baiDangHoc(p.cd), nutTiep = '';
+    if (vaiTro === 'con' && cd && bTiep) {
+      var buocT = C.buocCuaBai(p.cd, bTiep);
+      var tenT = cd.LT[bTiep] ? cd.LT[bTiep].ten : '';
+      if (buocT === 'doc') {
+        /* bài này chưa đọc lý thuyết → tức là bài TRƯỚC vừa xong, bài mới vừa mở */
+        h += '<div class="tip" style="text-align:left;margin-top:14px">🔓 <b>Bài tiếp theo vừa mở ra:</b> ' +
+          esc(tenT) + '<br><span class="muted">Đọc lý thuyết bài này rồi mới có bài tập nhé.</span></div>';
+        nutTiep = '<button class="btn tolam" data-baily="' + bTiep + '">📖 Đọc lý thuyết bài tiếp theo</button>';
+      } else {
+        var conT = Math.max(0, C.CAN_DUNG_BAI - C.dungCuaBai(p.cd, bTiep));
+        if (conT > 0) {
+          h += '<div class="tip" style="text-align:left;margin-top:14px">📌 <b>Bài đang học:</b> ' + esc(tenT) +
+            ' — còn <b>' + conT + ' câu đúng</b> nữa là xong bài, con được <b>⭐ 1 ngôi sao</b> ' +
+            'và bài sau mở ra.</div>';
+          nutTiep = '<button class="btn tolam" data-ltbai="' + bTiep + '">✏️ Làm tiếp bài này</button>';
+        }
+      }
+    }
+    h += '<div class="row" style="justify-content:center;margin-top:16px">' + nutTiep +
+      (nutTiep ? '' : (p.tron ? '<button class="btn" data-lttron="1">Làm bộ mới</button>'
+        : '<button class="btn" data-lt="' + (typeof p.kieu === 'string' ? p.kieu : 'smart') + '">Làm bộ mới</button>')) +
       '<button class="btn ghost" data-go2="cd">Về chuyên đề</button>' +
       '<button class="btn ghost" data-go2="home">Trang chủ</button></div></div>';
     el('pg-practice').innerHTML = h;
